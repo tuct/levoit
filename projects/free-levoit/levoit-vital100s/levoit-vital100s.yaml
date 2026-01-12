@@ -1,0 +1,118 @@
+esphome:
+  name: levoit-vital100s
+
+esp32:
+  board: az-delivery-devkit-v4
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: "aaa"
+
+ota:
+  - platform: esphome
+    password: "aaaaaaaa"
+
+wifi:
+  ssid: "mista3"
+  password: "vvfpnhk8vBfh"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Levoit-Vital100S"
+    password: "1ZjzfekrSvRt"
+
+captive_portal:
+external_components:
+  - source: ../../../components
+    components: [levoit]
+
+uart:
+  - id: uart_mcu2esp
+    tx_pin: 
+      number: GPIO17
+      inverted: false
+    rx_pin: 
+      number: GPIO16
+      inverted: false
+    baud_rate: 115200
+levoit:
+  id: levoitvital100
+  model: "VITAL100S"
+fan:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Fan"
+    id: levoit_fan1  
+switch:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Display"
+    type: display
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Child Lock"
+    type: child_lock
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Light Detect"
+    type: light_detect
+number:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Auto Mode Room Size"
+    type: efficiency_room_size
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Timer (min)"
+    type: timer
+sensor:
+
+  - platform: levoit
+    levoit: levoitvital100
+    name: "PM 2.5"
+    type: pm25
+  - platform: levoit
+    levoit: levoitvital100
+    name: "AQI"
+    type: aqi
+# Better: auto_mode_room_size_high_fan text_sensor    
+#  - platform: levoit
+#    levoit: levoitvital100
+#    name: "Efficiency Count Dowmn Timer (sec)"
+#    type: efficiency_counter
+# Better: timer_duration_remaining text_sensor    
+#  - platform: levoit
+#    levoit: levoitvital100
+#    name: "Timer Remaining"
+#    type: timer_current
+select:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Auto Mode"
+    type: auto_mode
+text_sensor:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "MCU Version"
+    type: mcu_version
+  - platform: levoit
+    levoit: levoitvital100
+    name: "ESP Version"
+    type: esp_version
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Timer Duration"
+    type: timer_duration_initial
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Timer Remaining"
+    type: timer_duration_remaining
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Auto: High remaining run time"
+    type: auto_mode_room_size_high_fan

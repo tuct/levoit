@@ -362,6 +362,7 @@ script:
       - delay: 30ms 
       - lambda: |-
           //
+          ESP_LOGI("main", "Update speed from template");
           auto speed_text = id(${id_prefix}_fan_speed).state;
           //map text speed back to int
           auto speed_fan = 0;
@@ -382,7 +383,9 @@ script:
     mode: restart
     then:
       - lambda: |-
-          id(${id_prefix}_id)->power_on();
+          ESP_LOGI("main", "Update preset from template");
+          bool power_template = id(${id_prefix}_fan).state;
+          if(power_template) id(${id_prefix}_id)->power_on();
       - delay: 25ms 
       - lambda: |-
           //
