@@ -1,5 +1,6 @@
 #include "decoder.h"
 #include "vital_status.h"
+#include "core_status.h"
 #include "esphome/core/log.h"
 #include "types.h"
 
@@ -92,11 +93,13 @@ namespace esphome
       (void)seq;
       (void)cmd_size_code;
 
-      ESP_LOGV(TAG_DEC, "dispatch: model=%d ptype=%02X%02X payload_len=%u",
+      ESP_LOGD(TAG_DEC, "dispatch: model=%d ptype=%02X%02X payload_len=%u",
                (int)model, ptype0, ptype1, (unsigned)payload_len);
+      // ack all messages!
+      self->ackMessage(ptype0, ptype1);
 
       uint8_t h = compute_payload_hash_(payload, payload_len);
-      ESP_LOGV("levoit.dedup", "model=%d ptype=%02X%02X payload_len=%u hash=0x%02X last=0x%02X",
+      ESP_LOGD("levoit.dedup", "model=%d ptype=%02X%02X payload_len=%u hash=0x%02X last=0x%02X",
                (int)model, ptype0, ptype1, (unsigned)payload_len, h,
                payload_len ? payload[payload_len - 1] : 0);
 
@@ -109,25 +112,41 @@ namespace esphome
       }
       else
       {
-        // Vital models: payload is TLV 0x00 0x55
-        if (msg_type == 0x22 && ptype0 == 0x00 && ptype1 == 0x55 && (model == ModelType::VITAL100S || model == ModelType::VITAL200S))
+
+        if (model == ModelType::CORE300S || model == ModelType::CORE400S)
         {
-          decode_vital_status(self, model, payload, payload_len);
+          // Core models: payload is 0x30 0x40 -> Core 200s/300s. 0x1B 0x40 -> Core 400s
+          if (msg_type == 0x22 && (ptype0 == 0x30 && ptype1 == 0x40|| ptype0 == 0x1B && ptype1 == 0x40))
+          {
+            decode_core_status(self, model, payload, payload_len);
+          }
+          // Core models: timer updated from device msg
+          if (msg_type == 0x12 && (ptype0 == 0x65 && ptype1 == 0xA2 ))
+          {
+            decode_core_timer(self, model, payload, payload_len);
+          }
         }
-        // Vital models: timer ack payload, send after status requested
-        if (msg_type == 0x12 && ptype0 == 0x1A && ptype1 == 0x50 && (model == ModelType::VITAL100S || model == ModelType::VITAL200S))
+        if (model == ModelType::VITAL100S || model == ModelType::VITAL200S)
         {
-          decode_vital_timer(self, model, payload, payload_len);
-        }
-        // Vital models: timer updated from device msg
-        if (msg_type == 0x22 && ptype0 == 0x1B && ptype1 == 0x50 && (model == ModelType::VITAL100S || model == ModelType::VITAL200S))
-        {
-          decode_vital_timer(self, model, payload, payload_len);
+          // Vital models: payload is TLV 0x00 0x55
+          if (msg_type == 0x22 && ptype0 == 0x00 && ptype1 == 0x55)
+          {
+            decode_vital_status(self, model, payload, payload_len);
+          }
+          // Vital models: timer ack payload, send after status requested
+          if (msg_type == 0x12 && ptype0 == 0x1A && ptype1 == 0x50)
+          {
+            decode_vital_timer(self, model, payload, payload_len);
+          }
+          // Vital models: timer updated from device msg
+          if (msg_type == 0x22 && ptype0 == 0x1B && ptype1 == 0x50)
+          {
+            decode_vital_timer(self, model, payload, payload_len);
+          }
         }
       }
 
-      // ack all messages!
-      self->ackMessage(ptype0, ptype1);
+
       // Other models: add other decoders later
     }
 

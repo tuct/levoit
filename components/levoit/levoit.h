@@ -64,6 +64,7 @@ class Levoit : public Component, public uart::UARTDevice {
   void ackMessage(uint8_t ptype0, uint8_t ptype1);
   void set_fan(LevoitFan *fan) { this->fan_ = fan; }
   LevoitFan *get_fan() const { return this->fan_; }
+  LevoitNumber *get_number(NumberType type) const { return numbers_[nt_idx_(type)]; }
   void start_timer(){this->timer_active_ = true;};
   void stop_timer(){this->timer_active_ = false;}; 
   bool is_timer_active() const { return this->timer_active_; };

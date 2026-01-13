@@ -10,6 +10,10 @@ namespace esphome
         {
             VITAL100S = 0,
             VITAL200S = 1,
+            CORE300S = 2,
+            CORE400S = 3,
+            //CORE200S = 4
+            //CORE600s = 5
         };
 
         enum class SwitchType : uint8_t

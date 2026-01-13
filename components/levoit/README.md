@@ -4,7 +4,7 @@ This component supports the following model
 
 * Levoit Vital 100s, MCU 1.0.5 - tested
 * Levoit Vital 200s
-* Levoit Core 300s, MCU 2.0.11
+* Levoit Core 300s, MCU 2.0.11  (2.0.7 -> mulcmu)
 * Levoit Core 400s, MCU 3.0.0
 
 esphome version: 2025.10.5 (newer might need a change!)

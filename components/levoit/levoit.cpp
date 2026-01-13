@@ -14,6 +14,9 @@
 #include "decoder.h"
 #include "tlv.h"
 #include "vital_status.h"
+#include "core_status.h"
+#include "core_commands.h"
+#include "vital_commands.h"
 #include "switch/levoit_switch.h"
 #include "fan/levoit_fan.h"
 #include "number/levoit_number.h"
@@ -139,7 +142,6 @@ namespace esphome
                 return;
             sw->publish_state(state);
         }
-        
 
         void Levoit::publish_sensor(SensorType type, uint32_t value)
         {
@@ -354,8 +356,14 @@ namespace esphome
         {
             if (model == "VITAL200S")
                 model_ = ModelType::VITAL200S;
-            if (model == "VITAL100S")
+            else if (model == "VITAL100S")
                 model_ = ModelType::VITAL100S;
+            else if (model == "CORE300S")
+                model_ = ModelType::CORE300S;
+            else if (model == "CORE400S")
+                model_ = ModelType::CORE400S;
+            
+            ESP_LOGI(TAG, "Model set to: %s (ModelType=%d)", model.c_str(), (int)model_);
         }
         void Levoit::setup()
         {
@@ -364,7 +372,6 @@ namespace esphome
                 cadr = 416;
             if (model_ == ModelType::VITAL100S)
                 cadr = 243;
-            
         }
 
         /// @brief The main loop, that is triggeed by the esphome framework automatically
@@ -479,7 +486,7 @@ namespace esphome
                 {
                     pos += snprintf(hexbuf + pos, sizeof(hexbuf) - pos, "0x%02X ", frame[i]);
                 }
-                
+
                 ESP_LOGV(TAG, "<<< RX packet (%u bytes): %s", (unsigned)frame_len, hexbuf);
 
                 // Example: log key header bytes if present
@@ -487,7 +494,7 @@ namespace esphome
                 {
                     ESP_LOGD(TAG,
                              "<<< HEADER: ptype=0x%02X 0x%02X | type=0x%02X ",
-                             frame[7], frame[8],  frame[1]);
+                             frame[7], frame[8], frame[1]);
                 }
                 if (frame_len > 10)
                 {
@@ -539,9 +546,9 @@ namespace esphome
             const uint8_t ptype1 = msg[8];
 
             // Frame sanity
-            ESP_LOGV(TAG,
-                     "RX: type=0x%02X seq=%u size_after_chk=%u cmdSz=%u ptype=%02X%02X",
-                     msg_type, seq, size_af, cmd_sz, ptype0, ptype1);
+            ESP_LOGD(TAG,
+                     "RX: type=0x%02X seq=%u size_after_chk=%u cmdSz=%u ptype=%02X%02X model=%d",
+                     msg_type, seq, size_af, cmd_sz, ptype0, ptype1, (int)model_);
 
             // Payload starts after the 10-byte header
             const uint8_t *payload = nullptr;
@@ -553,174 +560,26 @@ namespace esphome
                 payload_len = len - 10;
             }
 
+            ESP_LOGD(TAG, ">>> Calling dispatch_decoder with model=%d ptype=%02X%02X", (int)model_, ptype0, ptype1);
             dispatch_decoder(this, model_, msg_type, seq, cmd_sz, ptype0, ptype1, payload, payload_len);
         }
 
-        /// @brief Sends the commands depending on its type. long method but plain simple.
-        /// There are some extra bytes that i did not understand completely, but it works so far :).
+        /// @brief Sends the commands depending on its type. Delegates to model-specific command builders.
         /// @param commandType
         void Levoit::sendCommand(CommandType commandType)
         {
             ESP_LOGD(TAG, "Command triggered: %s", command_type_to_string(commandType));
             std::vector<uint8_t> message;
-            // TODO: implement the command sending here based on model!
-            switch (commandType)
-            {
-            case CommandType::setDeviceON:
-            {
-                message = build_levoit_message({0x02, 0x00, 0x50}, {0x01, 0x01, 0x01});
-                break;
-            }
-            case CommandType::setDeviceOFF:
-            {
-                message = build_levoit_message({0x02, 0x00, 0x50}, {0x01, 0x01, 0x00});
-                break;
-            }
-            case CommandType::setDeviceFanLvl1:
-            {
-                message = build_levoit_message({0x02, 0x03, 0x55}, {0x01, 0x01, 0x01});
-                break;
-            }
-            case CommandType::setDeviceFanLvl2:
-            {
-                message = build_levoit_message({0x02, 0x03, 0x55}, {0x01, 0x01, 0x02});
-                break;
-            }
-            case CommandType::setDeviceFanLvl3:
-            {
-                message = build_levoit_message({0x02, 0x03, 0x55}, {0x01, 0x01, 0x03});
-                break;
-            }
-            case CommandType::setDeviceFanLvl4:
-            {
-                message = build_levoit_message({0x02, 0x03, 0x55}, {0x01, 0x01, 0x04});
-                break;
-            }
-            case CommandType::setFanModeAuto:
-            {
-                message = build_levoit_message({0x02, 0x02, 0x55}, {0x01, 0x01, 0x02});
-                break;
-            }
-            case CommandType::setFanModeSleep:
-            {
-                message = build_levoit_message({0x02, 0x02, 0x55}, {0x01, 0x01, 0x01});
-                break;
-            }
-            case CommandType::setFanModeManual:
-            {
-                message = build_levoit_message({0x02, 0x02, 0x55}, {0x01, 0x01, 0x00});
-                break;
-            }
-            case CommandType::setFanModePet:
-            {
-                message = build_levoit_message({0x02, 0x02, 0x55}, {0x01, 0x01, 0x05});
-                break;
-            }
-            case CommandType::setLightDetectOn:
-            {
-                message = build_levoit_message({0x02, 0x11, 0x55}, {0x01, 0x01, 0x01});
-                break;
-            }
-            case CommandType::setLightDetectOff:
-            {
-                message = build_levoit_message({0x02, 0x11, 0x55}, {0x01, 0x01, 0x00});
-                break;
-            }
-            case CommandType::setDisplayOn:
-            {
-                message = build_levoit_message({0x02, 0x04, 0x55}, {0x01, 0x01, 0x64});
-                break;
-            }
-            case CommandType::setDisplayOff:
-            {
-                message = build_levoit_message({0x02, 0x04, 0x55}, {0x01, 0x01, 0x00});
-                break;
-            }
-            case CommandType::setDisplayLockOn:
-            {
-                message = build_levoit_message({0x02, 0x40, 0x51}, {0x01, 0x01, 0x01});
-                break;
-            }
-            case CommandType::setDisplayLockOff:
-            {
-                message = build_levoit_message({0x02, 0x40, 0x51}, {0x01, 0x01, 0x00});
-                break;
-            }
-            case CommandType::setAutoModeDefault:
-            {
-                message = build_levoit_message({0x02, 0x02, 0x55}, {0x02, 0x01, 0x00, 0x03, 0x02, 0x00, 0x00});
-                break;
-            }
-            case CommandType::setAutoModeQuiet:
-            {
-                // set 0x64, 0x00 based on val!
-                message = build_levoit_message({0x02, 0x02, 0x55}, {0x02, 0x01, 0x01, 0x03, 0x02, 0x00, 0x00});
-                break;
-            }
-            case CommandType::setAutoModeEfficient:
-            {
 
-                // set 0xAD, 0x01 based on val!
-                auto *num = this->numbers_[nt_idx_(NumberType::EFFICIENCY_ROOM_SIZE)];
-                if (num != nullptr)
-                {
-                    uint32_t room_size = static_cast<uint32_t>(num->state);
-
-                    uint8_t size_low = room_size & 0xFF;
-                    uint8_t size_high = (room_size >> 8) & 0xFF;
-
-                    ESP_LOGD(TAG, ">>> setAutoModeEfficient: room_size=%u size_low=0x%02X size_high=0x%02X",
-                             (unsigned)room_size, size_low, size_high);
-
-                    message = build_levoit_message({0x02, 0x02, 0x55},
-                                                   {0x02, 0x01, 0x02, 0x03, 0x02, size_low, size_high});
-                }
-                else
-                {
-                    message = build_levoit_message({0x02, 0x02, 0x55}, {0x02, 0x01, 0x02, 0x03, 0x02, 0xAD, 0x01});
-                }
-
-                break;
-            }
-            case CommandType::setTimerMinutes:
+            if (this->model_ == ModelType::CORE300S || this->model_ == ModelType::CORE400S)
             {
-                auto *num = this->numbers_[nt_idx_(NumberType::TIMER)];
-                if (num != nullptr)
-                {
-                    uint32_t secs = static_cast<uint32_t>(num->state) * 60;
-
-                    uint8_t b0 = (secs >> 0)  & 0xFF;
-                    uint8_t b1 = (secs >> 8)  & 0xFF;
-                    uint8_t b2 = (secs >> 16) & 0xFF;
-                    uint8_t b3 = (secs >> 24) & 0xFF;
-
-                    ESP_LOGD(TAG,">>> setTimerMinutes: secs=%u bytes=%02X %02X %02X %02X",(unsigned) secs, b0, b1, b2, b3);
-
-                    message = build_levoit_message({0x02, 0x19, 0x50}, {0x01, 0x04, b0,b1,b2,b3});
-                    if (secs > 0)
-                    {
-                        this->start_timer();
-                    }
-                    else
-                    {
-                        this->stop_timer();
-                    }
-                }
-
-                break;
+                message = build_core_command(this, commandType);
             }
-            case CommandType::requestTimerStatus:
+            else if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S)
             {
-                message = build_levoit_message({0x02, 0x1A, 0x50}, {});
-                break;
+                message = build_vital_command(this, commandType);
             }
-            default:
-            {
-                ESP_LOGI(TAG, ">>> Command not implemented yet: %s", command_type_to_string(commandType));
-                return;
-                break;
-            }
-            }
+
             if (message.size() > 0)
             {
                 ESP_LOGI(TAG, ">>> Sending command %s", command_type_to_string(commandType));
@@ -741,8 +600,11 @@ namespace esphome
         {
 
             uint8_t pv = 0x01;
-            if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S)
+            if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S){
                 pv = 0x02;
+                ESP_LOGI("TAG", ">>> Sending VITAL ack for: 0x%02X 0x%02X", ptype0, ptype1);
+            }
+                
 
             std::vector<uint8_t> message = {0xA5, 0x12, 0xFF, 0x04, 0xFF, 0x00, pv, ptype0, ptype1, 0x00};
 
@@ -764,7 +626,7 @@ namespace esphome
 
     } // namespace levoit
 } // namespace esphome
-// Force ESPHome/PIO to compile these translation units even if the component build doesn't glob them.
-// #include "tlv.cpp"
-// #include "vital_status.cpp"
-// #include "decoder.cpp"
+
+// Force ESPHome/PIO to compile these translation units
+#include "core_commands.cpp"
+#include "vital_commands.cpp"
