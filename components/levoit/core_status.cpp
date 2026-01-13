@@ -76,7 +76,7 @@ namespace esphome
       bool child_lock = payload[13] != 0;
       uint8_t fan_auto_mode = payload[14];
       uint16_t efficency_area = (payload[16] << 8) | payload[15]; // 2 bytes: little-endian (low byte at 15, high byte at 16)
-
+      bool has_error = payload[17] != 0; //filter error? nopt connected
       // display and fan speed differ between CORE300S and CORE400S or maybe based on firmware version?!?
       bool display_on = false;
       uint8_t fan_speed = 0;
@@ -93,6 +93,14 @@ namespace esphome
 
       // publish state to ESPHome entities
       self->publish_text_sensor(TextSensorType::MCU_VERSION, std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch));
+      if(has_error)
+      {
+        self->publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Sensor error");
+      }
+      else
+      {
+        self->publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Ok"); // clear error message
+      }
       self->publish_switch(SwitchType::CHILD_LOCK, child_lock);
       self->publish_switch(SwitchType::DISPLAY, display_on);
       self->publish_sensor(SensorType::AQI, (unsigned)aqi);

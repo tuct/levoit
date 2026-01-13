@@ -69,6 +69,7 @@ namespace esphome
             TIMER_DURATION_INITIAL = 2,
             TIMER_DURATION_CURRENT = 3,
             AUTO_MODE_ROOM_SIZE_HIGH_FAN = 4,
+            ERROR_MESSAGE = 5,
 
         };
         static constexpr TextSensorType MCU_VERSION = TextSensorType::MCU_VERSION;
@@ -76,6 +77,8 @@ namespace esphome
         static constexpr TextSensorType TIMER_DURATION_INITIAL = TextSensorType::TIMER_DURATION_INITIAL;
         static constexpr TextSensorType TIMER_DURATION_CURRENT = TextSensorType::TIMER_DURATION_CURRENT;
         static constexpr TextSensorType AUTO_MODE_ROOM_SIZE_HIGH_FAN = TextSensorType::AUTO_MODE_ROOM_SIZE_HIGH_FAN;
+        static constexpr TextSensorType ERROR_MESSAGE = TextSensorType::ERROR_MESSAGE;
+
 
 
         enum class SelectType : uint8_t

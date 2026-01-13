@@ -171,7 +171,14 @@ namespace esphome
           break;
         case 0x0A:
           ESP_LOGV(TAG_VITAL, "AirQualityDetail=%u", (unsigned)t.value_u32);
-
+          if( self != nullptr){
+            if((unsigned)t.value_u32 == 0){
+              self->publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Sensor Error");
+            }else{
+              self->publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Ok");
+            }
+          }
+            
           break;
         case 0x0B:
           ESP_LOGV(TAG_VITAL, "PM2.5=%u", (unsigned)t.value_u32);

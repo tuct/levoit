@@ -272,14 +272,15 @@ uart:
 
 ## Known Issues & TODO
 
-- [ ] Implement custom sleep mode settings for Vital series
+- [ ] Wifi Led blink and light after connect
 - [ ] Add filter life time and current CADR sensors
 - [ ] Enable filter reset from Home Assistant
+- [ ] Implement custom sleep mode settings for Vital series
 - [ ] Model-specific room size validation based on CADR ratings
-- [ ] Investigate: Room size resets after timer completion
 - [ ] Verify Core 300S/400S protocol differences (MCU version dependency)
-- [ ] Add appropriate icons for entities
+- [x] Add appropriate icons for entities
 - [x] Test compatibility with ESPHome 2025.11+ (preset mode API changes)
+
 
 ## Credits
 

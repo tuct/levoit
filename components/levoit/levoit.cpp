@@ -1,4 +1,5 @@
 #include "levoit.h"
+#include "levoit_message.h"
 #include "esphome/components/network/util.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
@@ -10,6 +11,7 @@
 #include <cstdint>
 #include <time.h>
 #include <vector>
+#include <functional>
 #include "freertos/task.h"
 #include "decoder.h"
 #include "tlv.h"
@@ -24,80 +26,12 @@
 #include "select/levoit_select.h"
 #include "text_sensor/levoit_text_sensor.h"
 
-// could be that less values generat errors(but not tested troughoutly).
-std::uint8_t messageUpCounter = 16;
-
 namespace esphome
 {
     namespace levoit
     {
 
         static const char *const TAG = "levoit";
-        constexpr size_t LEVOIT_IDX_COUNTER = 2;
-        constexpr size_t LEVOIT_IDX_LENGTH = 3;
-        constexpr size_t LEVOIT_IDX_CHECKSUM = 5;
-
-        static uint8_t levoit_checksum(const uint8_t *data, size_t len)
-        {
-            uint32_t sum = 0;
-            for (size_t i = 0; i < len; i++)
-            {
-                if (i == 5)
-                    continue; // skip checksum byte
-                sum += data[i];
-            }
-            return (uint8_t)(0xFF - (sum & 0xFF));
-        }
-        // add counter and checksum
-        static void levoit_finalize_message(
-            std::vector<uint8_t> &message)
-        {
-            // Sanity check
-            if (message.size() <= LEVOIT_IDX_CHECKSUM)
-                return;
-
-            // Set message counter
-            message[LEVOIT_IDX_COUNTER] = messageUpCounter;
-
-            // Compute checksum (skip checksum byte itself)
-            uint32_t sum = 0;
-            for (size_t i = 0; i < message.size(); i++)
-            {
-                if (i == LEVOIT_IDX_CHECKSUM)
-                    continue;
-                sum += message[i];
-            }
-
-            message[LEVOIT_IDX_CHECKSUM] = static_cast<uint8_t>(0xFF - (sum & 0xFF));
-        }
-
-        std::vector<uint8_t> build_levoit_message(
-            const std::vector<uint8_t> &msg_type,
-            const std::vector<uint8_t> &payload)
-        {
-            std::vector<uint8_t> msg;
-
-            // ---- header (checksum placeholder at [5]) ----
-            msg.push_back(0xA5);                                     // 0
-            msg.push_back(0x22);                                     // 1
-            msg.push_back(messageUpCounter);                         // 2
-            msg.push_back(0xFF);                                     // 3 length (filled later)
-            msg.push_back(0x00);                                     // 4 fixed ´0x00´
-            msg.push_back(0xFF);                                     // 5 checksum placeholder
-            msg.insert(msg.end(), msg_type.begin(), msg_type.end()); // 6,7,8
-            msg.push_back(0x00);                                     // 9
-            // ---- payload ----
-            if (!payload.empty())
-                msg.insert(msg.end(), payload.begin(), payload.end());
-
-            // ---- length = bytes AFTER checksum ----
-            msg[LEVOIT_IDX_LENGTH] = static_cast<uint8_t>(msg.size() - (LEVOIT_IDX_CHECKSUM + 1));
-
-            // ---- checksum ----
-            levoit_finalize_message(msg);
-
-            return msg;
-        }
 
         // ===== Component =====
 
@@ -372,6 +306,9 @@ namespace esphome
                 cadr = 416;
             if (model_ == ModelType::VITAL100S)
                 cadr = 243;
+            
+            // Set LED to blink on initial connect until WiFi is connected
+            this->sendCommand(setWifiLedOn);
         }
 
         /// @brief The main loop, that is triggeed by the esphome framework automatically
@@ -608,7 +545,7 @@ namespace esphome
 
             std::vector<uint8_t> message = {0xA5, 0x12, 0xFF, 0x04, 0xFF, 0x00, pv, ptype0, ptype1, 0x00};
 
-            levoit_finalize_message(message);
+            levoit_finalize_message(message, messageUpCounter);
 
             if (message.size() > 0)
             {
@@ -773,7 +710,7 @@ namespace esphome {
         return {};
       }
 
-      return build_levoit_message(msg_type, payload);
+      return build_levoit_message(msg_type, payload, messageUpCounter);
     }
 
     std::vector<uint8_t> build_vital_command(Levoit *self, CommandType cmd)
@@ -930,7 +867,7 @@ namespace esphome {
         return {};
       }
 
-      return build_levoit_message(msg_type, payload);
+      return build_levoit_message(msg_type, payload, messageUpCounter);
     }
 
   } // namespace levoit

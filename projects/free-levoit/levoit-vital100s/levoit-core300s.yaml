@@ -118,6 +118,10 @@ text_sensor:
     levoit: levoitcore300
     name: "Timer Remaining"
     type: timer_duration_remaining
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Error"
+    type: error_message
 #  Only for Vital100S and Vital200S
 #  - platform: levoit
 #    levoit: levoitcore300
