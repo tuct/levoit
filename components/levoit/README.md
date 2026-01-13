@@ -8,7 +8,7 @@ Custom ESPHome component for Levoit air purifiers (Core and Vital series) enabli
 |-------|-------------|--------|
 | Levoit Vital 100S | 1.0.5 | ✅ Tested |
 | Levoit Vital 200S | - | ⚠️ Untested |
-| Levoit Core 300S | 2.0.11 | ✅ Tested |
+| Levoit Core 300S | 2.0.11 | ✅ Tested -> with new ESP!|
 | Levoit Core 400S | 3.0.0 | ⚠️ Untested |
 
 **Requirements:** ESPHome 2025.10.5+ (compatibility with 2025.11+ needs verification due to preset mode changes)
@@ -36,6 +36,140 @@ Custom ESPHome component for Levoit air purifiers (Core and Vital series) enabli
 - **Light Detection**: Automatic display brightness adjustment (Vital series)
 - **Child Lock**: Prevent physical button presses
 - **Display Lock**: Lock display settings
+
+## Installation
+
+### Hardware Setup
+
+- ⚠️ Requires disassembly and serial access (TX, RX, GND, EN, GPIO0) initially
+
+
+#### Option 1: Flash Original ESP32 Directly
+Flash ESPHome directly onto the factory ESP32-Solo-1 module using serial connection.
+
+#### Option 2: Dual ESP Setup (Preserve Original)
+Keep the original ESP32 functional while adding a custom ESP32 for ESPHome control. This approach allows switching between firmware versions and enables MCU firmware updates.
+
+**Hardware Setup:**
+1. Install a **2-position switch** to select which ESP32 is active, only use during power down!
+2. Wire the switch:
+   - **Common (middle)**: Connect to GND
+   - **Position A**: Connect to EN pin of original ESP32
+   - **Position B**: Connect to EN pin of new ESP32
+
+3. Connect new ESP32:
+   - Power (3.3V) and GND from purifier PCB
+   - TX/RX to MCU UART pins (parallel to original ESP32)
+
+**Benefits:**
+- ✅ Revert to factory firmware anytime
+- ✅ Perform official MCU firmware updates when needed
+- ✅ Test ESPHome changes without risk
+- ⚠️ **Note**: New MCU firmware may require protocol updates in this component
+
+
+**Recommended modules:**
+- **XIAO Seeed ESP32-S3** - Compact form factor, easy to integrate
+- **XIAO Seeed ESP32-C3** - Budget-friendly alternative
+- Any ESP32 module with UART and sufficient GPIO pins
+
+
+
+
+
+
+
+
+
+
+
+
+### Hardware Access
+
+Each model requires different disassembly procedures. See model-specific guides in [projects/free-levoit](../../projects/free-levoit/) for:
+- PCB pinout diagrams
+- Disassembly instructions
+- UART pin locations
+- Photos and wiring diagrams
+
+
+
+### Software Installation
+
+#### Step 1: Add External Component
+In your ESPHome YAML configuration:
+
+**Local Development:**
+```yaml
+external_components:
+  - source:
+      type: local
+      path: ../../../components  # Relative to your YAML file
+    components: [levoit]
+```
+
+**Production (GitHub):**
+```yaml
+external_components:
+  - source:
+      type: git
+      url: https://github.com/tuct/esphome_external_components
+      ref: main
+    components: [levoit]
+```
+
+#### Step 2: Configure UART
+Match your hardware connections:
+```yaml
+uart:
+  tx_pin: GPIO4   # ESP TX → MCU RX
+  rx_pin: GPIO5   # ESP RX → MCU TX
+  baud_rate: 115200
+```
+
+#### Step 3: Add Levoit Component
+Specify your model (must match device):
+```yaml
+levoit:
+  id: air_purifier
+  model: CORE300S  # Options: VITAL100S, VITAL200S, CORE300S, CORE400S
+```
+
+#### Step 4: Compile and Flash
+```bash
+# Compile only (check for errors)
+esphome compile your-config.yaml
+
+# Compile and upload via serial
+esphome run your-config.yaml
+
+# Upload via OTA (after initial flash)
+esphome upload your-config.yaml --device your-device.local
+```
+
+For complete working examples, see the [free-levoit project configurations](../../projects/free-levoit/).
+
+### Troubleshooting Installation
+
+**No communication with MCU:**
+- Verify TX/RX are not swapped (common mistake)
+- Check 3.3V power supply voltage under load
+- Enable UART debugging: `uart: debug: { direction: BOTH }`
+- Confirm baud rate is 115200
+
+**Boot loops or crashes:**
+- Check `model:` matches your actual device
+- Verify GPIO pins don't conflict with ESP32 bootstrap pins
+- Try disabling PSRAM if using ESP32-S3: `psram_mode: disabled`
+
+**Device not responding in Home Assistant:**
+- Confirm ESPHome API is enabled
+- Check WiFi credentials and network connectivity
+- Review logs: `esphome logs your-config.yaml`
+- Verify model detection: Look for "Model set to: CORE300S (ModelType=2)" in logs
+
+
+
 
 ## Architecture
 
