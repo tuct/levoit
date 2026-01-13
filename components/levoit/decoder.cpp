@@ -125,6 +125,14 @@ namespace esphome
           {
             decode_core_timer(self, model, payload, payload_len);
           }
+          // Core models: timer updated from device msg
+          if (msg_type == 0x22 && (ptype0 == 0x66 && ptype1 == 0xA2 ))
+          {
+            decode_core_timer(self, model, payload, payload_len);
+          }
+
+
+
         }
         if (model == ModelType::VITAL100S || model == ModelType::VITAL200S)
         {

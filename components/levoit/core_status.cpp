@@ -75,7 +75,7 @@ namespace esphome
       float pm25 = static_cast<float>((payload[12] << 8) | payload[11]); // 2 bytes: little-endian (low byte at 11, high byte at 12)
       bool child_lock = payload[13] != 0;
       uint8_t fan_auto_mode = payload[14];
-      uint16_t efficency_area = (payload[15] << 8) | payload[14]; // 2 bytes: little-endian (low byte at 14, high byte at 15)
+      uint16_t efficency_area = (payload[16] << 8) | payload[15]; // 2 bytes: little-endian (low byte at 15, high byte at 16)
 
       // display and fan speed differ between CORE300S and CORE400S or maybe based on firmware version?!?
       bool display_on = false;
