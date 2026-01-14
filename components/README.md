@@ -1,6 +1,8 @@
-# esphome_external_components
+[← Back to ESPHome Projects](../README.md)
 
-collection of esphome components
+# ESPHome Components
+
+Collection of custom ESPHome components developed for various projects.
 
 ## SEN66
 Just because i didn't wanted to wait for the official component after getting my SEN66 evaluation kit!
