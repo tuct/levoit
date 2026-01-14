@@ -15,9 +15,11 @@ See [Levoit Component](../../../components/levoit/README.md) for complete compon
 | --- | --- |
 | Model | Core 300S |
 | Tested MCU FW | 2.0.11 |
-| ESPHome | 2025.12.5+ |
+| ESP | ESP32-SOLO-1C |
+| Board | CORE300S Ctrl Board V1.4.1 |
 | Speeds | 3 levels |
 | CADR (spec) | 214 m³/h |
+| ESPHome | 2025.12.5+ |
 | Entities | Fan (manual/auto/sleep), Current CADR, Filter Life Left, Filter Low (binary), Reset Filter Stats (button) |
 
 

@@ -12,9 +12,11 @@ See [Levoit Component](../../../components/levoit/README.md) for complete compon
 | --- | --- |
 | Model | Vital 100S |
 | Tested MCU FW | 1.0.5 |
-| ESPHome | 2025.12.5+ |
-| Speeds | 5 levels |
+| ESP | ESP32-C3-SOLO-1 |
+| Board | Vital 100S-C_V1.3P1.4 20221027 |
+| Speeds | 4 levels |
 | CADR (spec) | ~400 m³/h |
+| ESPHome | 2025.12.5+ |
 | Entities | Fan (manual/auto/sleep), Current CADR, Filter Life Left, Filter Low (binary), Reset Filter Stats (button) |
 
 ## Features
@@ -29,26 +31,44 @@ See [Levoit Component](../../../components/levoit/README.md) for complete compon
 
 ## Disassembly
 
-The Vital 100S uses a similar form factor to Core models:
 
-* Place device upside down and remove the base cover
-* Remove the air filter and any clips holding internal components
-* Locate the 8 screws holding the chassis (4 typically have washers)
-* Remove all screws carefully—they're made of soft metal
-* Using a pry tool, carefully separate the base from the top sleeve
-* Unplug the main logic board from its connectors
+
+The Top needs to be removed in order to get access to the pcb.
+Start by carfully opening the left side, i used a palstic plunger and kitchen knife:
+
+![Open Vital 100s](./images/Vital100s-open_top_01_small.jpg)
+
+There are hooks on each side that you need to get out, will need some force, but be gentle!
+
+![Open Vital 100s](./images/Vital100s-open_top_03_small.jpg)
+
+Open both sides and then pull gently but firm up and out, more up
+
+![Open Vital 100s](./images/Vital100s-open_top_04_small.jpg)
+
+Be careful with the cables, you need to slide them out of the holder on the right side
+
+![Open Vital 100s](./images/Vital100s-open_top_05_cables_small.jpg)
+
+Now we have full access to the PCB!
+
+![Open Vital 100s](./images/Vital100s-open_top_06_small.jpg)
+
 
 ## Debug Header Pinout
 
 The Vital series typically has a debug header or solder pads near the ESP32:
 
-* Pin 1: TX (MCU TX → ESP RX)
-* Pin 2: RX (MCU RX → ESP TX)
-* Pin 3: GND
-* Pin 4: 3.3V
-* Pin 5: IO0 (for bootloader mode)
-* Pin 6: EN (reset)
+* Pin 1: EN (reset)
+* Pin 2: GND 
+* Pin 3: 3.3V
+* Pin 4: TX
+* Pin 5: RX
+* Pin 6: IO0 (for bootloader mode)
 
+![Open Vital 100s](./images/Vital100s-board_pinout_small.jpg)
+
+![Open Vital 100s](./images/Vital100s-board_connector_small.jpg)
 ## Flash
 
 * Solder wires to the debug header pins or use a pogo pin connector for easier access

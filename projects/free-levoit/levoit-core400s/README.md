@@ -12,9 +12,10 @@ See [Levoit Component](../../../components/levoit/README.md) for complete compon
 | --- | --- |
 | Model | Core 400S |
 | Tested MCU FW | 3.0.0 (status: untested) |
-| ESPHome | 2025.12.5+ |
+| ESP | ESP32-SOLO-1C |
 | Speeds | 4 levels |
 | CADR (spec) | 415 m³/h |
+| ESPHome | 2025.12.5+ |
 | Entities | Fan (manual/auto/sleep), Current CADR, Filter Life Left, Filter Low (binary), Reset Filter Stats (button) |
 
 ## Features
