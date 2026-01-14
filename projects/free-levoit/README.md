@@ -1,7 +1,8 @@
+[← Back to Projects](../README.md)
+
 # Project - Free Levoit Air Purifiers
 
-I like the Levoit Air Purifiers! I have a Core 300s, Core 400s, two LV PUR 131s (got one under warranty), plus a Levoit Mini!
-I hated the fact that i had to use the cloud hosted by levoit and wanted fully Home Assistant integration without the cloud.
+Collection of custom ESPHome firmware and hardware projects for Levoit air purifiers, eliminating cloud dependency and enabling native Home Assistant integration.
 
 Here is a list of all 5 models running with ESPHome. Core 300S and Core 400S only require disassembly to flash firmware (no hardware modifications needed). The Mini and LV-PUR 131S require custom hardware hacks and PCB modifications.
 

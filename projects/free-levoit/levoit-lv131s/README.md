@@ -1,3 +1,5 @@
+[← Back to Free Levoit Project](../README.md)
+
 # Levoit LV-PUR 131S - Custom Firmware (ESPHome)
 
 This model is discontinued and known for reliability issues (sudden shutdown syndrome). This project upgrades the original hardware with modern components while maintaining form factor compatibility.

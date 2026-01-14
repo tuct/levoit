@@ -1,3 +1,5 @@
+[← Back to Components](../README.md)
+
 # Levoit ESPHome Component
 
 Custom ESPHome component for Levoit air purifiers (Core and Vital series) enabling local control without cloud dependency.

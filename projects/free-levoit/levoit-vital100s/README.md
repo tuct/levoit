@@ -1,3 +1,5 @@
+[← Back to Free Levoit Project](../README.md)
+
 # Levoit Vital 100S - Custom Firmware (ESPHome)
 
 Started from community projects and evolved into a generic Levoit ESPHome component for Core/Vital models.

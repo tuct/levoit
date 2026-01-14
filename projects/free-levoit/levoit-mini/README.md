@@ -1,3 +1,5 @@
+[← Back to Free Levoit Project](../README.md)
+
 # Levoit Mini - Custom PCB & ESPHome Firmware
 
 Custom PCB, 3D-printed parts, and ESPHome-based firmware to add smart home integration to the Levoit Mini Air Purifier without destroying the original device.

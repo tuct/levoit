@@ -1,6 +1,8 @@
-# esphome_external_components
+[← Back to Components](../README.md)
 
-collection of esphome components
+# Sensirion Sen66 ESPHome Component
+
+Integration for the Sensirion Sen66 air quality sensor.
 
 ## SEN66
 Just because i didn't wanted to wait for the official component after getting my SEN66 evaluation kit!

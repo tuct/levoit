@@ -1,3 +1,5 @@
+[← Back to Free Levoit Project](../README.md)
+
 # Levoit Core 400S - Custom Firmware (ESPHome)
 
 Started from community projects ([acvigue](https://github.com/acvigue/esphome-levoit-air-purifier), [mulcmu](https://github.com/mulcmu/esphome-levoit-core300s)) and evolved into a generic Levoit ESPHome component for Core/Vital models.

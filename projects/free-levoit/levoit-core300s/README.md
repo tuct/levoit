@@ -1,3 +1,5 @@
+[← Back to Free Levoit Project](../README.md)
+
 # Levoit Core 300S - Custom Firmware (ESPHome)
 
 ![Updated UI in Home Assistant](./photos/UpdatedUiInHa.png)
