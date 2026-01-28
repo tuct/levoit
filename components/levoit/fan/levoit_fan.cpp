@@ -2,6 +2,7 @@
 #include "../levoit.h"
 #include "esphome/core/log.h"
 #include <set>
+#include <string>
 
 namespace esphome
 {
@@ -82,7 +83,7 @@ namespace esphome
             // Track current values
             const bool cur_state = this->state;
             const int cur_speed = this->speed;
-            const char *cur_preset = this->get_preset_mode();
+            std::string cur_preset = this->get_preset_mode();
 
             // ---- power ----
             if (call.get_state().has_value())
@@ -163,8 +164,8 @@ namespace esphome
             if (preset != nullptr)
             {
                 ESP_LOGD(TAG, "Device mode %d maps to preset '%s'", mode, preset);
-                const char *cur = this->get_preset_mode();
-                if (cur == nullptr || std::strcmp(cur, preset) != 0)
+                std::string cur = this->get_preset_mode();
+                if (cur.empty() || cur != preset)
                 {
                     dirty = true;
                     ESP_LOGD(TAG, "Updating preset mode to '%s'", preset);

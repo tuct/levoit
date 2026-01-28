@@ -414,8 +414,8 @@ namespace esphome
             uint32_t result = (cadr * (uint32_t)speed) / max_speed;
 
             // Sleep mode derates level 1 to 63%
-            const char *preset = this->fan_->get_preset_mode();
-            if (preset != nullptr && std::strcmp(preset, "Sleep") == 0 && speed == 1)
+            std::string preset = this->fan_->get_preset_mode();
+            if (!preset.empty() && preset == "Sleep" && speed == 1)
             {
                 result = (uint32_t)(result * 0.63f);
             }
