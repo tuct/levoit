@@ -117,3 +117,45 @@ The Vital 100S uses the **TLV (Type-Length-Value)** protocol for communication:
 * Most commands also use TLV encoding for extensibility
 * This differs from the fixed-field protocol used by Core models
 * See [main project README](../README.md) for protocol details and TLV ID mappings
+
+
+
+# Custom Hardware - What todo if you PCB/MCU is fried
+
+I managed to fry my PCB for the Vital 100s, killed the 2nd MCU...
+
+So i decided to repair my now broken Levoit 100S with some parts:
+
+* 7 * [Touch buttons](https://amzn.to/4sZdCNO)
+* 1* [4-Digit Display -> for the TM1637 ;)](https://www.az-delivery.de/products/4-digit-display)
+* 16 Leds, 3mm white, 2,7V
+* Diode 1N4000
+* [ESP32 dev kit V4](https://amzn.to/4qLOvwh)
+  
+  ![esp32](./images/esp32.jpg)
+* Level Shifter
+* DC-DC Converter MP1584
+
+
+PWM info
+PWR, GND, PWM, SPEED
+24V
+PWM: 5V, 1.6kHz, max 90% duty cycle, min 10% -> esphome ,min 0.1 to 0.9
+Speed: 5V Frequency is speed - 0 = OFF, min 60Hz slowest speed max: 185
+
+## Schematics
+
+![schamtics](./images/custom_schematics.png)
+
+We are using a clock display from az-delivery which has a TM1637 to drive the 16 leds
+
+SEG1 = LED1 (in schematics), SEG2 = LED2, ...
+
+![schamtics](./images/TM1637.jpg)
+
+![schamtics](./images/leds_to_tm1637.png)
+
+
+
+
+

@@ -1,0 +1,173 @@
+esphome:
+  name: vital100s-custom
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: "a4m3xb"
+
+ota:
+  - platform: esphome
+    password: "a4m3xb"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Vital100S Custom"
+    password: "xNij5fxb6zUf"
+
+captive_portal:
+globals:
+  - id: display_buffer
+    type: std::array<uint8_t, 4>
+    restore_value: no
+    initial_value: '{0x01, 0x01, 0x00, 0x00}'
+  - id: target_byte
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+
+
+number:
+  - platform: template
+    name: "Target Byte"
+    id: target_byte_number
+    min_value: 0
+    max_value: 3
+    step: 1
+    initial_value: 0
+    optimistic: true
+    set_action:
+      - lambda: |-
+          id(target_byte) = (int)x;
+  - platform: template
+    name: "Fan Max"
+    min_value: 0.0
+    max_value: 1.0
+    step: 0.05
+    initial_value: 0.9
+    optimistic: true
+    set_action:
+      - output.set_max_power:
+          id: gpio_04
+          max_power: !lambda 'return x;'
+  - platform: template
+    name: "Fan Min"
+
+    min_value: 0.0
+    max_value: 1.0
+    step: 0.05
+    initial_value: 0.1
+    optimistic: true
+    set_action:
+      - output.set_min_power:
+          id: gpio_04
+          min_power: !lambda 'return x;'
+interval:
+  - interval: 0.5s
+    then:
+      - lambda: |-
+          static uint8_t index = 0;
+          const uint8_t values[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+          
+          // Reset all bytes to 0x00
+          id(display_buffer)[0] = 0x00;
+          id(display_buffer)[1] = 0x00;
+          id(display_buffer)[2] = 0x00;
+          id(display_buffer)[3] = 0x00;
+          
+          // Animate the selected byte
+          uint8_t byte_index = id(target_byte);
+          id(display_buffer)[byte_index] = values[index];
+          
+          index = (index + 1) % 8;
+          ESP_LOGD("main", "Display buffer set to: 0x%02X 0x%02X 0x%02X 0x%02X", 
+            id(display_buffer)[0], id(display_buffer)[1], id(display_buffer)[2], id(display_buffer)[3]);
+
+# Inputs
+binary_sensor:
+  - platform: gpio
+    pin: GPIO14
+    name: "BTN 1"
+  - platform: gpio
+    pin: GPIO27
+    name: "BTN 2"
+  - platform: gpio
+    pin: GPIO26
+    name: "BTN 3"
+  - platform: gpio
+    pin: GPIO25
+    name: "BTN 4"
+  - platform: gpio
+    pin: GPIO33
+    name: "BTN 5"
+  - platform: gpio
+    pin: GPIO32
+    name: "BTN 6"
+  - platform: gpio
+    pin: GPIO35
+    name: "BTN 7"
+sensor:
+  - platform: pulse_counter
+    pin: GPIO13
+    name: "Fan Speed"
+uart:
+  tx_pin: GPIO18
+  rx_pin: GPIO19
+  baud_rate: 9600
+# Outputs
+output:
+  - platform: ledc
+    pin: GPIO04
+    id: gpio_04
+    frequency: 1600Hz
+    max_power: 0.85
+    min_power: 0.4
+    zero_means_zero: true
+light:
+  - platform: monochromatic
+    output: gpio_04
+    name: "Test Fan"
+  - platform: esp32_rmt_led_strip
+    chipset: WS2812
+    pin: GPIO21
+    num_leds: 12
+    rgb_order: GRB
+    name: "FastLED WS2811 Light"
+    effects:
+      - addressable_scan:
+          name: Scan Effect With Custom Values
+          move_interval: 100ms
+          scan_width: 1
+      - addressable_rainbow:
+          name: Rainbow Effect With Custom Values
+          speed: 10
+          width: 12
+      - addressable_twinkle:
+          name: Twinkle Effect With Custom Values
+          twinkle_probability: 5%
+          progress_interval: 4ms
+display:
+    platform: tm1637
+    id: tm1637_display
+    clk_pin: GPIO16
+    dio_pin: GPIO17
+    inverted: true
+    length: 4
+    update_interval: 250ms
+    lambda: |-
+      //it.print("0123");
+      it.set_buffer(0xFF, 0xFF, 0xFF, 0xFF);
+      it.set_buffer(id(display_buffer)[0], id(display_buffer)[1], id(display_buffer)[2], id(display_buffer)[3]);
+    

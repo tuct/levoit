@@ -81,7 +81,7 @@ fan:
           }  
     on_speed_set:
       - lambda: |- 
-            auto preset = id(levoit_fan).preset_mode;
+            auto preset = id(levoit_fan).get_preset_mode();
             if (preset !="Manual") {
               auto call = id(levoit_fan).turn_on(); 
               call.set_preset_mode("Manual");
@@ -116,7 +116,7 @@ binary_sensor:
       then:
         - lambda: |-
             auto call = id(levoit_fan).turn_on(); 
-            auto presetMode = id(levoit_fan).preset_mode;
+            auto presetMode = id(levoit_fan).get_preset_mode();
             if(presetMode == "Manual") call.set_preset_mode("Auto");
             if(presetMode == "Auto") call.set_preset_mode("Sleep");
             if(presetMode == "Sleep" || presetMode =="") call.set_preset_mode("Manual");
@@ -363,9 +363,9 @@ display:
         lambda: |-
           if(!id(display_off)){
             if(id(levoit_fan).state){
-              if (id(levoit_fan).preset_mode == "Auto") {
+              if (id(levoit_fan).get_preset_mode() == "Auto") {
                 it.print(66, 16, id(roboto_big), TextAlign::CENTER, "AUTO"); 
-              }else if (id(levoit_fan).preset_mode == "Sleep") {
+              }else if (id(levoit_fan).get_preset_mode() == "Sleep") {
                 it.print(66, 16, id(roboto_big), TextAlign::CENTER, "SLEEP");  
               }else{
                switch(id(levoit_fan).speed){
