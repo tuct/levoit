@@ -96,6 +96,8 @@ namespace esphome
       ESP_LOGD(TAG_DEC, "dispatch: model=%d ptype=%02X%02X payload_len=%u",
                (int)model, ptype0, ptype1, (unsigned)payload_len);
       // ack all messages!
+      //only if (0x22)
+      if(msg_type==0x22)
       self->ackMessage(ptype0, ptype1);
 
       uint8_t h = compute_payload_hash_(payload, payload_len);
