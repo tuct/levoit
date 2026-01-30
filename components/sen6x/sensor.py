@@ -1,7 +1,7 @@
 from esphome import automation
 from esphome.automation import maybe_simple_id
 import esphome.codegen as cg
-from esphome.components import i2c, sensirion_common, sensor, binary_sensor
+from esphome.components import i2c, sensirion_common, sensor
 import esphome.config_validation as cv
 from esphome.const import (
     CONF_HUMIDITY,
@@ -39,7 +39,7 @@ CONF_ENABLED = "enabled"
 
 CODEOWNERS = ["@martgras"]
 DEPENDENCIES = ["i2c"]
-AUTO_LOAD = ["sensirion_common", "binary_sensor"]
+AUTO_LOAD = ["sensirion_common"]
 
 sen6x_ns = cg.esphome_ns.namespace("sen6x")
 SEN6XComponent = sen6x_ns.class_(
@@ -71,7 +71,6 @@ CONF_AMBIENT_PRESSURE = "ambient_pressure"
 CONF_SENSOR_ALTITUDE = "sensor_altitude"
 CONF_CO2_ASC = "co2_automatic_self_calibration"
 CONF_STARTUP_DELAY = "startup_delay"
-CONF_MEASUREMENT_RUNNING = "measurement_running"
 CONF_AUTO_CLEANING = "auto_cleaning"
 
 
@@ -224,9 +223,6 @@ CONFIG_SCHEMA = (
                     cv.Optional(CONF_T2, default=0): cv.float_range(0, 6553.5),
                 }
             ),
-            cv.Optional(CONF_MEASUREMENT_RUNNING): binary_sensor.binary_sensor_schema(
-                device_class="running"
-            )
         }
     )
     .extend(cv.polling_component_schema("60s"))
@@ -307,9 +303,6 @@ async def to_code(config):
                     cfg[CONF_T2],
                 )
             )
-        if CONF_MEASUREMENT_RUNNING in config:
-            sens = await binary_sensor.new_binary_sensor(config[CONF_MEASUREMENT_RUNNING])
-            cg.add(var.set_measurement_running_binary_sensor(sens))
         if CONF_AMBIENT_PRESSURE in config:
             cg.add(var.set_ambient_pressure(config[CONF_AMBIENT_PRESSURE]))
         if CONF_SENSOR_ALTITUDE in config:

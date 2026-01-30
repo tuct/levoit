@@ -2,7 +2,7 @@
 
 # Sensirion SEN6x ESPHome Component
 
-![SEN66](sen66.png)
+![SEN66](images/sen66.png)
 
 Integration for Sensirion SEN6x air quality sensors (I²C only; SEN6x does not support UART).
 
@@ -47,7 +47,7 @@ streamlines the supply chain, and allows for a fast time to market with the best
 | 5 | GND | Ground or NC | Pins 2 and 5 are connected internally |
 | 6 | VDD | Supply voltage or NC | Pins 1 and 6 are connected internally |
 
-![SEN6x pinout](pinout.png)
+![SEN6x pinout](images/pinout.png)
 
 
 
@@ -61,7 +61,9 @@ All sensor options are optional and follow ESPHome Sensor schema unless noted.
 - `nox` (optional `algorithm_tuning`)
 - `co2`
 - `hcho`
-- `measurement_running` (binary sensor)
+
+### Binary sensors
+- `measurement_running` (binary sensor platform)
 
 ### Algorithm tuning
 Under `voc:` and `nox:`
@@ -239,8 +241,24 @@ sensor:
 		auto_cleaning:
 			enabled: true
 			interval: 1week
-		measurement_running:
-			name: "SEN6x Measurement Running"
 		store_baseline: true
 		update_interval: 15s
+
+binary_sensor:
+	- platform: sen6x
+		sen6x_id: sen6x_1
+		id: sen6x_running
+		name: "SEN6x Measurement Running"
+
+switch:
+	- platform: template
+		name: "SEN6x Measurement"
+		lambda: |-
+			return id(sen6x_running).state;
+		turn_on_action:
+			- sen6x.start_measurement:
+					id: sen6x_1
+			turn_off_action:
+				- sen6x.stop_measurement:
+					id: sen6x_1
 ```

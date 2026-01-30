@@ -2,10 +2,15 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/sensor/sensor.h"
-#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/sensirion_common/i2c_sensirion.h"
 #include "esphome/core/application.h"
 #include "esphome/core/preferences.h"
+
+namespace esphome {
+namespace binary_sensor {
+class BinarySensor;
+}  // namespace binary_sensor
+}  // namespace esphome
 
 namespace esphome {
 namespace sen6x {
@@ -138,6 +143,8 @@ class SEN6XComponent : public PollingComponent, public sensirion_common::Sensiri
   bool write_tuning_parameters_(uint16_t i2c_command, const GasTuning &tuning);
   bool write_temperature_compensation_(const TemperatureCompensation &compensation);
   bool write_temperature_acceleration_(const TemperatureAcceleration &acceleration);
+    void schedule_post_setup_commands_();
+    void finish_setup_();
   ERRORCODE error_code_;
   bool initialized_{false};
   sensor::Sensor *pm_1_0_sensor_{nullptr};

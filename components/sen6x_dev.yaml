@@ -95,3 +95,21 @@ sensor:
 #        t2: 0
     store_baseline: true
     update_interval: 15s
+
+binary_sensor:
+  - platform: sen6x
+    sen6x_id: sen54
+    id: sen6x_running
+    name: "SEN6x Measurement Running"
+
+switch:
+  - platform: template
+    name: "SEN6x Measurement"
+    lambda: |-
+      return id(sen6x_running).state;
+    turn_on_action:
+      - sen6x.start_measurement:
+          id: sen54
+    turn_off_action:
+      - sen6x.stop_measurement:
+          id: sen54

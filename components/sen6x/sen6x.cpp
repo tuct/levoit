@@ -1,10 +1,12 @@
 #include "sen6x.h"
+#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/core/hal.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
 #include <cinttypes>
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace esphome {
 namespace sen6x {
@@ -88,7 +90,8 @@ void SEN6XComponent::setup() {
       this->serial_number_[0] = static_cast<bool>(uint16_t(raw_serial_number[0]) & 0xFF);
       this->serial_number_[1] = static_cast<uint16_t>(raw_serial_number[0] & 0xFF);
       this->serial_number_[2] = static_cast<uint16_t>(raw_serial_number[1] >> 8);
-      ESP_LOGD(TAG, "Serial number %02d.%02d.%02d", serial_number_[0], serial_number_[1], serial_number_[2]);
+      ESP_LOGD(TAG, "Serial number %02d.%02d.%02d", this->serial_number_[0], this->serial_number_[1],
+           this->serial_number_[2]);
 
       uint16_t raw_product_name[16];
 
@@ -107,33 +110,33 @@ void SEN6XComponent::setup() {
         // first char
         current_char = *current_int >> 8;
         if (current_char) {
-          product_name_.push_back(current_char);
+          this->product_name_.push_back(current_char);
           // second char
           current_char = *current_int & 0xFF;
           if (current_char)
-            product_name_.push_back(current_char);
+            this->product_name_.push_back(current_char);
         }
         current_int++;
       } while (current_char && --max);
 
       this->sen6x_type_ = UNKNOWN;
-      if (product_name_ == "SEN62") {
+      if (this->product_name_ == "SEN62") {
         this->sen6x_type_ = SEN62;
-      } else if (product_name_ == "SEN63C") {
+      } else if (this->product_name_ == "SEN63C") {
         this->sen6x_type_ = SEN63C;
-      } else if (product_name_ == "SEN65") {
+      } else if (this->product_name_ == "SEN65") {
         this->sen6x_type_ = SEN65;
-      } else if (product_name_ == "SEN66") {
+      } else if (this->product_name_ == "SEN66") {
         this->sen6x_type_ = SEN66;
-      } else if (product_name_ == "SEN68") {
+      } else if (this->product_name_ == "SEN68") {
         this->sen6x_type_ = SEN68;
-      } else if (product_name_ == "SEN69C") {
+      } else if (this->product_name_ == "SEN69C") {
         this->sen6x_type_ = SEN69C;
-      } else if (product_name_ == "") { // empty name
+      } else if (this->product_name_ == "") { // empty name
         ESP_LOGD(TAG, "Productname empty, falling back to SEN66");
         this->sen6x_type_ = SEN66;
       }
-      ESP_LOGD(TAG, "Productname %s", product_name_.c_str());
+      ESP_LOGD(TAG, "Productname %s", this->product_name_.c_str());
 
 
       if (!this->get_register(SEN6X_CMD_GET_FIRMWARE_VERSION, this->firmware_version_, 20)) {
@@ -158,7 +161,7 @@ void SEN6XComponent::setup() {
 
         if (this->pref_.load(&this->voc_baselines_storage_)) {
           ESP_LOGI(TAG, "Loaded VOC baseline state0: 0x%04" PRIX32 ", state1: 0x%04" PRIX32,
-                   this->voc_baselines_storage_.state0, voc_baselines_storage_.state1);
+                   this->voc_baselines_storage_.state0, this->voc_baselines_storage_.state1);
         }
 
         // Initialize storage timestamp
@@ -166,97 +169,129 @@ void SEN6XComponent::setup() {
 
         if (this->voc_baselines_storage_.state0 > 0 && this->voc_baselines_storage_.state1 > 0) {
           ESP_LOGI(TAG, "Setting VOC baseline from save state0: 0x%04" PRIX32 ", state1: 0x%04" PRIX32,
-                   this->voc_baselines_storage_.state0, voc_baselines_storage_.state1);
+                   this->voc_baselines_storage_.state0, this->voc_baselines_storage_.state1);
           uint16_t states[4];
 
-          states[0] = voc_baselines_storage_.state0 >> 16;
-          states[1] = voc_baselines_storage_.state0 & 0xFFFF;
-          states[2] = voc_baselines_storage_.state1 >> 16;
-          states[3] = voc_baselines_storage_.state1 & 0xFFFF;
+          states[0] = this->voc_baselines_storage_.state0 >> 16;
+          states[1] = this->voc_baselines_storage_.state0 & 0xFFFF;
+          states[2] = this->voc_baselines_storage_.state1 >> 16;
+          states[3] = this->voc_baselines_storage_.state1 & 0xFFFF;
 
           if (!this->write_command(SEN6X_CMD_VOC_ALGORITHM_STATE, states, 4)) {
             ESP_LOGE(TAG, "Failed to set VOC baseline from saved state");
           }
         }
       }
-      if (this->voc_tuning_params_.has_value()) {
-        this->write_tuning_parameters_(SEN6X_CMD_VOC_ALGORITHM_TUNING, this->voc_tuning_params_.value());
-        delay(20);
-      }
-      if (this->nox_tuning_params_.has_value()) {
-        this->write_tuning_parameters_(SEN6X_CMD_NOX_ALGORITHM_TUNING, this->nox_tuning_params_.value());
-        delay(20);
-      }
-
-      if (this->temperature_compensation_.has_value()) {
-        this->write_temperature_compensation_(this->temperature_compensation_.value());
-        delay(20);
-      }
-      if (this->temperature_acceleration_.has_value()) {
-        this->write_temperature_acceleration_(this->temperature_acceleration_.value());
-        delay(20);
-      }
-      if (this->ambient_pressure_.has_value()) {
-        uint16_t params[1];
-        params[0] = this->ambient_pressure_.value();
-        if (!this->write_command(SEN6X_CMD_AMBIENT_PRESSURE, params, 1)) {
-          ESP_LOGE(TAG, "set ambient pressure failed. Err=%d", this->last_error_);
-        } else {
-          delay(20);
-        }
-      }
-      if (this->sensor_altitude_.has_value()) {
-        uint16_t params[1];
-        params[0] = this->sensor_altitude_.value();
-        if (!this->write_command(SEN6X_CMD_SENSOR_ALTITUDE, params, 1)) {
-          ESP_LOGE(TAG, "set sensor altitude failed. Err=%d", this->last_error_);
-        } else {
-          delay(20);
-        }
-      }
-      if (this->co2_asc_.has_value()) {
-        uint16_t params[1];
-        params[0] = this->co2_asc_.value() ? 0x0001 : 0x0000;
-        if (!this->write_command(SEN6X_CMD_CO2_SENSOR_AUTOMATIC_SELF_CAL, params, 1)) {
-          ESP_LOGE(TAG, "set CO2 ASC failed. Err=%d", this->last_error_);
-        } else {
-          delay(20);
-        }
-      }
-      const bool supports_co2 = this->sen6x_type_ == SEN63C || this->sen6x_type_ == SEN66 || this->sen6x_type_ == SEN69C;
-      if (supports_co2) {
-        uint16_t ambient_pressure = 0;
-        if (this->get_register(SEN6X_CMD_AMBIENT_PRESSURE, ambient_pressure, 20)) {
-          if (ambient_pressure != 0xFFFF)
-            this->ambient_pressure_read_ = ambient_pressure;
-        }
-        uint16_t sensor_altitude = 0;
-        if (this->get_register(SEN6X_CMD_SENSOR_ALTITUDE, sensor_altitude, 20)) {
-          if (sensor_altitude != 0xFFFF)
-            this->sensor_altitude_read_ = sensor_altitude;
-        }
-        uint16_t asc_raw = 0;
-        if (this->get_register(SEN6X_CMD_CO2_SENSOR_AUTOMATIC_SELF_CAL, asc_raw, 20)) {
-          this->co2_asc_read_ = (asc_raw & 0x00FF) != 0;
-        }
-      }
-
-      // Finally start sensor measurements
-      if (!this->write_command(SEN6X_CMD_START_MEASUREMENTS)) {
-        ESP_LOGE(TAG, "Error starting continuous measurements.");
-        this->error_code_ = MEASUREMENT_INIT_FAILED;
-        this->mark_failed();
-        return;
-      }
-      this->measurement_started_ = true;
-      this->startup_stable_after_ = millis() + this->startup_delay_ms_;
-      if (this->measurement_running_binary_sensor_ != nullptr) {
-        this->measurement_running_binary_sensor_->publish_state(true);
-      }
-      initialized_ = true;
-      ESP_LOGD(TAG, "Sensor initialized");
+      this->schedule_post_setup_commands_();
     });
   });
+}
+
+void SEN6XComponent::schedule_post_setup_commands_() {
+  std::vector<std::function<void()>> steps;
+
+  if (this->voc_tuning_params_.has_value()) {
+    steps.emplace_back([this]() {
+      this->write_tuning_parameters_(SEN6X_CMD_VOC_ALGORITHM_TUNING, this->voc_tuning_params_.value());
+    });
+  }
+  if (this->nox_tuning_params_.has_value()) {
+    steps.emplace_back([this]() {
+      this->write_tuning_parameters_(SEN6X_CMD_NOX_ALGORITHM_TUNING, this->nox_tuning_params_.value());
+    });
+  }
+  if (this->temperature_compensation_.has_value()) {
+    steps.emplace_back([this]() {
+      this->write_temperature_compensation_(this->temperature_compensation_.value());
+    });
+  }
+  if (this->temperature_acceleration_.has_value()) {
+    steps.emplace_back([this]() {
+      this->write_temperature_acceleration_(this->temperature_acceleration_.value());
+    });
+  }
+  if (this->ambient_pressure_.has_value()) {
+    steps.emplace_back([this]() {
+      uint16_t params[1];
+      params[0] = this->ambient_pressure_.value();
+      if (!this->write_command(SEN6X_CMD_AMBIENT_PRESSURE, params, 1)) {
+        ESP_LOGE(TAG, "set ambient pressure failed. Err=%d", this->last_error_);
+      }
+    });
+  }
+  if (this->sensor_altitude_.has_value()) {
+    steps.emplace_back([this]() {
+      uint16_t params[1];
+      params[0] = this->sensor_altitude_.value();
+      if (!this->write_command(SEN6X_CMD_SENSOR_ALTITUDE, params, 1)) {
+        ESP_LOGE(TAG, "set sensor altitude failed. Err=%d", this->last_error_);
+      }
+    });
+  }
+  if (this->co2_asc_.has_value()) {
+    steps.emplace_back([this]() {
+      uint16_t params[1];
+      params[0] = this->co2_asc_.value() ? 0x0001 : 0x0000;
+      if (!this->write_command(SEN6X_CMD_CO2_SENSOR_AUTOMATIC_SELF_CAL, params, 1)) {
+        ESP_LOGE(TAG, "set CO2 ASC failed. Err=%d", this->last_error_);
+      }
+    });
+  }
+
+  if (steps.empty()) {
+    this->finish_setup_();
+    return;
+  }
+
+  auto run_step = std::make_shared<std::function<void(size_t)>>();
+  *run_step = [this, steps, run_step](size_t index) {
+    if (index >= steps.size()) {
+      this->finish_setup_();
+      return;
+    }
+    steps[index]();
+    this->set_timeout(20, [run_step, index]() { (*run_step)(index + 1); });
+  };
+
+  (*run_step)(0);
+}
+
+void SEN6XComponent::finish_setup_() {
+  const bool supports_co2 = this->sen6x_type_ == SEN63C || this->sen6x_type_ == SEN66 ||
+                            this->sen6x_type_ == SEN69C;
+  if (supports_co2) {
+    uint16_t ambient_pressure = 0;
+    if (this->get_register(SEN6X_CMD_AMBIENT_PRESSURE, ambient_pressure, 20)) {
+      if (ambient_pressure != 0xFFFF)
+        this->ambient_pressure_read_ = ambient_pressure;
+    }
+    uint16_t sensor_altitude = 0;
+    if (this->get_register(SEN6X_CMD_SENSOR_ALTITUDE, sensor_altitude, 20)) {
+      if (sensor_altitude != 0xFFFF)
+        this->sensor_altitude_read_ = sensor_altitude;
+    }
+    uint16_t asc_raw = 0;
+    if (this->get_register(SEN6X_CMD_CO2_SENSOR_AUTOMATIC_SELF_CAL, asc_raw, 20)) {
+      this->co2_asc_read_ = (asc_raw & 0x00FF) != 0;
+    }
+  }
+
+  if (!this->write_command(SEN6X_CMD_START_MEASUREMENTS)) {
+    ESP_LOGE(TAG, "Error starting continuous measurements.");
+    this->error_code_ = MEASUREMENT_INIT_FAILED;
+    this->mark_failed();
+    return;
+  }
+
+  const uint32_t now = App.get_loop_component_start_time();
+  this->measurement_started_ = true;
+  this->startup_stable_after_ = now + this->startup_delay_ms_;
+  this->last_cleaning_ms_ = now;
+  if (this->measurement_running_binary_sensor_ != nullptr) {
+    this->measurement_running_binary_sensor_->publish_state(true);
+  }
+  this->initialized_ = true;
+  ESP_LOGD(TAG, "Sensor initialized");
 }
 
 void SEN6XComponent::dump_config() {
@@ -286,7 +321,8 @@ void SEN6XComponent::dump_config() {
   }
   ESP_LOGCONFIG(TAG, "  Productname: %s", this->product_name_.c_str());
   ESP_LOGCONFIG(TAG, "  Firmware version: %d", this->firmware_version_);
-  ESP_LOGCONFIG(TAG, "  Serial number %02d.%02d.%02d", serial_number_[0], serial_number_[1], serial_number_[2]);
+  ESP_LOGCONFIG(TAG, "  Serial number %02d.%02d.%02d", this->serial_number_[0],
+               this->serial_number_[1], this->serial_number_[2]);
 
   LOG_UPDATE_INTERVAL(this);
   if (this->measurement_running_binary_sensor_ != nullptr) {
@@ -343,14 +379,15 @@ void SEN6XComponent::dump_config() {
 }
 
 void SEN6XComponent::update() {
-  if (!initialized_) {
+  if (!this->initialized_) {
     return;
   }
+  const uint32_t now = App.get_loop_component_start_time();
   if (this->measurement_started_ && this->auto_cleaning_enabled_.value_or(false) &&
       this->auto_cleaning_interval_s_.has_value()) {
     const uint32_t interval_ms = this->auto_cleaning_interval_s_.value() * 1000UL;
-    if (interval_ms > 0 && (millis() - this->last_cleaning_ms_) >= interval_ms) {
-      this->last_cleaning_ms_ = millis();
+    if (interval_ms > 0 && (now - this->last_cleaning_ms_) >= interval_ms) {
+      this->last_cleaning_ms_ = now;
       this->start_fan_cleaning();
     }
   }
@@ -400,7 +437,7 @@ void SEN6XComponent::update() {
 
             if (this->pref_.save(&this->voc_baselines_storage_)) {
               ESP_LOGI(TAG, "Stored VOC baseline state0: 0x%04" PRIX32 " ,state1: 0x%04" PRIX32,
-                       this->voc_baselines_storage_.state0, voc_baselines_storage_.state1);
+                       this->voc_baselines_storage_.state0, this->voc_baselines_storage_.state1);
             } else {
               ESP_LOGW(TAG, "Could not store VOC baselines");
             }
@@ -589,7 +626,8 @@ void SEN6XComponent::update() {
       this->last_co2_ = co2;
       this->has_last_values_ = true;
 
-      if (millis() < this->startup_stable_after_) {
+      const uint32_t check_time = App.get_loop_component_start_time();
+      if (check_time < this->startup_stable_after_) {
         ESP_LOGV(TAG, "Startup stabilization in progress, skipping publish");
         this->status_clear_warning();
         return;
@@ -631,7 +669,7 @@ bool SEN6XComponent::write_tuning_parameters_(uint16_t i2c_command, const GasTun
   params[3] = tuning.gating_max_duration_minutes;
   params[4] = tuning.std_initial;
   params[5] = tuning.gain_factor;
-  auto result = write_command(i2c_command, params, 6);
+  auto result = this->write_command(i2c_command, params, 6);
   if (!result) {
     ESP_LOGE(TAG, "set tuning parameters failed. i2c command=%0xX, err=%d", i2c_command, this->last_error_);
   }
@@ -644,7 +682,7 @@ bool SEN6XComponent::write_temperature_compensation_(const TemperatureCompensati
   params[1] = compensation.normalized_offset_slope;
   params[2] = compensation.time_constant;
   params[3] = compensation.slot;
-  if (!write_command(SEN6X_CMD_TEMPERATURE_COMPENSATION, params, 4)) {
+  if (!this->write_command(SEN6X_CMD_TEMPERATURE_COMPENSATION, params, 4)) {
     ESP_LOGE(TAG, "set temperature_compensation failed. Err=%d", this->last_error_);
     return false;
   }
@@ -657,7 +695,7 @@ bool SEN6XComponent::write_temperature_acceleration_(const TemperatureAccelerati
   params[1] = acceleration.p;
   params[2] = acceleration.t1;
   params[3] = acceleration.t2;
-  if (!write_command(SEN6X_CMD_RHT_ACCELERATION_MODE, params, 4)) {
+  if (!this->write_command(SEN6X_CMD_RHT_ACCELERATION_MODE, params, 4)) {
     ESP_LOGE(TAG, "set temperature_acceleration failed. Err=%d", this->last_error_);
     return false;
   }
@@ -669,7 +707,7 @@ bool SEN6XComponent::start_fan_cleaning() {
   if (was_running) {
     this->stop_measurement();
   }
-  if (!write_command(SEN6X_CMD_START_CLEANING_FAN)) {
+  if (!this->write_command(SEN6X_CMD_START_CLEANING_FAN)) {
     this->status_set_warning();
     ESP_LOGE(TAG, "write error start fan (%d)", this->last_error_);
     return false;
@@ -693,24 +731,25 @@ bool SEN6XComponent::perform_forced_co2_recalibration(uint16_t reference_ppm) {
   }
   uint16_t params[1];
   params[0] = reference_ppm;
-  if (!write_command(SEN6X_CMD_CO2_FORCE_RECALIBRATION, params, 1)) {
+  if (!this->write_command(SEN6X_CMD_CO2_FORCE_RECALIBRATION, params, 1)) {
     this->status_set_warning();
     ESP_LOGE(TAG, "write error forced CO2 recalibration (%d)", this->last_error_);
     return false;
   }
-  delay(500);
-  uint16_t correction = 0;
-  if (!this->read_data(correction)) {
-    this->status_set_warning();
-    ESP_LOGE(TAG, "read error forced CO2 recalibration (%d)", this->last_error_);
-    return false;
-  }
-  if (correction == 0xFFFF) {
-    ESP_LOGW(TAG, "Forced CO2 recalibration failed");
-    return false;
-  }
-  int16_t frc = static_cast<int16_t>(correction - 0x8000);
-  ESP_LOGD(TAG, "Forced CO2 recalibration correction: %d ppm", frc);
+  this->set_timeout(500, [this]() {
+    uint16_t correction = 0;
+    if (!this->read_data(correction)) {
+      this->status_set_warning();
+      ESP_LOGE(TAG, "read error forced CO2 recalibration (%d)", this->last_error_);
+      return;
+    }
+    if (correction == 0xFFFF) {
+      ESP_LOGW(TAG, "Forced CO2 recalibration failed");
+      return;
+    }
+    int16_t frc = static_cast<int16_t>(correction - 0x8000);
+    ESP_LOGD(TAG, "Forced CO2 recalibration correction: %d ppm", frc);
+  });
   return true;
 }
 
@@ -718,29 +757,32 @@ bool SEN6XComponent::co2_sensor_factory_reset() {
   if (this->measurement_started_) {
     this->stop_measurement();
   }
-  if (!write_command(SEN6X_CMD_CO2_SENSOR_FACTORY_RESET)) {
+  if (!this->write_command(SEN6X_CMD_CO2_SENSOR_FACTORY_RESET)) {
     this->status_set_warning();
     ESP_LOGE(TAG, "write error CO2 sensor factory reset (%d)", this->last_error_);
     return false;
   }
-  delay(1400);
-  ESP_LOGD(TAG, "CO2 sensor factory reset complete");
+  this->set_timeout(1400, [this]() {
+    ESP_LOGD(TAG, "CO2 sensor factory reset complete");
+  });
   return true;
 }
 
 bool SEN6XComponent::start_measurement() {
-  const uint32_t now = millis();
+  const uint32_t now = App.get_loop_component_start_time();
   if (this->last_stop_ms_ != 0 && (now - this->last_stop_ms_) < 1400) {
-    delay(1400 - (now - this->last_stop_ms_));
+    const uint32_t wait_ms = 1400 - (now - this->last_stop_ms_);
+    this->set_timeout(wait_ms, [this]() { this->start_measurement(); });
+    return true;
   }
-  if (!write_command(SEN6X_CMD_START_MEASUREMENTS)) {
+  if (!this->write_command(SEN6X_CMD_START_MEASUREMENTS)) {
     this->status_set_warning();
     ESP_LOGE(TAG, "write error start measurement (%d)", this->last_error_);
     return false;
   }
   this->measurement_started_ = true;
-  this->startup_stable_after_ = millis() + this->startup_delay_ms_;
-  this->last_cleaning_ms_ = millis();
+  this->startup_stable_after_ = now + this->startup_delay_ms_;
+  this->last_cleaning_ms_ = now;
   if (this->measurement_running_binary_sensor_ != nullptr) {
     this->measurement_running_binary_sensor_->publish_state(true);
   }
@@ -749,14 +791,13 @@ bool SEN6XComponent::start_measurement() {
 }
 
 bool SEN6XComponent::stop_measurement() {
-  if (!write_command(SEN6X_CMD_STOP_MEASUREMENTS)) {
+  if (!this->write_command(SEN6X_CMD_STOP_MEASUREMENTS)) {
     this->status_set_warning();
     ESP_LOGE(TAG, "write error stop measurement (%d)", this->last_error_);
     return false;
   }
-  delay(1400);
   this->measurement_started_ = false;
-  this->last_stop_ms_ = millis();
+  this->last_stop_ms_ = App.get_loop_component_start_time();
   this->auto_clean_restart_pending_ = false;
   if (this->measurement_running_binary_sensor_ != nullptr) {
     this->measurement_running_binary_sensor_->publish_state(false);
@@ -769,13 +810,12 @@ bool SEN6XComponent::activate_sht_heater() {
   if (this->measurement_started_) {
     this->stop_measurement();
   }
-  if (!write_command(SEN6X_CMD_SHT_HEATER_ACTIVATE)) {
+  if (!this->write_command(SEN6X_CMD_SHT_HEATER_ACTIVATE)) {
     this->status_set_warning();
     ESP_LOGE(TAG, "write error SHT heater activate (%d)", this->last_error_);
     return false;
   }
-  delay(20);
-  ESP_LOGD(TAG, "SHT heater activated");
+  this->set_timeout(20, [this]() { ESP_LOGD(TAG, "SHT heater activated"); });
   return true;
 }
 
@@ -811,29 +851,30 @@ bool SEN6XComponent::get_sht_heater_measurements() {
     this->stop_measurement();
   }
 
-  if (!write_command(SEN6X_CMD_SHT_HEATER_MEASUREMENTS)) {
+  if (!this->write_command(SEN6X_CMD_SHT_HEATER_MEASUREMENTS)) {
     this->status_set_warning();
     ESP_LOGE(TAG, "write error SHT heater measurements (%d)", this->last_error_);
     return false;
   }
 
-  delay(20);
-  uint16_t values[2];
-  if (!this->read_data(values, 2)) {
-    this->status_set_warning();
-    ESP_LOGE(TAG, "read error SHT heater measurements (%d)", this->last_error_);
-    return false;
-  }
+  this->set_timeout(20, [this]() {
+    uint16_t values[2];
+    if (!this->read_data(values, 2)) {
+      this->status_set_warning();
+      ESP_LOGE(TAG, "read error SHT heater measurements (%d)", this->last_error_);
+      return;
+    }
 
-  float humidity = static_cast<int16_t>(values[0]) / 100.0f;
-  float temperature = static_cast<int16_t>(values[1]) / 200.0f;
-  if (values[0] == 0x7FFF) {
-    ESP_LOGD(TAG, "SHT heater humidity not ready");
-  }
-  if (values[1] == 0x7FFF) {
-    ESP_LOGD(TAG, "SHT heater temperature not ready");
-  }
-  ESP_LOGD(TAG, "SHT heater measurements: RH=%.2f%% T=%.2fC", humidity, temperature);
+    float humidity = static_cast<int16_t>(values[0]) / 100.0f;
+    float temperature = static_cast<int16_t>(values[1]) / 200.0f;
+    if (values[0] == 0x7FFF) {
+      ESP_LOGD(TAG, "SHT heater humidity not ready");
+    }
+    if (values[1] == 0x7FFF) {
+      ESP_LOGD(TAG, "SHT heater temperature not ready");
+    }
+    ESP_LOGD(TAG, "SHT heater measurements: RH=%.2f%% T=%.2fC", humidity, temperature);
+  });
   return true;
 }
 
