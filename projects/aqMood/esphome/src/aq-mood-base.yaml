@@ -10,8 +10,9 @@ external_components:
 #  - source: tos_components/components
   - source:
       type: git
-      url: https://github.com/tuct/esphome_external_components
-      ref: main  
+      url: https://github.com/tuct/esphome-projects
+      ref: main
+    components: [sen6x]
     refresh: 1800s
 i2c:
   sda: ${pin_sda}
