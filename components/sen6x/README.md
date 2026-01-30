@@ -27,6 +27,7 @@ all measurement parameters, together with all relevant algorithms in one device 
 streamlines the supply chain, and allows for a fast time to market with the best performance.
 
 ## Supported variants
+Test status: only SEN66 has been tested so far.
 | Product Variant | Sensor Signals |
 | --- | --- |
 | [SEN62](https://sensirion.com/de/produkte/katalog/SEN62) | PM, RH & T |
