@@ -1,57 +1,53 @@
-substitutions:
-  id_prefix: aq_mini
-  node_name: mista-aq-mini
 external_components:
   - source:
       type: git
-      url: https://github.com/tuct/esphome_external_components
-      ref: main  
+      url: https://github.com/tuct/esphome-projects
+      ref: main
+    components: [sen6x]
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+
 sensor:
   - platform: sen6x
     id: sen54
     pm_1_0:
       name: "PM <1µm Weight concentration ${node_name}"
-      id: ${id_prefix}_pm10
+      id: pm10
       accuracy_decimals: 1
-      filters:
-        - sliding_window_moving_average:
-            window_size: 9
-            send_every: 1
+
     pm_2_5:
       name: "PM <2.5µm Weight concentration ${node_name}"
-      id: ${id_prefix}_pm25
+      id: pm25
       accuracy_decimals: 1
-      filters:
-        - sliding_window_moving_average:
-            window_size: 9
-            send_every: 1
+
     pm_4_0:
       name: "PM <4µm Weight concentration ${node_name}"
-      id: ${id_prefix}_pm40
+      id: pm40
       accuracy_decimals: 1
     pm_10_0:
       name: "PM <10µm Weight concentration ${node_name}"
-      id: ${id_prefix}_pm100
+      id: pm100
       accuracy_decimals: 1
     nox:
       name: "NOX ${node_name}"
-      id: ${id_prefix}_nox
+      id: nox
       accuracy_decimals: 1
     co2:
       name: "CO2 ${node_name}"
-      id: ${id_prefix}_co2
+      id: co2
       accuracy_decimals: 1
     temperature:
       name: "Temperature top ${node_name}"
       accuracy_decimals: 1
-      id: ${id_prefix}_temperature_top
+      id: temperature_top
     humidity:
       name: "Humidity ${node_name}"
       accuracy_decimals: 0
-      id: ${id_prefix}_humidity
+      id: humidity
     voc:
       name: "VOC ${node_name}"
-      id: ${id_prefix}_voc
+      id: voc
       algorithm_tuning:
         index_offset: 100
         learning_time_offset_hours: 12
@@ -59,13 +55,15 @@ sensor:
         gating_max_duration_minutes: 180
         std_initial: 50
         gain_factor: 230
-      filters:
-        - sliding_window_moving_average:
-            window_size: 9
-            send_every: 1
-    temperature_compensation:
-      offset: 0
-      normalized_offset_slope: 0
-      time_constant: 0
+#      temperature_compensation:
+#        offset: 0
+#        normalized_offset_slope: 0
+#        time_constant: 0
+#        slot: 0
+#      temperature_acceleration:
+#        k: 0
+#        p: 0
+#        t1: 0
+#        t2: 0
     store_baseline: true
-    update_interval: 10s
+    update_interval: 15s

@@ -257,6 +257,17 @@ void SEN6XComponent::dump_config() {
   LOG_SENSOR("  ", "NOx", this->nox_sensor_);
   LOG_SENSOR("  ", "HCHO", this->hcho_sensor_);
   LOG_SENSOR("  ", "CO2", this->co2_sensor_);  // SEN66
+
+  if (this->temperature_compensation_.has_value()) {
+    const auto &comp = this->temperature_compensation_.value();
+    ESP_LOGCONFIG(TAG, "  Temperature compensation: offset=%.2fC slope=%.4f time_constant=%us slot=%u",
+                 comp.offset / 200.0f, comp.normalized_offset_slope / 10000.0f, comp.time_constant, comp.slot);
+  }
+  if (this->temperature_acceleration_.has_value()) {
+    const auto &accel = this->temperature_acceleration_.value();
+    ESP_LOGCONFIG(TAG, "  Temperature acceleration: K=%.1f P=%.1f T1=%.1fs T2=%.1fs",
+                 accel.k / 10.0f, accel.p / 10.0f, accel.t1 / 10.0f, accel.t2 / 10.0f);
+  }
 }
 
 void SEN6XComponent::update() {

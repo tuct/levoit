@@ -83,9 +83,15 @@ sensor:
         gating_max_duration_minutes: 180
         std_initial: 50
         gain_factor: 230
-    temperature_compensation:
-      offset: 0
-      normalized_offset_slope: 0
-      time_constant: 0
+#      temperature_compensation:
+#        offset: 0
+#        normalized_offset_slope: 0
+#        time_constant: 0
+#        slot: 0
+#      temperature_acceleration:
+#        k: 0
+#        p: 0
+#        t1: 0
+#        t2: 0
     store_baseline: true
     update_interval: 15s
