@@ -60,11 +60,11 @@ external_components:
 
 uart:
   - id: uart_mcu2esp
-    tx_pin: 
-      number: GPIO04
+    tx_pin:
+      number: GPIO17
       inverted: false
-    rx_pin: 
-      number: GPIO05
+    rx_pin:
+      number: GPIO16
       inverted: false
     baud_rate: 115200
 
