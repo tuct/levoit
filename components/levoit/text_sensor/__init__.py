@@ -1,7 +1,7 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import text_sensor
-from esphome.const import CONF_ID, CONF_ICON
+from esphome.const import CONF_ID, CONF_ICON, CONF_ENTITY_CATEGORY, ENTITY_CATEGORY_DIAGNOSTIC
 
 from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
 
@@ -19,15 +19,15 @@ TYPE_MAP = {
     "error_message": TextSensorType.ERROR_MESSAGE,
 }
 
-ICON_MAP = {
-    "mcu_version": "mdi:chip",
-    "esp_version": "mdi:chip",
-    "timer_duration_initial": "mdi:timer",
-    "timer_duration_remaining": "mdi:progress-clock",
-    "auto_mode_room_size_high_fan": None,
-    "error_message": "mdi:alert-circle-outline",
+TYPE_PROPS = {
+    "mcu_version": {CONF_ICON: "mdi:chip", CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC},
+    "esp_version": {CONF_ICON: "mdi:chip", CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC},
+    "timer_duration_initial": {CONF_ICON: "mdi:timer"},
+    "timer_duration_remaining": {CONF_ICON: "mdi:progress-clock"},
+    "auto_mode_room_size_high_fan": {},
+    "error_message": {CONF_ICON: "mdi:alert-circle-outline", CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC},
 }
-  
+
 
 CONFIG_SCHEMA = text_sensor.text_sensor_schema(LevoitTextSensor).extend(
     {
@@ -40,27 +40,21 @@ CONFIG_SCHEMA = text_sensor.text_sensor_schema(LevoitTextSensor).extend(
 async def to_code(config):
     parent = await cg.get_variable(config[CONF_LEVOIT_ID])
 
-    # Set icon in config for the schema to process
     sensor_type = config[CONF_TYPE]
-    # Use user-provided icon if available, otherwise use default from ICON_MAP
-    if CONF_ICON not in config:
-        icon = ICON_MAP.get(sensor_type)
-        if icon:
-            config[CONF_ICON] = icon
+    config = dict(config)
+    for key, val in TYPE_PROPS.get(sensor_type, {}).items():
+        if key not in config:
+            config[key] = val
 
     var = cg.new_Pvariable(config[CONF_ID])
     await text_sensor.register_text_sensor(var, config)
     await cg.register_component(var, config)
 
-    # parent pointer for write_state 
+    # parent pointer for write_state
     cg.add(var.set_parent(parent))
 
     # set enum type and register into parent
     st = TYPE_MAP[sensor_type]
     cg.add(var.set_type(st))
     cg.add(parent.register_text_sensor(st, var))
-    
-    # Also generate C++ code to set icon (for setup() method)
-    if icon:
-        cg.add(var.set_icon(icon))
 

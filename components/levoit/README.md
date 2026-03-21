@@ -15,8 +15,14 @@ Custom ESPHome component for Levoit air purifiers (Core and Vital series) enabli
 | Levoit Vital 200S PRO | 2.0.0 | ✅ Tested -> with original ESP, Thanks @dnsefe |
 | Levoit Core 200S | ?.?.? | ⚠️ Untested -> comming soon!|
 
+**Requires:** ESPHome 2026.01.2+
 
-**Requirements:** ESPHome 2026.01.2+
+## Change Log
+
+### 2026.03.21
+
+* Works with for esphome 2026.3+
+* Sensors - added state class measurement -> allow statistics to be tracked
 
 ## Features
 

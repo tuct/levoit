@@ -16,37 +16,19 @@ namespace esphome
 
       switch (this->type_) {
         case NumberType::EFFICIENCY_ROOM_SIZE:
-          this->set_entity_category(EntityCategory::ENTITY_CATEGORY_CONFIG);
-          this->traits.set_device_class("area");
-          this->traits.set_unit_of_measurement("m²");
           this->traits.set_mode(number::NumberMode::NUMBER_MODE_SLIDER);
-          this->traits.set_min_value(132);
-          this->traits.set_max_value(792);
-          this->traits.set_step(14);  // 1 m
-      
           break;
 
         case NumberType::TIMER:
-          this->traits.set_device_class("duration");
-          this->traits.set_unit_of_measurement("min");
-          this->traits.set_mode(number::NumberMode::NUMBER_MODE_SLIDER);  // if you want
-          this->traits.set_min_value(0);
-          this->traits.set_max_value(720); // 12 hours
-          this->traits.set_step(30);
-          break;
-        case NumberType::FILTER_LIFETIME_MONTHS:
-          this->traits.set_device_class("duration");
-          this->traits.set_unit_of_measurement("months");
           this->traits.set_mode(number::NumberMode::NUMBER_MODE_SLIDER);
-          this->traits.set_min_value(1);
-          this->traits.set_max_value(12);
-          this->traits.set_step(1);
-          this->set_icon("mdi:air-filter");
-          this->set_entity_category(EntityCategory::ENTITY_CATEGORY_CONFIG);
-          
+          break;
+
+        case NumberType::FILTER_LIFETIME_MONTHS:
+          this->traits.set_mode(number::NumberMode::NUMBER_MODE_SLIDER);
+
           // Setup preferences for persistent storage
           pref_ = global_preferences->make_preference<float>(fnv1_hash("levoit_filter_months"));
-          
+
           // Restore saved value or use default
           float saved_value;
           if (pref_.load(&saved_value)) {

@@ -1,7 +1,7 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import switch
-from esphome.const import CONF_ID
+from esphome.const import CONF_ID, CONF_ENTITY_CATEGORY, ENTITY_CATEGORY_CONFIG
 
 from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
 
@@ -29,6 +29,9 @@ async def to_code(config):
     parent = await cg.get_variable(config[CONF_LEVOIT_ID])
 
     var = cg.new_Pvariable(config[CONF_ID])
+    config = dict(config)
+    if CONF_ENTITY_CATEGORY not in config:
+        config[CONF_ENTITY_CATEGORY] = ENTITY_CATEGORY_CONFIG
     await switch.register_switch(var, config)
     await cg.register_component(var, config)
 

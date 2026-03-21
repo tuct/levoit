@@ -9,16 +9,6 @@ static const char *const TAG = "levoit.binary_sensor";
 
 void LevoitBinarySensor::setup() {
   ESP_LOGD(TAG, "Setting up Levoit Binary Sensor");
-              switch (this->type_)
-            {
-            case BinarySensorType::FILTER_LOW:
-                this->set_device_class("battery");
-                this->set_icon("mdi:air-filter");
-                break;
-
-            default:
-                break;
-            }
 }
 
 void LevoitBinarySensor::dump_config() {

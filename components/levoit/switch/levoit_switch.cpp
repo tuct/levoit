@@ -9,18 +9,6 @@ namespace esphome
     static const char *const TAG = "levoit.switch";
     void LevoitSwitch::setup()
     {
-      switch (this->type_)
-      {
-      case SwitchType::DISPLAY:
-      case SwitchType::CHILD_LOCK:
-      case SwitchType::LIGHT_DETECT:
-      case SwitchType::DAYTIME_ENABLED:
-      case SwitchType::QUICK_CLEAN:
-      case SwitchType::WHITE_NOISE:
-      default:
-        this->set_entity_category(EntityCategory::ENTITY_CATEGORY_CONFIG);
-        break;
-      }
     }
     void LevoitSwitch::write_state(bool state)
     {

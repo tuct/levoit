@@ -12,17 +12,6 @@ namespace esphome
         void LevoitButton::setup()
         {
             ESP_LOGD(TAG, "Setting up Levoit Button");
-            switch (this->type_)
-            {
-            case ButtonType::RESET_FILTER_STATS:
-                this->set_entity_category(EntityCategory::ENTITY_CATEGORY_CONFIG);
-                this->set_device_class("reset");
-                this->set_icon("mdi:air-filter");
-                break;
-
-            default:
-                break;
-            }
         }
 
         void LevoitButton::dump_config()

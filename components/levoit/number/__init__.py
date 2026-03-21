@@ -1,13 +1,20 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import number
-from esphome.const import CONF_ID
+from esphome.const import (
+    CONF_ID,
+    CONF_DEVICE_CLASS,
+    CONF_UNIT_OF_MEASUREMENT,
+    CONF_ICON,
+    CONF_ENTITY_CATEGORY,
+    ENTITY_CATEGORY_CONFIG,
+)
 
 from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
 
 CONF_TYPE = "type"
 
-LevoitNumber = levoit_ns.class_("LevoitNumber", number.Number,cg.Component)
+LevoitNumber = levoit_ns.class_("LevoitNumber", number.Number, cg.Component)
 NumberType = levoit_ns.enum("NumberType")
 
 TYPE_MAP = {
@@ -22,7 +29,24 @@ TYPE_MAP = {
     "sleep_mode_fan_mode_level": NumberType.SLEEP_MODE_FAN_MODE_LEVEL,
     "filter_lifetime_months": NumberType.FILTER_LIFETIME_MONTHS,
 }
-  
+
+# (min_value, max_value, step, extra_props)
+TYPE_RANGE = {
+    "efficiency_room_size": (132.0, 792.0, 14.0, {
+        CONF_DEVICE_CLASS: "area",
+        CONF_UNIT_OF_MEASUREMENT: "m²",
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
+    }),
+    "timer": (0.0, 720.0, 30.0, {
+        CONF_DEVICE_CLASS: "duration",
+        CONF_UNIT_OF_MEASUREMENT: "min",
+    }),
+    "filter_lifetime_months": (1.0, 12.0, 1.0, {
+        CONF_UNIT_OF_MEASUREMENT: "months",
+        CONF_ICON: "mdi:air-filter",
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
+    }),
+}
 
 CONFIG_SCHEMA = number.number_schema(LevoitNumber).extend(
     {
@@ -34,33 +58,21 @@ CONFIG_SCHEMA = number.number_schema(LevoitNumber).extend(
 async def to_code(config):
     parent = await cg.get_variable(config[CONF_LEVOIT_ID])
 
-    min_value = 0.0
-    max_value = 1000.0
-    step = 1.0
-
-
-
     ntype = config[CONF_TYPE]
-#    if ntype == "timer":
-#        max_value = 720.0   # max 12 hours
-#        step = 30.0         # 30 min steps
-#
-#    if ntype == "efficiency_room_size":
-#        min_value = 132.0   # 9 m²
-#        max_value = 792.0   # 56 m² should 54?
-#        step = 14           # this is 1 m² in ft²
-
+    min_value, max_value, step, extra_props = TYPE_RANGE.get(ntype, (0.0, 1000.0, 1.0, {}))
 
     var = cg.new_Pvariable(config[CONF_ID])
-    # inject into config BEFORE register_number
     config = dict(config)
+    for key, val in extra_props.items():
+        if key not in config:
+            config[key] = val
 
     await number.register_number(
         var,
         config,
         min_value=min_value,
         max_value=max_value,
-        step=step
+        step=step,
     )
     await cg.register_component(var, config)
 
