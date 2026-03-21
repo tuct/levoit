@@ -8,6 +8,7 @@ Here is a list of all 5 models running with ESPHome. Core 300S and Core 400S onl
 
 * [Generic Levoit ESPHome Component](../../components/levoit/), full custom ESPHome-based firmware
 
+* [levoit-core200s](./levoit-core200s) – Custom ESPHome Firmware - WIP!
 * [levoit-core300s](./levoit-core300s) – Custom ESPHome Firmware
 * [levoit-core400s](./levoit-core400s) – Custom ESPHome Firmware
 * [levoit-vital100s](./levoit-vital100s) – Custom ESPHome Firmware
