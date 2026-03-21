@@ -1,5 +1,13 @@
+substitutions:
+  max_cfm: "240.0"
+  min_actual_speed: "0.05"
+
 esphome:
   name: vital100s-custom
+  on_boot:
+    priority: -10
+    then:
+      - fan.turn_on: fan_vital100
 
 esp32:
   board: esp32dev
@@ -11,7 +19,8 @@ logger:
 
 # Enable Home Assistant API
 api:
-  password: "a4m3xb"
+  encryption:
+    key: !secret api_key
 
 ota:
   - platform: esphome
@@ -20,6 +29,7 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  id: wifi_component
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -32,132 +42,500 @@ globals:
     type: std::array<uint8_t, 4>
     restore_value: no
     initial_value: '{0x01, 0x01, 0x00, 0x00}'
-  - id: target_byte
-    type: int
+  - id: wled_scan_mode
+    type: bool
     restore_value: no
+    initial_value: 'false'
+  - id: timer_sync_lock
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: childlock_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+  - id: wifi_blink_on
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: cfm_min_used
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
+  - id: run_time_min
+    type: int
+    restore_value: yes
     initial_value: '0'
-
-
-
+  - id: fan_output_percent
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: adopt_last_target
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
 number:
   - platform: template
-    name: "Target Byte"
-    id: target_byte_number
+    id: timer_min
+    name: "Timer Minutes"
+    optimistic: true
     min_value: 0
-    max_value: 3
-    step: 1
+    max_value: 720
     initial_value: 0
+    restore_value: false
+    step: 1
+    on_value:
+      then:
+        lambda: |-
+          int total_min = (int) id(timer_min).state;
+          // Update timer mode display switches
+          bool is_2h = (total_min == 120);
+          bool is_4h = (total_min == 240);
+          bool is_8h = (total_min == 480);
+          bool is_custom = (total_min > 0 && !is_2h && !is_4h && !is_8h);
+          if (!id(timer_sync_lock)) {
+            id(timer_sync_lock) = true;
+            if (total_min == 0) {
+              id(timer_mode).make_call().set_option("Off").perform();
+            } else if (is_2h) {
+              id(timer_mode).make_call().set_option("2h").perform();
+            } else if (is_4h) {
+              id(timer_mode).make_call().set_option("4h").perform();
+            } else if (is_8h) {
+              id(timer_mode).make_call().set_option("8h").perform();
+            } else if (is_custom) {
+              id(timer_mode).make_call().set_option("Custom").perform();
+            }
+            id(timer_sync_lock) = false;
+          }
+          if (total_min == 0) {
+            id(timer_text).publish_state("Off");
+            return;
+          }
+          if (total_min > 720) total_min = 720;
+          int hh = total_min / 60;
+          int mm = total_min % 60;
+          static char buf[6];
+          sprintf(buf, "%d:%02d", hh, mm);
+          id(timer_text).publish_state(buf);
+  - platform: template
+    id: timer_custom_min
     optimistic: true
+    min_value: 0
+    max_value: 720
+    initial_value: 60
+    restore_value: true
+    step: 30
+  - platform: template
+    id: max_filter_months
+    entity_category: config
+    icon: mdi:air-filter
+    name: "Filter life time (months)"
+    optimistic: true
+    min_value: 3
+    max_value: 12
+    initial_value: 6
+    restore_value: true
+    step: 1
+  - platform: template
+    id: fan_speed_percent
+    name: "Fan Speed Percent"
+    entity_category: diagnostic
+    optimistic: true
+    min_value: 0.0
+    max_value: 100.0
+    initial_value: 0.0
+    restore_value: false
+    step: 1
     set_action:
       - lambda: |-
-          id(target_byte) = (int)x;
-  - platform: template
-    name: "Fan Max"
-    min_value: 0.0
-    max_value: 1.0
-    step: 0.05
-    initial_value: 0.9
-    optimistic: true
-    set_action:
-      - output.set_max_power:
-          id: gpio_04
-          max_power: !lambda 'return x;'
-  - platform: template
-    name: "Fan Min"
-
-    min_value: 0.0
-    max_value: 1.0
-    step: 0.05
-    initial_value: 0.1
-    optimistic: true
-    set_action:
-      - output.set_min_power:
-          id: gpio_04
-          min_power: !lambda 'return x;'
-interval:
-  - interval: 0.5s
-    then:
-      - lambda: |-
-          static uint8_t index = 0;
-          const uint8_t values[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
-          
-          // Reset all bytes to 0x00
-          id(display_buffer)[0] = 0x00;
-          id(display_buffer)[1] = 0x00;
-          id(display_buffer)[2] = 0x00;
-          id(display_buffer)[3] = 0x00;
-          
-          // Animate the selected byte
-          uint8_t byte_index = id(target_byte);
-          id(display_buffer)[byte_index] = values[index];
-          
-          index = (index + 1) % 8;
-          ESP_LOGD("main", "Display buffer set to: 0x%02X 0x%02X 0x%02X 0x%02X", 
-            id(display_buffer)[0], id(display_buffer)[1], id(display_buffer)[2], id(display_buffer)[3]);
-
+          float percent = x;
+          if (percent < 0.0f) percent = 0.0f;
+          if (percent > 100.0f) percent = 100.0f;
+          const float min_percent = ${min_actual_speed} * 100.0f;
+          if (percent > 0.0f && percent < min_percent) percent = min_percent;
+          // target only; output is adjusted by adopt_fan_speed
 # Inputs
 binary_sensor:
   - platform: gpio
     pin: GPIO14
-    name: "BTN 1"
+    id: btn_sleep
+    on_click:
+      min_length: 50ms
+      max_length: 2500ms
+      then:
+        - if:
+            condition:
+              lambda: |-
+                return id(fan_vital100).state;
+            then:
+              - lambda: |-
+                  auto call = id(fan_vital100).turn_on();
+                  call.set_preset_mode("Sleep");
+                  call.perform();
   - platform: gpio
     pin: GPIO27
-    name: "BTN 2"
+    id: btn_manual
+    on_click:
+      min_length: 50ms
+      max_length: 2500ms
+      then:
+        - if:
+            condition:
+              lambda: |-
+                return id(fan_vital100).state;
+            then:
+              - lambda: |-
+                  auto preset = id(fan_vital100).get_preset_mode();
+                  if (preset == "Manual") {
+                    // Cycle speed: 1-4
+                    int speed = id(fan_vital100).speed;
+                    speed = (speed % 4) + 1;
+                    auto call = id(fan_vital100).make_call();
+                    call.set_speed(speed);
+                    call.perform();
+                  } else {
+                    auto call = id(fan_vital100).turn_on();
+                    call.set_preset_mode("Manual");
+                    call.perform();
+                  }
   - platform: gpio
     pin: GPIO26
-    name: "BTN 3"
+    id: btn_auto
+    on_click:
+      min_length: 50ms
+      max_length: 2500ms
+      then:
+        - if:
+            condition:
+              lambda: |-
+                return id(fan_vital100).state;
+            then:
+              - lambda: |-
+                  auto call = id(fan_vital100).turn_on();
+                  call.set_preset_mode("Auto");
+                  call.perform();
   - platform: gpio
     pin: GPIO25
-    name: "BTN 4"
+    id: btn_power
+    on_click:
+      min_length: 50ms
+      max_length: 2500ms
+      then:
+        - if:
+            condition:
+              lambda: |-
+                return !id(childlock_enabled);
+            then:
+              - lambda: |-
+                  if (id(fan_vital100).state) {
+                    id(fan_vital100).turn_off().perform();
+                  } else {
+                    id(fan_vital100).turn_on().perform();
+                  }
   - platform: gpio
     pin: GPIO33
-    name: "BTN 5"
+    id: btn_childlock
+    on_multi_click:
+      - timing:
+          - ON for at least 5s
+        then:
+          - lambda: |-
+              id(childlock_enabled) = !id(childlock_enabled);
+              id(update_display_buffer).execute();
   - platform: gpio
     pin: GPIO32
-    name: "BTN 6"
+    id: btn_timer
+    on_click:
+      min_length: 50ms
+      max_length: 2500ms
+      then:
+        - script.execute: cycle_timer
   - platform: gpio
     pin: GPIO35
-    name: "BTN 7"
+    id: btn_display
+    on_click:
+      min_length: 50ms
+      max_length: 2000ms
+      then:
+        - if:
+            condition:
+              lambda: |-
+                return id(fan_vital100).state;
+            then:
+              - lambda: |-
+                  if (id(display_switch).state) {
+                    id(display_switch).turn_off();
+                  } else {
+                    id(display_switch).turn_on();
+                  }
+    on_multi_click:
+      - timing:
+          - ON for at least 2.1s
+        then:
+          - lambda: |-
+              // Cycle Light Mode select (fixed for ESPHome 2026+)
+              auto sel = id(light_mode);
+              auto& opts = sel->traits.get_options();
+              int idx = 0, found = 0;
+              for (size_t i = 0; i < opts.size(); i++) {
+                if (std::string(opts[i]) == sel->current_option()) { idx = i; found = 1; break; }
+              }
+              if (!found) idx = 0;
+              idx = (idx + 1) % opts.size();
+              sel->make_call().set_option(opts[idx]).perform();
+  - platform: template
+    id: replace_filter
+    name: "Replace filter"
+    device_class: smoke
+    icon: mdi:air-filter
+    trigger_on_initial_state: true
+    condition:
+      sensor.in_range:
+        id: filter_life_left
+        below: 5.0
+switch:
+  - platform: template
+    id: display_switch
+    name: "Display"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_off_action:
+      - lambda: |-
+          id(display_buffer)[0] = 0x00;
+          id(display_buffer)[1] = 0x00;
+          id(display_buffer)[2] = 0x00;
+          id(display_buffer)[3] = 0x00;
+      - light.turn_off: wled_light
+  - platform: template
+    id: child_lock
+    name: "Child Lock"
+    lambda: |-
+      return id(childlock_enabled);
+    turn_on_action:
+      - lambda: |-
+          id(childlock_enabled) = true;
+          id(update_display_buffer).execute();
+    turn_off_action:
+      - lambda: |-
+          id(childlock_enabled) = false;
+          id(update_display_buffer).execute();
+
+
+text_sensor:
+  - platform: template
+    name: "Timer"
+    id: timer_text
+    icon: mdi:timer-outline
+
+select:
+  - platform: template
+    id: timer_mode
+    name: "Timer Mode"
+    optimistic: true
+    options:
+      - "Off"
+      - "2h"
+      - "4h"
+      - "8h"
+      - "Custom"
+    initial_option: "2h"
+    set_action:
+      - lambda: |-
+          if (id(timer_sync_lock)) return;
+          if (x == "Off") {
+            if ((int) id(timer_min).state != 0) {
+              auto call = id(timer_min).make_call();
+              call.set_value(0);
+              call.perform();
+            }
+          } else if (x == "2h") {
+            if ((int) id(timer_min).state != 120) {
+              auto call = id(timer_min).make_call();
+              call.set_value(120);
+              call.perform();
+            }
+          } else if (x == "4h") {
+            if ((int) id(timer_min).state != 240) {
+              auto call = id(timer_min).make_call();
+              call.set_value(240);
+              call.perform();
+            }
+          } else if (x == "8h") {
+            if ((int) id(timer_min).state != 480) {
+              auto call = id(timer_min).make_call();
+              call.set_value(480);
+              call.perform();
+            }
+          } else if (x == "Custom") {
+            if ((int) id(timer_min).state != 120) {
+              auto call = id(timer_min).make_call();
+              call.set_value(120);
+              call.perform();
+            }
+          }
+  - platform: template
+    id: light_mode
+    name: "Light Mode"
+    options:
+      - "AQI"
+      - "Rainbow"
+    initial_option: "AQI"
+    optimistic: true
+
 sensor:
-  - platform: pulse_counter
-    pin: GPIO13
+  - platform: filter_lifetime
+    name: "Filter Life new"
+    id: uptime_sensor_new
+    max_lifetime: 12
+    is_on: !lambda 'return id(fan_vital100).state;'
+    current_speed: !lambda 'return id(fan_speed_percent).state;'
+    update_interval: 5s
+    device_class: battery
+    unit_of_measurement: '%'
+    accuracy_decimals: 2
+    # Optional analytics sensors
+    runtime_hours:
+      name: "Filter Runtime Hours"
+    remaining_days:
+      name: "Filter Remaining Days"
+  - platform: pulse_meter
+    pin:
+      number: GPIO13
     name: "Fan Speed"
+    accuracy_decimals: 2
+    internal_filter_mode: PULSE
+    timeout: 1000ms
+    id: fan_speed_percent_sensor
+    unit_of_measurement: '%'
+    filters:
+      - median:
+          window_size: 5
+          send_every: 2
+          send_first_at: 1
+      - multiply: 0.016666667 # to hz
+      - multiply: 0.537634    # to percent (assuming 186 hz = 100%)
+      - clamp:
+          min_value: 0
+          max_value: 100
+      - round_to_multiple_of: 1
+      - lambda: |-
+          return id(fan_vital100).state ? x : 0.0f;
+      - delta: 1
+
+
+
+  - platform: template
+    name: "Current CFM"
+    id: current_cfm
+    update_interval: 1s
+    entity_category: diagnostic
+    icon: mdi:air-filter
+    device_class: volume_flow_rate
+    unit_of_measurement: CFM
+    accuracy_decimals: 0
+    lambda: |-
+      const float max_cfm = ${max_cfm};
+      if (!id(fan_vital100).state) return 0.0f;
+      float percent = id(fan_speed_percent_sensor).state;
+      if (isnan(percent)) return 0.0f;
+      if (percent < 0.0f) percent = 0.0f;
+      if (percent > 100.0f) percent = 100.0f;
+      return max_cfm * (percent / 100.0f);
+    filters:
+      - delta: 1.0
+  - platform: template
+    name: "Filter"
+    accuracy_decimals: 1
+    id: filter_life_left
+    entity_category: diagnostic
+    device_class: battery
+    unit_of_measurement: '%'
+    filters:
+      - round_to_multiple_of: 0.01
+      - delta: 0.01
+    lambda: |-
+      float cfmMin = id(cfm_min_used);
+      if (cfmMin <= 0.0f) return 100.0f;
+      int maxMonths = (int) id(max_filter_months).state;
+      const float max_cfm = ${max_cfm};
+      float maxCFMMin = maxMonths * 30.0f * 60.0f * 24.0f * max_cfm;
+      float used = cfmMin > maxCFMMin ? maxCFMMin : cfmMin;
+      float percent = (1.0f - (used / maxCFMMin)) * 100.0f;
+      return percent;
+    update_interval: 10s
+  - platform: pm100x
+    model: PM1003
+    id: pm1003_sensor
+    update_interval: 10s
+    pm_2_5:
+      name: "PM2.5"
+      id: pm1003_sensor_pm25
+      filters:
+        - median:
+            window_size: 6
+            send_every: 1
+            send_first_at: 1
+  - platform: aqi
+    name: "European Air Quality Index"
+    id: european_air_quality_index
+    pm_2_5: pm1003_sensor_pm25
+    pm_10_0: pm1003_sensor_pm25
+    calculation_type: CAQI  
 uart:
-  tx_pin: GPIO18
-  rx_pin: GPIO19
+  tx_pin: GPIO19
+  rx_pin: GPIO18
   baud_rate: 9600
+
 # Outputs
 output:
   - platform: ledc
     pin: GPIO04
-    id: gpio_04
-    frequency: 1600Hz
-    max_power: 0.85
-    min_power: 0.4
+    id: gpio_05
+    frequency: 3khz
+    max_power: 0.95
+    min_power: 0.05
     zero_means_zero: true
 light:
-  - platform: monochromatic
-    output: gpio_04
-    name: "Test Fan"
   - platform: esp32_rmt_led_strip
+    id: wled_light
     chipset: WS2812
     pin: GPIO21
-    num_leds: 12
+    num_leds: 26
     rgb_order: GRB
-    name: "FastLED WS2811 Light"
     effects:
       - addressable_scan:
-          name: Scan Effect With Custom Values
+          name: Scan
           move_interval: 100ms
-          scan_width: 1
+          scan_width: 6
       - addressable_rainbow:
-          name: Rainbow Effect With Custom Values
+          name: Rainbow
           speed: 10
           width: 12
-      - addressable_twinkle:
-          name: Twinkle Effect With Custom Values
-          twinkle_probability: 5%
-          progress_interval: 4ms
+      - addressable_lambda:
+          name: "AQI"
+          update_interval: 1s
+          lambda: |-
+            // Get CAQI value (European Air Quality Index sensor)
+            float caqi = id(european_air_quality_index).state;
+            // Map CAQI to color (green to red)
+            uint8_t r = 0, g = 0, b = 0;
+            if (isnan(caqi)) {
+              r = 0; g = 0; b = 0; // Off if unknown
+            } else if (caqi <= 25) {
+              r = 0; g = 255; b = 0; // Green
+            } else if (caqi <= 50) {
+              r = 128; g = 255; b = 0; // Yellow-green
+            } else if (caqi <= 75) {
+              r = 255; g = 255; b = 0; // Yellow
+            } else if (caqi <= 100) {
+              r = 255; g = 128; b = 0; // Orange
+            } else {
+              r = 255; g = 0; b = 0; // Red (Very High)
+            }
+            for (int i = 0; i < it.size(); i++) {
+              it[i] = Color(r, g, b);
+            }
 display:
     platform: tm1637
     id: tm1637_display
@@ -167,7 +545,363 @@ display:
     length: 4
     update_interval: 250ms
     lambda: |-
+      if (!id(display_switch).state) {
+        it.set_buffer(0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+        return;
+      }
       //it.print("0123");
-      it.set_buffer(0xFF, 0xFF, 0xFF, 0xFF);
-      it.set_buffer(id(display_buffer)[0], id(display_buffer)[1], id(display_buffer)[2], id(display_buffer)[3]);
+      //it.set_buffer(0xFF, 0xFF, 0xFF, 0xFF,0xFF,0xFF);
+      it.set_buffer(id(display_buffer)[0], id(display_buffer)[1], id(display_buffer)[2], id(display_buffer)[3], 0x00,0x00);
+fan:
+  - platform: template
+    id: fan_vital100
+    name: "Fan"
+    speed_count: 4
+    preset_modes :
+      - "Manual"
+      - "Auto"
+      - "Sleep"
+    on_speed_set:
+      - script.execute: apply_fan_output
+      - script.execute: set_fan_to_manual_mode
+    on_preset_set:
+      - script.execute: apply_fan_output
+    on_turn_on:
+      - switch.turn_on: display_switch
+      - script.execute: apply_fan_output
+    on_turn_off:
+      - lambda: |-
+          id(fan_output_percent) = 0.0f;
+          id(gpio_05).set_level(0.0f);
+          id(adopt_last_target) = NAN;
+          auto call = id(fan_speed_percent).make_call();
+          call.set_value(0.0f);
+          call.perform();
+      - script.execute: apply_fan_output
+
+button:
+  - platform: template
+    name: "Reset Filter Stats"
+    entity_category: config
+    icon: mdi:air-filter
+    on_press:
+      - globals.set:
+          id: cfm_min_used
+          value: '0.0'
+      - globals.set:
+          id: run_time_min
+          value: '0'
+
+
+script:
+  - id: cycle_timer
+    mode: restart
+    then:
+      - lambda: |-
+          int timer_min_left = (int) id(timer_min).state;
+          if (timer_min_left == 0) {
+            id(timer_mode).make_call().set_option("2h").perform();
+          } else if (timer_min_left == 120) {
+            id(timer_mode).make_call().set_option("4h").perform();
+          } else if (timer_min_left == 240) {
+            id(timer_mode).make_call().set_option("8h").perform();
+          } else if (timer_min_left == 480) {
+            id(timer_mode).make_call().set_option("Off").perform();
+          } else {
+            id(timer_mode).make_call().set_option("Off").perform();
+          }
+  - id: update_display_buffer
+    mode: restart
+    then:
+      - lambda: |-
+          if (!id(display_switch).state) {
+            id(display_buffer)[0] = 0x00;
+            id(display_buffer)[1] = 0x00;
+            id(display_buffer)[2] = 0x00;
+            id(display_buffer)[3] = 0x00;
+            return;
+          }
+          uint8_t b2 = 0x00;
+          uint8_t b3 = 0x00;
+          //Fan lights
+          if (!id(fan_vital100).state) {
+            b2 |= 0x80; // power light only when off
+            id(display_buffer)[0] = 0x00;
+            id(display_buffer)[1] = 0x00;
+            id(display_buffer)[2] = b2;
+            id(display_buffer)[3] = b3;
+            //ESP_LOGD("display", "update_display_buffer: fan=off power-only b2=0x%02X b3=0x%02X", b2, b3);
+            return;
+          }
+          b2 |= 0x80;
+          if (id(fan_vital100).state) {
+            auto preset = id(fan_vital100).get_preset_mode();
+            if (preset == "Sleep") {
+              b3 |= 0x20;
+            } else if (preset == "Auto") {
+              b3 |= 0x80;
+            } else {
+              b3 |= 0x40;
+              switch (id(fan_vital100).speed) {
+                case 1: b3 |= 0x02; break;
+                case 2: b3 |= 0x04; break;
+                case 3: b3 |= 0x08; break;
+                case 4: b3 |= 0x10; break;
+                default: break;
+              }
+            }
+          }
+          //status lights
+          if (id(filter_life_left).state < 5.0f) b3 |= 0x01; //if filter life below 5% show filter icon
+          if (id(childlock_enabled)) b2 |= 0x01; // child lock status
+          if (id(wifi_component).is_connected()) {
+            b2 |= 0x20; // wifi connected
+          } else if (id(wifi_blink_on)) {
+            b2 |= 0x20; // blink wifi icon until connected
+          }
+          //timer
+          int total_min = (int) id(timer_min).state;
+          if (total_min > 0) {
+            b2 |= 0x40;
+            if (total_min == 120) {
+              b2 |= 0x02;
+            } else if (total_min == 240) {
+              b2 |= 0x04;
+            } else if (total_min == 480) {
+              b2 |= 0x08;
+            } else {
+              b2 |= 0x10;
+            }
+          }
+          id(display_buffer)[0] = 0x00;
+          id(display_buffer)[1] = 0x00;
+          id(display_buffer)[2] = b2;
+          id(display_buffer)[3] = b3;
+          
+          // Update WLED effect based on display status and AQI 
+          static bool last_want_on = false;
+          static std::string last_effect = "";
+          bool want_on = id(display_switch).state && id(fan_vital100).state;
+          bool scan = !id(wifi_component).is_connected();
+          std::string effect = id(light_mode).current_option();
+          if (effect != "AQI" && effect != "Rainbow") effect = "Rainbow";
+          bool effect_changed = (effect != last_effect);
+          if (want_on != last_want_on || effect_changed) {
+            if (want_on) {
+              auto call = id(wled_light).turn_on();
+              call.set_effect(scan ? "Scan" : effect.c_str());
+              call.set_rgb(0.0f, 0.0f, 1.0f);
+              call.perform();
+              id(wled_scan_mode) = scan;
+            } else {
+              id(wled_light).turn_off().perform();
+              id(wled_scan_mode) = false;
+            }
+            last_want_on = want_on;
+            last_effect = effect;
+          } else if (want_on && scan != id(wled_scan_mode)) {
+            auto call = id(wled_light).turn_on();
+            call.set_effect(scan ? "Scan" : effect.c_str());
+            call.set_rgb(0.0f, 0.0f, 1.0f);
+            call.perform();
+            id(wled_scan_mode) = scan;
+          }
+  - id: set_fan_to_manual_mode
+    mode: restart
+    then:
+      - lambda: |-
+          if (!id(fan_vital100).state) return;
+          auto preset = id(fan_vital100).get_preset_mode();
+          if (preset == "Manual") return;
+          auto call = id(fan_vital100).turn_on();
+          call.set_preset_mode("Manual");
+          call.perform();
+  - id: apply_fan_output
+    mode: restart
+    then:
+      - lambda: |-
+          float percent = 0.0f;
+          if (!id(fan_vital100).state) {
+            percent = 0.0f;
+          } else {
+            auto preset = id(fan_vital100).get_preset_mode();
+            if (!preset.empty() && preset == "Sleep") {
+              percent = 33.0f;
+            } else {
+              switch (id(fan_vital100).speed) {
+                case 1: percent = 40.0f; break;
+                case 2: percent = 60.0f; break;
+                case 3: percent = 80.0f; break;
+                case 4: percent = 100.0f; break;
+                default: percent = 0.0f; break;
+              }
+            }
+          }
+          const float min_percent = ${min_actual_speed} * 100.0f;
+          if (percent > 0.0f && percent < min_percent) percent = min_percent;
+          ESP_LOGI("fan", "apply_fan_output: state=%s preset=%s speed=%d percent=%.1f min=%.1f", id(fan_vital100).state ? "on" : "off", id(fan_vital100).get_preset_mode().c_str(), id(fan_vital100).speed, percent, min_percent);
+          auto percent_call = id(fan_speed_percent).make_call();
+          percent_call.set_value(percent);
+          percent_call.perform();
+          // target only; output is adjusted by adopt_fan_speed
+  - id: adopt_fan_speed
+    mode: queued
+    then:
+      - lambda: |-
+          //return; // disable for now
+          //ESP_LOGI("fan", "adopt_fan_speed: tick");
+          static int cooldown_ticks = 0;
+          static int hold_ticks = 0;
+          if (!id(fan_vital100).state) {
+            id(fan_output_percent) = 0.0f;
+            id(gpio_05).set_level(0.0f);
+            hold_ticks = 0;
+            cooldown_ticks = 0;
+            id(adopt_last_target) = NAN;
+            return;
+          }
+          float target = id(fan_speed_percent).state;
+          if (target < 0.0f) target = 0.0f;
+          if (target > 100.0f) target = 100.0f;
+          auto preset = id(fan_vital100).get_preset_mode();
+          if (!preset.empty() && preset == "Auto") {
+              int caqi = (int) id(european_air_quality_index).state;
+              float auto_trg = 0.0f;
+              if (caqi <= 25) {
+                auto_trg = 33.0f;
+              } else if (caqi <= 50) {
+                auto_trg = 40.0f;
+              } else if (caqi <= 75) {
+                auto_trg = 60.0f;
+              } else if (caqi <= 100) {
+                auto_trg = 80.0f;
+              } else {
+                auto_trg = 100.0f;
+              }
+              if(auto_trg != target){
+                target = auto_trg;
+              }
+          }
+
+
+
+
+
+          const float min_percent = ${min_actual_speed} * 100.0f;
+          if (target > 0.0f && target < min_percent) target = min_percent;
+          float actual = id(fan_speed_percent_sensor).state;
+          if (isnan(actual)) actual = 0.0f;
+          if (actual < 0.0f) actual = 0.0f;
+          if (actual > 100.0f) actual = 100.0f;
+          float output = id(fan_output_percent);
+          
+          bool target_changed = isnan(id(adopt_last_target)) || fabsf(target - id(adopt_last_target)) > 0.1f;
+          if (target_changed) {
+            float base = 5.0f;
+            if (target >= 90.0f) {
+              base = 95.0f;
+            } else if (target >= 70.0f) {
+              base = 46.6f;
+            } else if (target >= 50.0f) {
+              base = 28.8f;
+            } else if (target >= 30.0f) {
+              base = 11.9f;
+            }
+            if (base < min_percent) base = min_percent;
+            output = base;
+            id(fan_output_percent) = output;
+            id(gpio_05).set_level(output / 100.0f);
+            id(adopt_last_target) = target;
+            hold_ticks = 10;
+            cooldown_ticks = 5;
+          }
+
+          if (actual <= 0.0f) {
+            if (output <= 0.0f) {
+              float fallback = 33.0f;
+              if (fallback < min_percent) fallback = min_percent;
+              ESP_LOGI("fan", "adopt_fan_speed: no speed detected, fallback=%.1f target=%.1f", fallback, target);
+              id(fan_output_percent) = fallback;
+              id(gpio_05).set_level(fallback / 100.0f);
+            } else {
+              id(gpio_05).set_level(output / 100.0f);
+            }
+            cooldown_ticks = 5;
+            return;
+          }
+          float error = target - actual;
+          float abs_error = fabsf(error);
+          if (abs_error < 0.3f) return;
+          if (hold_ticks > 0) {
+            hold_ticks--;
+            return;
+          }
+          if (cooldown_ticks > 0) {
+            cooldown_ticks--;
+            return;
+          }
+          float step = error * 0.12f;
+          float max_step = 1.0f;
+          float min_step = 0.05f;
+          if (target <= 25.0f) {
+            step = error * 0.08f;
+            max_step = 0.6f;
+            min_step = 0.05f;
+          } else {
+            step = error * 0.1f;
+            max_step = 0.8f;
+            min_step = 0.05f;
+          }
+          if (step > max_step) step = max_step;
+          if (step < -max_step) step = -max_step;
+          if (fabsf(step) < min_step) step = (error > 0.0f) ? min_step : -min_step;
+          ESP_LOGD("fan", "adopt_fan_speed: target=%.1f actual=%.1f error=%.1f output=%.1f step=%.1f", target, actual, error, output, step);
+          output += step;
+          if (output < 0.0f) output = 0.0f;
+          if (output > 100.0f) output = 100.0f;
+          if (target > 0.0f && output < min_percent) output = min_percent;
+          id(fan_output_percent) = output;
+          id(gpio_05).set_level(output / 100.0f);
+          cooldown_ticks = 5;
+
+
+interval:
+  - interval: 500ms
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return !id(wifi_component).is_connected();
+          then:
+            - lambda: |-
+                id(wifi_blink_on) = !id(wifi_blink_on);
+                id(update_display_buffer).execute();
+          else:
+            - lambda: |-
+                if (id(wifi_blink_on)) {
+                  id(wifi_blink_on) = false;
+                }
+                id(update_display_buffer).execute();
+  - interval: 60s
+    then:
+      - lambda: |-
+          if (id(fan_vital100).state && id(timer_min).state > 0) {
+            auto call = id(timer_min).make_call();
+            auto new_val = id(timer_min).state - 1;
+            call.set_value(new_val);
+            call.perform();
+            if (new_val == 0) {
+              auto call2 = id(fan_vital100).turn_off();
+              call2.perform();
+            }
+          }
+          if (id(fan_vital100).state) {
+            id(cfm_min_used) += id(current_cfm).state;
+            id(run_time_min) += 1;
+          }
+  - interval: 1s
+    then:
+      - script.execute: adopt_fan_speed
+
+
     
