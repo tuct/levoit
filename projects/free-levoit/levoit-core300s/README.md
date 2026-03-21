@@ -19,7 +19,7 @@ See [Levoit Component](../../../components/levoit/README.md) for complete compon
 | Board | CORE300S Ctrl Board V1.4.1 |
 | Speeds | 3 levels |
 | CADR (spec) | 214 m³/h |
-| ESPHome | 2025.12.5+ |
+| ESPHome | 2026.1.2+ |
 | Entities | Fan (manual/auto/sleep), Current CADR, Filter Life Left, Filter Low (binary), Reset Filter Stats (button) |
 
 

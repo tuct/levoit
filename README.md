@@ -16,11 +16,17 @@ Mostly DIY esphome devices, but also some some components and esphome based cust
 Collection of custom ESPHome firmware and hardware projects for Levoit air purifiers, eliminating cloud dependency and enabling native Home Assistant integration.
 
 **Supported Models:**
+
 * [Core 300S](./projects/free-levoit/levoit-core300s) – Custom firmware (no hardware modifications needed)
 * [Core 400S](./projects/free-levoit/levoit-core400s) – Custom firmware (no hardware modifications needed)
 * [Vital 100S](./projects/free-levoit/levoit-vital100s) – Custom firmware (no hardware modifications needed)
 * [LV-PUR 131S](./projects/free-levoit/levoit-lv131s) – Custom firmware + ESP32-C3 MCU upgrade + PM5003 sensor upgrade (hardware hack; plays Doom!)
 * [Mini](./projects/free-levoit/levoit-mini) – Custom PCB, 3D-printed parts, and firmware (fully reversible modification)
+
+Soon:
+* [Core 200s](./projects/free-levoit/levoit-core200s) – Custom Firmware - WIP
+* [Core 600s](./projects/free-levoit/levoit-core600s) – Custom Firmware - WIP
+* [Vital 200S](./projects/free-levoit/levoit-vital200s) – Custom firmware (no hardware modifications needed)
 
 **Key Features Across All Models:**
 - Full Home Assistant integration via native ESPHome API (no cloud required)
