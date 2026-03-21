@@ -255,6 +255,23 @@ namespace esphome
                 }
                 break;
 
+            case SelectType::NIGHTLIGHT:
+                switch (value)
+                {
+                case 0:
+                    this->sendCommand(setNightlightOff);
+                    break;
+                case 1:
+                    this->sendCommand(setNightlightMid);
+                    break;
+                case 2:
+                    this->sendCommand(setNightlightFull);
+                    break;
+                default:
+                    break;
+                }
+                break;
+
             default:
                 break;
             }

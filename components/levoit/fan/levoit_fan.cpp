@@ -39,8 +39,10 @@ namespace esphome
         }
         void LevoitFan::setup()
         {
-            bool isCore300s = parent_->get_model() == ModelType::CORE300S;
-            bool isCoreModel = parent_->get_model() == ModelType::CORE300S || parent_->get_model() == ModelType::CORE400S;
+            ModelType model = parent_->get_model();
+            bool isCore200s = model == ModelType::CORE200S;
+            bool isCore300s = model == ModelType::CORE300S;
+            bool isCoreModel = model == ModelType::CORE200S || model == ModelType::CORE300S || model == ModelType::CORE400S;
             auto restore = this->restore_state_();
             if (restore.has_value())
             {
@@ -50,14 +52,16 @@ namespace esphome
             std::vector<const char *> preset_modes;
             for (const auto &m : MODE_MAP)
             {
-                if(isCoreModel && m.preset == "Pet")
+                if (isCoreModel && std::strcmp(m.preset, "Pet") == 0)
                     continue; // Core models do not have Pet mode
+                if (isCore200s && std::strcmp(m.preset, "Auto") == 0)
+                    continue; // Core200S has no Auto mode (no PM2.5 sensor)
                 preset_modes.push_back(m.preset);
             }
-            
+
             // Set speed count based on model
-            if (parent_ != nullptr && isCore300s) {
-                this->speed_count_ = 3;  // Core300S has 3 speeds
+            if (isCore200s || isCore300s) {
+                this->speed_count_ = 3;  // Core200S and Core300S have 3 speeds
             } else {
                 this->speed_count_ = 4;  // Other models have 4 speeds
             }

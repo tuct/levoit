@@ -30,6 +30,9 @@ namespace esphome
         case SelectType::DAYTIME_FAN_MODE_LEVEL:
           this->traits.set_options({"Auto","Low","Medium","High","Highest","Pet"});
           break;
+        case SelectType::NIGHTLIGHT:
+          this->traits.set_options({"Off","Mid","Full"});
+          break;
         default:
           break;
       }

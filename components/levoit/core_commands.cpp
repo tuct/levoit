@@ -163,6 +163,20 @@ namespace esphome
                 payload = {};
                 break;
 
+            // Core200S nightlight
+            case CommandType::setNightlightOff:
+                msg_type = {0x01, 0x03, 0xA0};
+                payload = {0x00, 0x00};
+                break;
+            case CommandType::setNightlightMid:
+                msg_type = {0x01, 0x03, 0xA0};
+                payload = {0x00, 0x32};
+                break;
+            case CommandType::setNightlightFull:
+                msg_type = {0x01, 0x03, 0xA0};
+                payload = {0x00, 0x64};
+                break;
+
             default:
                 ESP_LOGW(TAG_CORE_CMD, "Command not implemented: %s", command_type_to_string(cmd));
                 return {};

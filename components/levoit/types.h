@@ -108,6 +108,7 @@ namespace esphome
             WHITE_NOISE_FAN_LEVEL = 3,
             SLEEP_MODE_FAN_MODE_LEVEL = 4,
             DAYTIME_FAN_MODE_LEVEL = 5,
+            NIGHTLIGHT = 6,
         };
         static constexpr SelectType AUTO_MODE = SelectType::AUTO_MODE;
         static constexpr SelectType SLEEP_MODE = SelectType::SLEEP_MODE;
@@ -115,6 +116,7 @@ namespace esphome
         static constexpr SelectType WHITE_NOISE_FAN_LEVEL = SelectType::WHITE_NOISE_FAN_LEVEL;
         static constexpr SelectType SLEEP_MODE_FAN_MODE_LEVEL = SelectType::SLEEP_MODE_FAN_MODE_LEVEL;
         static constexpr SelectType DAYTIME_FAN_MODE_LEVEL = SelectType::DAYTIME_FAN_MODE_LEVEL;
+        static constexpr SelectType NIGHTLIGHT = SelectType::NIGHTLIGHT;
 
 
 
@@ -152,6 +154,10 @@ namespace esphome
             setFanModePet,
             setPowerMode,
             setSleepModeDefault,
+            // Core200S nightlight
+            setNightlightOff,
+            setNightlightMid,
+            setNightlightFull,
             COMMAND_TYPE_MAX
 
             // dedicated command for setSleepModeCustom
@@ -190,6 +196,9 @@ namespace esphome
                 "setFanModePet",
                 "setPowerMode",
                 "setSleepModeDefault",
+                "setNightlightOff",
+                "setNightlightMid",
+                "setNightlightFull",
             };
             static_assert(
                 sizeof(names) / sizeof(names[0]) == COMMAND_TYPE_MAX,

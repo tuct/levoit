@@ -117,24 +117,37 @@ namespace esphome
 
         if (model == ModelType::CORE300S || model == ModelType::CORE400S)
         {
-          // Core models: payload is 0x30 0x40 -> Core 200s/300s. 0x1B 0x40 -> Core 400s
-          if (msg_type == 0x22 && (ptype0 == 0x30 && ptype1 == 0x40|| ptype0 == 0xB0 && ptype1 == 0x40))
+          // Core300S/400S status: ptype 0x30 0x40 or 0xB0 0x40
+          if (msg_type == 0x22 && (ptype0 == 0x30 && ptype1 == 0x40 || ptype0 == 0xB0 && ptype1 == 0x40))
           {
             decode_core_status(self, model, payload, payload_len);
           }
-          // Core models: timer updated from device msg
-          if (msg_type == 0x12 && (ptype0 == 0x65 && ptype1 == 0xA2 ))
+          // Timer
+          if (msg_type == 0x12 && ptype0 == 0x65 && ptype1 == 0xA2)
           {
             decode_core_timer(self, model, payload, payload_len);
           }
-          // Core models: timer updated from device msg
-          if (msg_type == 0x22 && (ptype0 == 0x66 && ptype1 == 0xA2 ))
+          if (msg_type == 0x22 && ptype0 == 0x66 && ptype1 == 0xA2)
           {
             decode_core_timer(self, model, payload, payload_len);
           }
-
-
-
+        }
+        if (model == ModelType::CORE200S)
+        {
+          // Core200S status: ptype 0x01 0x60 (third byte 0x40), payload 16 bytes
+          if (msg_type == 0x22 && ptype0 == 0x01 && ptype1 == 0x60)
+          {
+            decode_core_status(self, model, payload, payload_len);
+          }
+          // Timer (same format as Core300S)
+          if (msg_type == 0x12 && ptype0 == 0x65 && ptype1 == 0xA2)
+          {
+            decode_core_timer(self, model, payload, payload_len);
+          }
+          if (msg_type == 0x22 && ptype0 == 0x66 && ptype1 == 0xA2)
+          {
+            decode_core_timer(self, model, payload, payload_len);
+          }
         }
         if (model == ModelType::VITAL100S || model == ModelType::VITAL200S)
         {
