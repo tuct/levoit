@@ -42,10 +42,27 @@ TBD
 ![PCB back](./images/pcb_back.jpg)
 ![PCB front](./images/pcb_front.jpg)
 
-## Flash
 
-* Solder wires to pins TXD0, RXD0, IO0, +3V3, and GND near the ESP32 on the logic board, and connect these to a USB-UART converter. On some boards, if these are through holes, soldering may not be necessary.
+## Use new ESP32-S3 
+
+Connect ESP32-S3 to PCB - This allows us to keep the original ESP32 firmware 
+
+![PCB esp32-s3](./images/pcb_wire_s3.jpg)
+
+| PCB | ESP32-S3 |
+|-----|----------|
+| EN | GND |
+| 3.3V | 3.3V |
+| GND | GND |
+| RX | GPIO05 |
+| TX | GPIO04 |
+
+## Flash existing ESP32-C1-SOLO
+
+* Solder wires to pins TXD0, RXD0, IO0, +5V, and GND near the ESP32 on the logic board, and connect these to a USB-UART converter. On some boards, if these are through holes, soldering may not be necessary.
 * Connect IO0 to ground during power before connecting USB-UART to boot to bootloader. On some boards, IO0 may not have it's own debug pin and the ESP32 GPIO0 pin on the esp can be used.
+
+
 
 ### Backup Existing Firmware
 ```
