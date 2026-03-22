@@ -338,6 +338,8 @@ namespace esphome
                 model_ = ModelType::VITAL200S;
             else if (model == "VITAL100S")
                 model_ = ModelType::VITAL100S;
+            else if (model == "CORE200S")
+                model_ = ModelType::CORE200S;
             else if (model == "CORE300S")
                 model_ = ModelType::CORE300S;
             else if (model == "CORE400S")
