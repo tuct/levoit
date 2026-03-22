@@ -19,12 +19,22 @@
 #include "core_status.h"
 #include "core_commands.h"
 #include "vital_commands.h"
+#ifdef USE_SWITCH
 #include "switch/levoit_switch.h"
+#endif
 #include "fan/levoit_fan.h"
+#ifdef USE_NUMBER
 #include "number/levoit_number.h"
+#endif
+#ifdef USE_SENSOR
 #include "sensor/levoit_sensor.h"
+#endif
+#ifdef USE_SELECT
 #include "select/levoit_select.h"
+#endif
+#ifdef USE_TEXT_SENSOR
 #include "text_sensor/levoit_text_sensor.h"
+#endif
 
 namespace esphome
 {
@@ -79,78 +89,70 @@ namespace esphome
         }
         void Levoit::publish_switch(SwitchType type, bool state)
         {
+#ifdef USE_SWITCH
             auto *sw = switches_[st_idx_(type)];
             if (!sw)
                 return;
-
-            // avoid redundant publishes (helps “loop feel”)
             if (sw->state == state)
                 return;
             sw->publish_state(state);
+#endif
         }
 
         void Levoit::publish_sensor(SensorType type, uint32_t value)
         {
+#ifdef USE_SENSOR
             auto *se = sensors_[st_idx_(type)];
             if (!se)
                 return;
-
             float fvalue = static_cast<float>(value);
-            // avoid redundant publishes (helps “loop feel”)
-
             if (se->has_state() && se->state == fvalue)
                 return;
             se->publish_state(value);
+#endif
         }
 
         void Levoit::publish_number(NumberType type, uint32_t value)
         {
+#ifdef USE_NUMBER
             auto *nm = numbers_[nt_idx_(type)];
             if (!nm)
                 return;
-
             float fvalue = static_cast<float>(value);
-            // avoid redundant publishes (helps “loop feel”)
-
             if (nm->has_state() && nm->state == fvalue)
                 return;
             nm->publish_state(value);
+#endif
         }
         void Levoit::publish_select(SelectType type, uint32_t value)
         {
+#ifdef USE_SELECT
             auto *sl = selects_[sl_idx_(type)];
             if (!sl)
                 return;
-
             const auto &options = sl->traits.get_options();
-
-            // bounds check: value is an index into options
             if (value >= options.size())
             {
                 ESP_LOGW(TAG, "publish_select: invalid index %u for type %d (options=%u)",
                          value, (int)type, (unsigned)options.size());
                 return;
             }
-
             const std::string &opt = options[value];
-
-            // avoid redundant publishes
             if (sl->has_state() && sl->current_option() == opt)
                 return;
-
             sl->publish_state(opt);
+#endif
         }
         void Levoit::publish_text_sensor(TextSensorType type, const std::string &value)
         {
+#ifdef USE_TEXT_SENSOR
             auto *tsl = text_sensor_[static_cast<uint8_t>(type)];
             if (!tsl)
                 return;
-
-            // avoid redundant publishes
             if (tsl->has_state() && tsl->state == value)
                 return;
-
             tsl->publish_state(value);
+#endif
         }
         void Levoit::publish_binary_sensor(BinarySensorType type, bool state)
         {
@@ -159,12 +161,12 @@ namespace esphome
         }
         void Levoit::publish_filter_stats_now()
         {
-            // Publish filter life percent as float
             float filter_left = this->calculate_filter_life_left_percent();
+#ifdef USE_SENSOR
             auto *se = this->sensors_[st_idx_(SensorType::FILTER_LIFE_LEFT)];
             if (se != nullptr)
                 se->publish_state(filter_left);
-            // Publish binary sensor state based on 5% threshold
+#endif
             this->publish_binary_sensor(BinarySensorType::FILTER_LOW, filter_left < 5.0f);
         }
         void Levoit::on_switch_command(SwitchType type, bool state)
@@ -409,9 +411,11 @@ namespace esphome
                 
                 // Calculate and publish filter life left (once per minute here)
                 float filter_left = this->calculate_filter_life_left_percent();
+#ifdef USE_SENSOR
                 auto *se = this->sensors_[st_idx_(SensorType::FILTER_LIFE_LEFT)];
                 if (se != nullptr)
                     se->publish_state(filter_left);
+#endif
                 
                 // Save to preferences every minute when running
                 pref_used_cadr_.save(&used_cadr_);
@@ -442,9 +446,12 @@ namespace esphome
 
         float Levoit::calculate_filter_life_left_percent() const
         {
+#ifndef USE_NUMBER
+            return 100.0f;
+#else
             auto *filter_lifetime_num = this->get_number(NumberType::FILTER_LIFETIME_MONTHS);
             if (filter_lifetime_num == nullptr || !filter_lifetime_num->has_state())
-                return 100.0f; // 100%
+                return 100.0f;
 
             float filter_lifetime_months = filter_lifetime_num->state;
             uint32_t total_filter_capacity = cadr * 24 * 30 * filter_lifetime_months;
@@ -458,6 +465,7 @@ namespace esphome
                 life_left_percent = 100.0f;
 
             return life_left_percent;
+#endif
         }
 
         /// @brief The main loop, that is triggeed by the esphome framework automatically
@@ -541,10 +549,11 @@ namespace esphome
             {
                 last_filter_check = now;
                 float filter_left = this->calculate_filter_life_left_percent();
+#ifdef USE_SENSOR
                 auto *se = this->sensors_[st_idx_(SensorType::FILTER_LIFE_LEFT)];
                 if (se != nullptr)
                     se->publish_state(filter_left);
-                // Also update FILTER_LOW binary sensor
+#endif
                 this->publish_binary_sensor(BinarySensorType::FILTER_LOW, filter_left < 5.0f);
             }
 
@@ -739,7 +748,7 @@ namespace esphome
             ESP_LOGD(TAG, "Command triggered: %s", command_type_to_string(commandType));
             std::vector<uint8_t> message;
 
-            if (this->model_ == ModelType::CORE300S || this->model_ == ModelType::CORE400S)
+            if (this->model_ == ModelType::CORE200S || this->model_ == ModelType::CORE300S || this->model_ == ModelType::CORE400S)
             {
                 message = build_core_command(this, commandType);
             }
