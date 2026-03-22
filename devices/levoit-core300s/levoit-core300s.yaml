@@ -36,12 +36,12 @@ ota:
     password: !secret ota_password
 
 wifi:
-  ssid: "mista3"
+  ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: none
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "Levoit-Vital100S"
+    ssid: "Levoit-Core300S"
     password: !secret wifi_ap_password
 
 captive_portal:

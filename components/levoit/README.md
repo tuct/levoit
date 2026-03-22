@@ -9,11 +9,12 @@ Custom ESPHome component for Levoit air purifiers (Core and Vital series) enabli
 | Model | MCU Version | Status |
 |-------|-------------|--------|
 | Levoit Vital 100S | 1.0.5 | ✅ Tested |
+| Levoit Core 200S | 2.0.11 | ✅ Tested |
 | Levoit Core 300S | 2.0.7, 2.0.11 | ✅ Tested -> with new ESP!|
 | Levoit Core 400S | 3.0.0 | ✅ Tested -> with original ESP|
 | Levoit Vital 200S | ?.?.? | ⚠️ Untested -> should be same as Levoit Vital 100S/200S pro |
 | Levoit Vital 200S PRO | 2.0.0 | ✅ Tested -> with original ESP, Thanks @dnsefe |
-| Levoit Core 200S | ?.?.? | ⚠️ Untested -> comming soon!|
+
 
 **Requires:** ESPHome 2026.01.2+
 
@@ -27,13 +28,13 @@ Custom ESPHome component for Levoit air purifiers (Core and Vital series) enabli
 ## Features
 
 ### Fan Control
-- Standard fan entity with multiple speed levels (1-4, 3 for Core300s)
+- Standard fan entity with multiple speed levels (1-4, 3 for Core300S)
 - Preset modes for Auto, Sleep, and Manual operation
 - Pet mode (Vital series)
 - On/Off control
 
 ### Sensors
-- **PM2.5**: Real-time particulate matter readings (Core series)
+- **PM2.5**: Real-time particulate matter readings
 - **Timer Status**: Remaining time display (e.g., "5h 33 min remaining")
 - **Current CADR**: Real-time air purification rate in m³/h (speed-dependent)
 - **Filter Life Left**: Percentage of filter lifetime remaining (0-100%)
@@ -53,7 +54,7 @@ Custom ESPHome component for Levoit air purifiers (Core and Vital series) enabli
 - **Display Control**: Toggle screen on/off
 - **Light Detection**: Automatic display brightness adjustment (Vital series)
 - **Child Lock**: Prevent physical button presses
-- **Display Lock**: Lock display settings
+- **Night Light**: Off / Mid / Full (Core200S only)
 
 ## Installation
 

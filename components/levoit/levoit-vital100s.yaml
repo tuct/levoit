@@ -18,20 +18,21 @@ logger:
 
 # Enable Home Assistant API
 api:
-  password: "aaa"
+  encryption:
+    key: !secret api_key
 
 ota:
   - platform: esphome
-    password: "aaaaaaaa"
+    password: !secret ota_password
 
 wifi:
-  ssid: "mista3"
-  password: "vvfpnhk8vBfh"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Levoit-Vital100S"
-    password: "1ZjzfekrSvRt"
+    password: !secret wifi_ap_password
 
 captive_portal:
 external_components:
@@ -57,93 +58,92 @@ fan:
     id: levoit_fan1  
 switch:
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Display"
     type: display
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Child Lock"
     type: child_lock
 
 number:
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Auto Mode Room Size"
     type: efficiency_room_size
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Timer (min)"
     type: timer
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Filter Months"
     type: filter_lifetime_months
 sensor:
 
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "AQ - PM 2.5"
     type: pm25
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "AQI"
     type: aqi
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Current CADR"
     type: current_cadr
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Filter %"
     type: filter_life_left
 # Better: auto_mode_room_size_high_fan text_sensor    
 #  - platform: levoit
-#    levoit: levoitcore300
+#    levoit: levoitvital100
 #    name: "Efficiency Count Dowmn Timer (sec)"
 #    type: efficiency_counter
 # Better: timer_duration_remaining text_sensor    
 #  - platform: levoit
-#    levoit: levoitcore300
+#    levoit: levoitvital100
 #    name: "Timer Remaining"
 #    type: timer_current
 select:
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Auto Mode"
     type: auto_mode
 text_sensor:
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "MCU Version"
     type: mcu_version
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "ESP Version"
     type: esp_version
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Timer Duration"
     type: timer_duration_initial
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Timer Remaining"
     type: timer_duration_remaining
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
+    name: "Auto: High remaining run time"
+    type: auto_mode_room_size_high_fan
+  - platform: levoit
+    levoit: levoitvital100
     name: "Error"
     type: error_message
 button:
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Filter Reset"
     type: reset_filter_stats
 binary_sensor:
   - platform: levoit
-    levoit: levoitcore300
+    levoit: levoitvital100
     name: "Filter Low"
     type: filter_low
-#  Only for Vital100S and Vital200S
-#  - platform: levoit
-#    levoit: levoitcore300
-#    name: "Auto: High remaining run time"
-#    type: auto_mode_room_size_high_fan
