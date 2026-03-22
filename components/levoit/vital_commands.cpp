@@ -129,6 +129,12 @@ namespace esphome
         break;
       }
 
+      case CommandType::setTimerStop:
+        msg_type = {0x02, 0x19, 0x50};
+        payload = {0x01, 0x04, 0x00, 0x00, 0x00, 0x00};
+        self->stop_timer();
+        break;
+
       case CommandType::setTimerMinutes:
       {
         msg_type = {0x02, 0x19, 0x50};

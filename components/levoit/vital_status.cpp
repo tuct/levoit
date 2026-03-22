@@ -62,7 +62,7 @@ namespace esphome
             self->publish_text_sensor(TextSensorType::TIMER_DURATION_CURRENT, format_duration_minutes(remaining_min));
             if (remaining_min > 0)
             {
-              self->start_timer();        
+              self->start_timer();
             }
             else
             {
@@ -70,7 +70,7 @@ namespace esphome
                 self->stop_timer();
                 self->publish_number(NumberType::TIMER, 0); // set to 0 when timer ends
               }
-              
+              self->set_timer_stop_pending(false);  // MCU confirmed timer off
             }
           }
 

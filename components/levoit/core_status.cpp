@@ -20,12 +20,15 @@ namespace esphome
                            size_t payload_len)
     {
       (void)model;
-      if (self == nullptr || !payload || payload_len < 8)
+      if (self == nullptr || !payload || payload_len < 4)
         return;
 
-      // Extract two uint32 values (little-endian)
+      // Extract two uint32 values (little-endian).
+      // Core200S echoes only remaining_sec (4 bytes); Core300S sends both (8 bytes).
       uint32_t remaining_sec = payload[0] | (payload[1] << 8) | (payload[2] << 16) | (payload[3] << 24);
-      uint32_t initial_sec = payload[4] | (payload[5] << 8) | (payload[6] << 16) | (payload[7] << 24);
+      uint32_t initial_sec = (payload_len >= 8)
+          ? (payload[4] | (payload[5] << 8) | (payload[6] << 16) | (payload[7] << 24))
+          : remaining_sec;
 
       uint16_t remaining_min = remaining_sec / 60;
       uint16_t initial_min = initial_sec / 60;
@@ -49,6 +52,7 @@ namespace esphome
           self->stop_timer();
           self->publish_number(NumberType::TIMER, 0);
         }
+        self->set_timer_stop_pending(false);  // MCU confirmed timer off
       }
     }
     void decode_core_status(Levoit *self,

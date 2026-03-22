@@ -210,8 +210,24 @@ namespace esphome
             switch (type)
             {
             case NumberType::TIMER:
-
-                this->sendCommand(setTimerMinutes); // in minutes
+                if (this->model_ == ModelType::CORE200S) {
+                    // Core200S: MCU requires stop before accepting new timer value;
+                    // after stop, poll requestTimerStatus until MCU confirms remaining=0
+                    if (value == 0) {
+                        this->sendCommand(setTimerStop);
+                        this->set_timer_stop_pending(true);
+                    } else if (this->is_timer_active()) {
+                        this->sendCommand(setTimerStop);
+                        this->set_timeout(500, [this]() {
+                            this->sendCommand(setTimerMinutes);
+                        });
+                    } else {
+                        this->sendCommand(setTimerMinutes);
+                    }
+                } else {
+                    // Other models: direct stop or set
+                    this->sendCommand(value == 0 ? setTimerStop : setTimerMinutes);
+                }
                 break;
 
             case NumberType::EFFICIENCY_ROOM_SIZE:
@@ -564,6 +580,14 @@ namespace esphome
                 // timer active?
                 last_check = now;
                 ESP_LOGD(TAG, "Request status - timer");
+                this->sendCommand(requestTimerStatus);
+            }
+
+            // Poll timer status every 1s after sending stop, until MCU confirms remaining=0
+            if (this->timer_stop_pending_ && now - this->timer_stop_sent_at_ >= 1000)
+            {
+                this->timer_stop_sent_at_ = now;
+                ESP_LOGD(TAG, "Polling timer status (stop pending)");
                 this->sendCommand(requestTimerStatus);
             }
             // 1) Read incoming bytes into buffer_

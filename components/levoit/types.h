@@ -137,6 +137,7 @@ namespace esphome
             setAutoModeDefault,
             setAutoModeEfficient,
             setTimerMinutes,
+            setTimerStop,       // send 00 00 00 00 (clears timer without touching num->state)
             requestTimerStatus,
             setFanModeManual,
             setFanModeAuto,
@@ -181,6 +182,7 @@ namespace esphome
                 "setAutoModeDefault",
                 "setAutoModeEfficient",
                 "setTimerMinutes",
+                "setTimerStop",
                 "requestTimerStatus",
                 "setFanModeManual",
                 "setFanModeAuto",

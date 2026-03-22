@@ -134,12 +134,16 @@ namespace esphome
         }
         if (model == ModelType::CORE200S)
         {
-          // Core200S status: ptype 0x01 0x60 (third byte 0x40), payload 16 bytes
-          if (msg_type == 0x22 && ptype0 == 0x01 && ptype1 == 0x60)
+          // Core200S status: frame bytes {0x01, 0x60, 0x40} → ptype0=0x60, ptype1=0x40
+          if (msg_type == 0x22 && ptype0 == 0x60 && ptype1 == 0x40)
           {
             decode_core_status(self, model, payload, payload_len);
           }
-          // Timer (same format as Core300S)
+          // Timer: device echoes set command back (ptype 0x64) or pushes update (ptype 0x66)
+          if (msg_type == 0x22 && ptype0 == 0x64 && ptype1 == 0xA2)
+          {
+            decode_core_timer(self, model, payload, payload_len);
+          }
           if (msg_type == 0x12 && ptype0 == 0x65 && ptype1 == 0xA2)
           {
             decode_core_timer(self, model, payload, payload_len);

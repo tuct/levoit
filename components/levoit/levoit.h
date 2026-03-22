@@ -79,9 +79,11 @@ class Levoit : public Component, public uart::UARTDevice {
   LevoitNumber *get_number(NumberType type) const { return numbers_[nt_idx_(type)]; }
   class LevoitBinarySensor *get_binary_sensor(BinarySensorType type) const { return binary_sensors_[bs_idx_(type)]; }
   bool get_binary_sensor_state(BinarySensorType type) const { return binary_sensor_states_[bs_idx_(type)]; }
-  void start_timer(){this->timer_active_ = true;};
-  void stop_timer(){this->timer_active_ = false;}; 
+  void start_timer(){this->timer_active_ = true; this->timer_stop_pending_ = false;};
+  void stop_timer(){this->timer_active_ = false;};
   bool is_timer_active() const { return this->timer_active_; };
+  void set_timer_stop_pending(bool v) { this->timer_stop_pending_ = v; if (v) this->timer_stop_sent_at_ = millis(); }
+  bool is_timer_stop_pending() const { return this->timer_stop_pending_; };
   
   // Getters for internally tracked values
   uint32_t get_used_cadr() const { return used_cadr_; }
@@ -116,6 +118,8 @@ class Levoit : public Component, public uart::UARTDevice {
   size_t buf_len_{0};
 
   bool timer_active_{true};
+  bool timer_stop_pending_{false};  // poll requestTimerStatus until MCU confirms off
+  uint32_t timer_stop_sent_at_{0};  // millis() when stop was sent, for polling delay
   bool wifi_led_solid_{false};
   bool filter_led_on_{false};
   bool filter_blinking_{false};
