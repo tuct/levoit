@@ -4,57 +4,8 @@
 
 Custom ESPHome component for Levoit air purifiers (Core and Vital series) enabling local control without cloud dependency.
 
-## Supported Models
+[See Supported Models and Feature Matrix and Changelog](../../README.md)
 
-| Model | MCU Version | Status |
-|-------|-------------|--------|
-| Levoit Vital 100S | 1.0.5 | ✅ Tested |
-| Levoit Core 200S | 2.0.11 | ✅ Tested |
-| Levoit Core 300S | 2.0.7, 2.0.11 | ✅ Tested -> with new ESP!|
-| Levoit Core 400S | 3.0.0 | ✅ Tested -> with original ESP|
-| Levoit Vital 200S | ?.?.? | ⚠️ Untested -> should be same as Levoit Vital 100S/200S pro |
-| Levoit Vital 200S PRO | 2.0.0 | ✅ Tested -> with original ESP, Thanks @dnsefe |
-
-
-**Requires:** ESPHome 2026.01.2+
-
-## Change Log
-
-### 2026.03.21
-
-* Works with for esphome 2026.3+
-* Sensors - added state class measurement -> allow statistics to be tracked
-
-## Features
-
-### Fan Control
-- Standard fan entity with multiple speed levels (1-4, 3 for Core300S)
-- Preset modes for Auto, Sleep, and Manual operation
-- Pet mode (Vital series)
-- On/Off control
-
-### Sensors
-- **PM2.5**: Real-time particulate matter readings
-- **Timer Status**: Remaining time display (e.g., "5h 33 min remaining")
-- **Current CADR**: Real-time air purification rate in m³/h (speed-dependent)
-- **Filter Life Left**: Percentage of filter lifetime remaining (0-100%)
-
-### Binary Sensors
-- **Filter Low**: Indicates when filter life drops below 5%
-
-### Buttons
-- **Reset Filter Stats**: Resets used CADR and runtime tracking, clears filter life calculation
-
-### Configuration Options
-- **Timer**: Set duration in minutes
-- **Auto Mode**: Configurable with room size optimization
-  - Default mode
-  - Quiet mode
-  - Efficient mode (with room size parameter)
-- **Display Control**: Toggle screen on/off
-- **Light Detection**: Automatic display brightness adjustment (Vital series)
-- **Child Lock**: Prevent physical button presses
-- **Night Light**: Off / Mid / Full (Core200S only)
 
 ## Installation
 
@@ -139,7 +90,7 @@ esp32:
 for custom esp, set accordingly 
 
 
-#### Step 2: Configure UART
+#### Step 3: Configure UART
 Match your hardware connections:
 ```yaml
 uart:
@@ -148,15 +99,15 @@ uart:
   baud_rate: 115200
 ```
 
-#### Step 3: Add Levoit Component
+#### Step 4: Add Levoit Component
 Specify your model (must match device):
 ```yaml
 levoit:
   id: air_purifier
-  model: CORE300S  # Options: VITAL100S, VITAL200S, CORE300S, CORE400S
+  model: CORE300S  # Options: VITAL100S, VITAL200S, CORE200S, CORE300S, CORE400S
 ```
 
-#### Step 4: Compile and Flash
+#### Step 5: Compile and Flash
 ```bash
 # Compile only (check for errors)
 esphome compile your-config.yaml
@@ -243,49 +194,70 @@ uart:
 
 levoit:
   id: air_purifier
-  model: CORE300S  # or VITAL100S, VITAL200S, CORE400S
-  
+  model: CORE300S  # or VITAL100S, VITAL200S, CORE200S, CORE400S
+
 fan:
   - platform: levoit
-    levoit_id: air_purifier
+    levoit: air_purifier
     name: "Air Purifier"
 
 switch:
   - platform: levoit
-    levoit_id: air_purifier
-    display:
-      name: "Display"
-    child_lock:
-      name: "Child Lock"
+    levoit: air_purifier
+    name: "Display"
+    type: display
+  - platform: levoit
+    levoit: air_purifier
+    name: "Child Lock"
+    type: child_lock
 
 number:
   - platform: levoit
-    levoit_id: air_purifier
-    timer:
-      name: "Timer"
-      min_value: 0
-      max_value: 720  # 12 hours
-      step: 1
+    levoit: air_purifier
+    name: "Timer"
+    type: timer
+  - platform: levoit
+    levoit: air_purifier
+    name: "Filter Lifetime (months)"
+    type: filter_lifetime_months
 
 sensor:
   - platform: levoit
-    levoit_id: air_purifier
-    current_cadr:
-      name: "Current CADR"
-    filter_life_left:
-      name: "Filter Life Left"
+    levoit: air_purifier
+    name: "Current CADR"
+    type: current_cadr
+  - platform: levoit
+    levoit: air_purifier
+    name: "Filter Life Left"
+    type: filter_life_left
 
 binary_sensor:
   - platform: levoit
-    levoit_id: air_purifier
-    type: filter_low
+    levoit: air_purifier
     name: "Filter Low"
+    type: filter_low
 
 button:
   - platform: levoit
-    levoit_id: air_purifier
-    type: reset_filter_stats
+    levoit: air_purifier
     name: "Reset Filter Stats"
+    type: reset_filter_stats
+
+text_sensor:
+  - platform: levoit
+    levoit: air_purifier
+    name: "Timer Remaining"
+    type: timer_duration_remaining
+  - platform: levoit
+    levoit: air_purifier
+    name: "MCU Version"
+    type: mcu_version
+
+select:
+  - platform: levoit
+    levoit: air_purifier
+    name: "Night Light"
+    type: nightlight  # Core200S only
 ```
 
 For complete configuration examples, see the [free-levoit project](../../projects/free-levoit/).
@@ -335,12 +307,12 @@ Adjust filter lifetime expectancy via the **Filter Lifetime (months)** number en
 ```yaml
 number:
   - platform: levoit
-    levoit_id: air_purifier
-    filter_lifetime_months:
-      name: "Filter Lifetime (months)"
-      min_value: 1
-      max_value: 24
-      step: 1
+    levoit: air_purifier
+    name: "Filter Lifetime (months)"
+    type: filter_lifetime_months
+    min_value: 1
+    max_value: 24
+    step: 1
 ```
 
 Default: 12 months. Adjust based on your filter's actual rated lifespan or usage pattern.
@@ -369,21 +341,7 @@ uart:
     direction: BOTH  # Monitor raw UART traffic
 ```
 
-## ESPHome 2025.12.5+ Compatibility
 
-This component has been updated for ESPHome 2025.12.5 with the following changes:
-
-### Fan Component Updates
-- **Preset Mode API**: Now uses internal tracking (`current_preset_`) since `preset_mode_` is private
-- **Preset Modes**: Changed from `std::set` to `std::vector<std::string>` for `supported_preset_modes()`
-- **FanCall Handling**: Updated to use `has_preset_mode()` and proper string comparisons
-
-### Text Sensor Icons
-- Icons now configured via Python codegen schema rather than C++ `setup()`
-- Ensures proper Home Assistant entity registration with correct icons
-
-### Select Component
-- Migrated from deprecated `.state` to `current_option()` method
 
 ## Known Issues & TODO
 - [ ] Implement custom sleep mode settings for Vital series

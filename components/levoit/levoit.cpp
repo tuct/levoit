@@ -533,11 +533,23 @@ namespace esphome
                     if (is_connected && !wifi_led_solid_)
                     {
                         ESP_LOGD(TAG, "WiFi connected - setting LED solid");
-                        this->sendCommand(CommandType::setWifiLedOn);
                         wifi_led_solid_ = true;
                         this->sendCommand(CommandType::setFilterLedOff);
                         filter_led_on_ = false;
                         filter_blinking_ = false;
+                        if (this->model_ == ModelType::CORE200S)
+                        {
+                            this->set_timeout(500, [this]() {
+                                this->sendCommand(CommandType::setWifiLedOn);
+                                this->set_timeout(500, [this]() {
+                                    this->sendCommand(CommandType::setWifiLedOn);
+                                });
+                            });
+                        }
+                        else
+                        {
+                            this->sendCommand(CommandType::setWifiLedOn);
+                        }
                     }
                     else if (is_connecting && wifi_led_solid_)
                     {
@@ -551,6 +563,8 @@ namespace esphome
                         this->sendCommand(CommandType::setWifiLedOff);
                         wifi_led_solid_ = false;
                     }
+                }else {
+                    ESP_LOGW(TAG, "WiFi component not found - cannot update LED status");       
                 }
             }
 

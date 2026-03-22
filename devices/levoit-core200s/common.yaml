@@ -27,7 +27,7 @@ wifi:
 captive_portal:
 
 external_components:
-  - source: ../../../components
+  - source: ../../components
     components: [levoit]
 
 #external_components:
