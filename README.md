@@ -28,6 +28,16 @@ Can be flashed to the original ESP32-SOLO-C1 or also installed on top (replace o
 
 ### Features
 
+Core200s  
+
+![PCB back](./devices/levoit-core200s/images/controls_sensors.png)
+![PCB back](./devices/levoit-core200s/images/config_diag.png)
+
+Core300s - with Air Quality and Auto 
+
+![PCB back](./devices/levoit-core300s/photos/filters.png)
+![PCB back](./devices/levoit-core300s/photos/config.png)
+ 
 #### Fan
 
 Native Home Assistant Fan component, with preset support.
@@ -39,6 +49,7 @@ Availiable speed levels and presets are based on model
 | C300S | 1–3 | Auto, Manual, Sleep |
 | C400S | 1–4 | Auto, Manual, Sleep |
 | V100S | 1–4 | Auto, Manual, Sleep, Pet |
+
 
 #### Display / Light
 
