@@ -1,7 +1,0 @@
-packages:
-  c3: !include aq-mood-c3.yaml
-substitutions:
-  id_prefix: aq_mood_c3_kitchen
-  node_name: mista-aq-mood-kitchen
-  name: AQMood - Kitchen
-  led_brightness: '0.20' # 0.0 to 1.0 argb led brightness on trurn in via touch long press

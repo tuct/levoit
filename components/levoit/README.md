@@ -387,7 +387,7 @@ This component has been updated for ESPHome 2025.12.5 with the following changes
 ## Known Issues & TODO
 - [ ] Implement custom sleep mode settings for Vital series
 - [ ] Model-specific room size validation based on CADR ratings
-- [ ] Verify Core 300S/400S protocol differences (MCU version dependency)
+- [x] Verify Core 300S/400S protocol differences (MCU version dependency)
 - [x] WiFi LED control and status indication after connection
 - [x] Add filter life time and current CADR sensors
 - [x] Add filter low binary sensor (< 5% threshold)
