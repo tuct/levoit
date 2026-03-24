@@ -254,6 +254,9 @@ namespace esphome
                 case 2:
                     this->sendCommand(setAutoModeEfficient);
                     break;
+                case 3:
+                    this->sendCommand(setAutoModeEco);
+                    break;
                 default:
                     break;
                 }

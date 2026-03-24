@@ -1,5 +1,6 @@
 #include "levoit_select.h"
 #include "../levoit.h"
+#include "../types.h"
 #include "esphome/core/log.h"
 #include "esphome/components/select/select_traits.h"
 
@@ -13,7 +14,10 @@ namespace esphome
     void LevoitSelect::setup() {
       switch (this->type_) {
         case SelectType::AUTO_MODE:
-          this->traits.set_options({"Default","Quiet","Room Size"});
+          if (parent_ && parent_->get_model() == ModelType::CORE600S)
+            this->traits.set_options({"Default", "Quiet", "Room Size", "ECO"});
+          else
+            this->traits.set_options({"Default", "Quiet", "Room Size"});
           break;
         case SelectType::SLEEP_MODE:
           this->traits.set_options({"Default","Custom"});

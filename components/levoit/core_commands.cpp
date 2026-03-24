@@ -111,6 +111,11 @@ namespace esphome
                 msg_type = {0x01, 0xE2, 0xA5};
                 payload = {0x01};
                 break;
+            case CommandType::setAutoModeEco:
+                msg_type = {0x01, 0xE6, 0xA5};
+                payload = {0x03, 0x00, 0x00};
+                break;
+
             case CommandType::setAutoModeEfficient:
             {
                 msg_type = {0x01, 0xE6, 0xA5};

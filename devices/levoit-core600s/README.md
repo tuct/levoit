@@ -10,7 +10,7 @@ See [Levoit Component](../../../components/levoit/README.md) for complete compon
 | --- | --- |
 | Model | Core 600S |
 | Tested MCU FW | 2.0.01 |
-| ESP | unknown (replace with custom ESP32) |
+| ESP | ESP32-C3-SOLO-1 |
 | Speeds | 4 levels |
 | CADR (spec) | 641 m³/h |
 | ESPHome | 2025.12.5+ |
@@ -23,7 +23,7 @@ See [Levoit Component](../../../components/levoit/README.md) for complete compon
 * Light Detect switch (auto-dims display in dark rooms)
 * Display on/off switch
 * Child Lock switch
-* Auto Mode select (Default / Quiet / Efficient with room size)
+* Auto Mode select (Default / Quiet / Room Size with 9–296 m² / ECO)
 * Timer (minutes)
 * Current CADR sensor (m³/h), Filter Life Left (%) sensor
 * Filter Low binary sensor (<5%)
@@ -35,7 +35,8 @@ See [Levoit Component](../../../components/levoit/README.md) for complete compon
 Same UART protocol as Core 300S/400S with these differences:
 - Status push: `CMD=01 40 41` (vs `B0 40` / `30 40` on 300S/400S)
 - Light Detect command: `CMD=01 E9 A5` PAY=`01`/`00`
-- Status byte layout shifted — display at `[8]`, AQI at `[11]`, PM2.5 at `[12-13]`, child lock at `[14]`, auto mode at `[15]`, efficiency area at `[16-17]`, light detect at `[21]`
+- 4 Auto Mode options: Default (`00`), Quiet (`01`), Room Size (`02` + room_size LE), ECO (`03`)
+- Status byte layout shifted — display at `[8]`, AQI at `[11]`, PM2.5 at `[12-13]`, child lock at `[14]`, auto mode at `[15]`, room size at `[16-17]`, light detect at `[21]`
 
 ## Flash
 
