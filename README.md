@@ -23,7 +23,7 @@ Can be flashed to the original ESP32-SOLO-C1 or also installed on top (replace o
 | [Levoit Core 400s](./devices/levoit-core400s) | 3.0.0 | ✅ Tested (with original ESP) |
 | Levoit Core 600s | ?.?.? | ⚠️ WIP, not supported |
 | [Levoit Vital 100s](./devices/levoit-vital100s) | 1.0.5 | ✅ Tested |
-| Levoit Vital 200S | ?.?.? | ⚠️ WIP, not supported |
+| [Levoit Vital 200s](./devices/levoit-vital200s) | 1.0.5 | ✅ Same protocol as Vital 100S |
 | Levoit Vital 200S PRO | 2.0.0 | ✅ Tested (with original ESP, thanks @dnsefe) |
 
 ### Features
@@ -102,7 +102,7 @@ Availiable speed levels and presets are based on model
 |---------|----|------------|-------------|
 | MCU Version | `mcu_version` | Firmware version string of the purifier MCU chip | 
 | ESP Version |text_sensor| `esp_version` | ESPHome component version string | 
-| Error |text_sensor| `error_message` | Device error status: "Ok" or "Sensor Error" | 
+| Error |text_sensor| `error_message` | Device error status: "Ok" or "Sensor Error" **Not for Core200S** | 
 
 
 ### Change Log

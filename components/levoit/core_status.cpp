@@ -101,7 +101,8 @@ namespace esphome
         return;
 
       uint8_t aqi = payload[10];
-      float pm25 = static_cast<float>((payload[12] << 8) | payload[11]);
+      uint16_t pm25_raw = (payload[12] << 8) | payload[11];
+      float pm25 = static_cast<float>(pm25_raw);
       bool child_lock = payload[13] != 0;
       uint8_t fan_auto_mode = payload[14];
       uint16_t efficency_area = (payload[16] << 8) | payload[15];
@@ -128,7 +129,10 @@ namespace esphome
       self->publish_switch(SwitchType::CHILD_LOCK, child_lock);
       self->publish_switch(SwitchType::DISPLAY, display_on);
       self->publish_sensor(SensorType::AQI, (unsigned)aqi);
-      self->publish_sensor(SensorType::PM25, pm25);
+      if (pm25_raw <= 1000)
+        self->publish_sensor(SensorType::PM25, pm25);
+      else
+        ESP_LOGW(TAG_CORE, "PM2.5 raw value %u out of range, skipping publish", pm25_raw);
       self->publish_select(SelectType::AUTO_MODE, fan_auto_mode);
       self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, (unsigned)efficency_area);
 
