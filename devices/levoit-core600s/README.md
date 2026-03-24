@@ -9,7 +9,7 @@ See [Levoit Component](../../../components/levoit/README.md) for complete compon
 | Item | Value |
 | --- | --- |
 | Model | Core 600S |
-| Tested MCU FW | 2.0.1 |
+| Tested MCU FW | 2.0.01 |
 | ESP | unknown (replace with custom ESP32) |
 | Speeds | 4 levels |
 | CADR (spec) | 641 m³/h |
