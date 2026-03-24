@@ -169,6 +169,17 @@ namespace esphome
                 payload = {};
                 break;
 
+            // Core600S light detect
+            case CommandType::setLightDetectOn:
+                msg_type = {0x01, 0xE9, 0xA5};
+                payload = {0x01};
+                break;
+
+            case CommandType::setLightDetectOff:
+                msg_type = {0x01, 0xE9, 0xA5};
+                payload = {0x00};
+                break;
+
             // Core200S nightlight
             case CommandType::setNightlightOff:
                 msg_type = {0x01, 0x03, 0xA0};

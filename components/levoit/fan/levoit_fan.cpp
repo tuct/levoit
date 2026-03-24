@@ -42,7 +42,7 @@ namespace esphome
             ModelType model = parent_->get_model();
             bool isCore200s = model == ModelType::CORE200S;
             bool isCore300s = model == ModelType::CORE300S;
-            bool isCoreModel = model == ModelType::CORE200S || model == ModelType::CORE300S || model == ModelType::CORE400S;
+            bool isCoreModel = model == ModelType::CORE200S || model == ModelType::CORE300S || model == ModelType::CORE400S || model == ModelType::CORE600S;
             auto restore = this->restore_state_();
             if (restore.has_value())
             {

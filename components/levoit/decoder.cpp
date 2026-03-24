@@ -153,6 +153,23 @@ namespace esphome
             decode_core_timer(self, model, payload, payload_len);
           }
         }
+        if (model == ModelType::CORE600S)
+        {
+          // Core600S status push: MCU sends SEND(0x22) CMD=01 40 41
+          if (msg_type == 0x22 && ptype0 == 0x40 && ptype1 == 0x41)
+          {
+            decode_core_status(self, model, payload, payload_len);
+          }
+          // Timer
+          if (msg_type == 0x12 && ptype0 == 0x65 && ptype1 == 0xA2)
+          {
+            decode_core_timer(self, model, payload, payload_len);
+          }
+          if (msg_type == 0x22 && ptype0 == 0x66 && ptype1 == 0xA2)
+          {
+            decode_core_timer(self, model, payload, payload_len);
+          }
+        }
         if (model == ModelType::VITAL100S || model == ModelType::VITAL200S)
         {
           // Vital models: payload is TLV 0x00 0x55

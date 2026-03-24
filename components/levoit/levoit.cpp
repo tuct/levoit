@@ -360,6 +360,8 @@ namespace esphome
                 model_ = ModelType::CORE300S;
             else if (model == "CORE400S")
                 model_ = ModelType::CORE400S;
+            else if (model == "CORE600S")
+                model_ = ModelType::CORE600S;
 
             ESP_LOGI(TAG, "Model set to: %s (ModelType=%d)", model.c_str(), (int)model_);
         }
@@ -788,7 +790,7 @@ namespace esphome
             ESP_LOGD(TAG, "Command triggered: %s", command_type_to_string(commandType));
             std::vector<uint8_t> message;
 
-            if (this->model_ == ModelType::CORE200S || this->model_ == ModelType::CORE300S || this->model_ == ModelType::CORE400S)
+            if (this->model_ == ModelType::CORE200S || this->model_ == ModelType::CORE300S || this->model_ == ModelType::CORE400S || this->model_ == ModelType::CORE600S)
             {
                 message = build_core_command(this, commandType);
             }

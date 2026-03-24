@@ -96,6 +96,43 @@ namespace esphome
         return;
       }
 
+      // --- Core600S ---
+      if (model == ModelType::CORE600S)
+      {
+        if (payload_len < 22)
+          return;
+
+        uint8_t fan_speed   = payload[5];
+        bool display_on     = payload[8] != 0;
+        uint8_t aqi         = payload[11];
+        uint16_t pm25_raw   = (uint16_t)((payload[13] << 8) | payload[12]);
+        float pm25          = static_cast<float>(pm25_raw);
+        bool child_lock     = payload[14] != 0;
+        uint8_t fan_auto_mode = payload[15];
+        uint16_t efficency_area = (uint16_t)((payload[17] << 8) | payload[16]);
+        bool light_detect   = payload[21] != 0;
+
+        self->publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Ok");
+        self->publish_switch(SwitchType::CHILD_LOCK, child_lock);
+        self->publish_switch(SwitchType::DISPLAY, display_on);
+        self->publish_switch(SwitchType::LIGHT_DETECT, light_detect);
+        self->publish_sensor(SensorType::AQI, (unsigned)aqi);
+        if (pm25_raw <= 1000)
+          self->publish_sensor(SensorType::PM25, pm25);
+        else
+          ESP_LOGW(TAG_CORE, "PM2.5 raw value %u out of range, skipping publish", pm25_raw);
+        self->publish_select(SelectType::AUTO_MODE, fan_auto_mode);
+        self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, (unsigned)efficency_area);
+
+        auto *fan = self->get_fan();
+        if (fan != nullptr)
+        {
+          ESP_LOGV(TAG_CORE, "Core600S fan: power=%d speed=%d mode=%d", power, fan_speed, (int)fan_mode);
+          fan->apply_device_status(power, fan_speed, fan_mode);
+        }
+        return;
+      }
+
       // --- Core300S / Core400S ---
       if (payload_len < 18)
         return;
