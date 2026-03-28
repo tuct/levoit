@@ -27,7 +27,7 @@ class LevoitButton;
 
 class Levoit : public Component, public uart::UARTDevice {
  public:
-  const char* get_version() const { return "1.2.0 esphome"; }
+  const char* get_version() const { return "1.3.0 esphome"; }
 
   // called from python codegen
   void register_switch(SwitchType type, LevoitSwitch *sw);
