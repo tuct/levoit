@@ -1,4 +1,4 @@
-[← Back to Free Levoit Project](../../README.md)
+[← Back](../../README.md)
 
 # Levoit Vital 200S (Pro) - Custom Firmware (ESPHome)
 
@@ -40,6 +40,18 @@ Same protocol as the Vital 100S. Tested with original ESP by @dnsefe.
 | MCU Version | text_sensor | |
 | Error | text_sensor | "Ok" or "Sensor Error" |
 
+## Teardown / Disassembly
+
+> TODO: add teardown steps and photos
+
+## Debug Header Pinout
+
+> TODO: add pinout and photos
+
+## Wiring New ESP
+
+> TODO: add wiring photos and pin mapping
+
 ## Flash
 
 ### Prerequisites
@@ -78,15 +90,3 @@ Reassemble and enjoy!
 esptool erase_flash
 esptool write_flash 0x00 levoit-vital200s-backup.bin
 ```
-
-## Teardown / Disassembly
-
-> TODO: add teardown steps and photos
-
-## Debug Header Pinout
-
-> TODO: add pinout and photos
-
-## Wiring New ESP
-
-> TODO: add wiring photos and pin mapping

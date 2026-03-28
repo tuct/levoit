@@ -1,4 +1,4 @@
-[← Back to Devices](../README.md)
+[← Back](../../README.md)
 
 # Levoit Core 300S - Custom Firmware (ESPHome)
 
@@ -40,6 +40,15 @@
 ![Core 300S Fan](./photos/fan.png)
 ![Filters](./photos/filters.png)
 ![Config](./photos/config.png)
+
+## Teardown / Disassembly
+
+* Place upside down, remove base cover and filter to expose 8 screws (4 have washers)
+* Remove all 8 screws — they are soft metal, do not overtighten when reassembling
+* Slide a pry tool between the tabs to separate base and top sleeve
+* Unplug the logic board
+
+For a visual teardown walkthrough see the [blog post](https://vigue.me/posts/levoit-air-purifier-esphome-conversion).
 
 ## Flash Original ESP32
 
@@ -90,12 +99,3 @@ Replacing the original ESP32 allows switching back to original firmware without 
 
 > The RX/TX pads are **not** on the pin header — use the test pads near the original ESP32 on the board.
 > Pull the `EN` pin of the original ESP32 to GND to disable it.
-
-## Teardown / Disassembly
-
-* Place upside down, remove base cover and filter to expose 8 screws (4 have washers)
-* Remove all 8 screws — they are soft metal, do not overtighten when reassembling
-* Slide a pry tool between the tabs to separate base and top sleeve
-* Unplug the logic board
-
-For a visual teardown walkthrough see the [blog post](https://vigue.me/posts/levoit-air-purifier-esphome-conversion).

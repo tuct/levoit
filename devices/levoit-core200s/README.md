@@ -1,4 +1,4 @@
-[← Back to Free Levoit Project](../../README.md)
+[← Back](../../README.md)
 
 # Levoit Core 200S - Custom Firmware (ESPHome)
 
@@ -33,6 +33,10 @@
 | MCU Version | text_sensor | |
 
 > No PM2.5 / AQI sensor on this model. No Auto mode.
+
+## Teardown / Disassembly
+
+> TODO: add teardown steps and photos
 
 ## PCB
 
@@ -97,7 +101,3 @@ Reassemble and enjoy!
 esptool erase_flash
 esptool write_flash 0x00 levoit-core200s-backup.bin
 ```
-
-## Teardown / Disassembly
-
-> TODO: add teardown steps and photos
