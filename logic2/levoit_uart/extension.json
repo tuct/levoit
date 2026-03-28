@@ -1,0 +1,13 @@
+{
+  "name": "Levoit UART Extractor",
+  "apiVersion": "1.0.0",
+  "author": "@tuct",
+  "version": "0.0.1",
+  "description": "Can be used to check Levoit UART communication",
+  "extensions": {
+    "levoit_uart": {
+      "type": "HighLevelAnalyzer",
+      "entryPoint": "HighLevelAnalyzer.LevoitExtractor"
+    }
+  }
+}
