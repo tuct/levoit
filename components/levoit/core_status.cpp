@@ -110,6 +110,7 @@ namespace esphome
         bool child_lock     = payload[14] != 0;
         uint8_t fan_auto_mode = payload[15];
         uint16_t efficency_area = (uint16_t)((payload[17] << 8) | payload[16]);
+        float efficency_area_m2 = static_cast<float>(efficency_area) / (10.764f * 3.15f);
         bool light_detect   = payload[21] != 0;
 
         self->publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Ok");
@@ -122,7 +123,7 @@ namespace esphome
         else
           ESP_LOGW(TAG_CORE, "PM2.5 raw value %u out of range, skipping publish", pm25_raw);
         self->publish_select(SelectType::AUTO_MODE, fan_auto_mode);
-        self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, (unsigned)efficency_area);
+        self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, efficency_area_m2);
 
         auto *fan = self->get_fan();
         if (fan != nullptr)
@@ -143,6 +144,7 @@ namespace esphome
       bool child_lock = payload[13] != 0;
       uint8_t fan_auto_mode = payload[14];
       uint16_t efficency_area = (payload[16] << 8) | payload[15];
+      float efficency_area_m2 = static_cast<float>(efficency_area) / (10.764f * 3.15f);
       bool has_error = payload[17] != 0;
 
       bool display_on = false;
@@ -171,7 +173,7 @@ namespace esphome
       else
         ESP_LOGW(TAG_CORE, "PM2.5 raw value %u out of range, skipping publish", pm25_raw);
       self->publish_select(SelectType::AUTO_MODE, fan_auto_mode);
-      self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, (unsigned)efficency_area);
+      self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, efficency_area_m2);
 
       auto *fan = self->get_fan();
       if (fan != nullptr)

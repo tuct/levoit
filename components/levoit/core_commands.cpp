@@ -122,12 +122,14 @@ namespace esphome
                 auto *num = self->get_number(NumberType::EFFICIENCY_ROOM_SIZE);
                 if (num != nullptr)
                 {
-                    uint32_t room_size = static_cast<uint32_t>(num->state);
-                    uint8_t size_low = room_size & 0xFF;
-                    uint8_t size_high = (room_size >> 8) & 0xFF;
+                    // Convert m² → raw MCU value: 1 m² = 10.764 sq ft, MCU uses sq_ft × 3.15
+                    float m2 = num->state;
+                    uint32_t raw = static_cast<uint32_t>(m2 * 10.764f * 3.15f + 0.5f);
+                    uint8_t size_low = raw & 0xFF;
+                    uint8_t size_high = (raw >> 8) & 0xFF;
 
-                    ESP_LOGD(TAG_CORE_CMD, "setAutoModeEfficient: room_size=%u size_low=0x%02X size_high=0x%02X",
-                             (unsigned)room_size, size_low, size_high);
+                    ESP_LOGD(TAG_CORE_CMD, "setAutoModeEfficient: %.0f m² -> raw=%u (0x%02X 0x%02X)",
+                             m2, raw, size_low, size_high);
 
                     payload = {0x02, size_low, size_high};
                 }

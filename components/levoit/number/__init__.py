@@ -8,6 +8,9 @@ from esphome.const import (
     CONF_ICON,
     CONF_ENTITY_CATEGORY,
     ENTITY_CATEGORY_CONFIG,
+    CONF_MIN_VALUE,
+    CONF_MAX_VALUE,
+    CONF_STEP,
 )
 
 from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
@@ -32,7 +35,7 @@ TYPE_MAP = {
 
 # (min_value, max_value, step, extra_props)
 TYPE_RANGE = {
-    "efficiency_room_size": (132.0, 792.0, 14.0, {
+    "efficiency_room_size": (9.0, 296.0, 1.0, {
         CONF_DEVICE_CLASS: "area",
         CONF_UNIT_OF_MEASUREMENT: "m²",
         CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
@@ -59,7 +62,10 @@ async def to_code(config):
     parent = await cg.get_variable(config[CONF_LEVOIT_ID])
 
     ntype = config[CONF_TYPE]
-    min_value, max_value, step, extra_props = TYPE_RANGE.get(ntype, (0.0, 1000.0, 1.0, {}))
+    min_default, max_default, step_default, extra_props = TYPE_RANGE.get(ntype, (0.0, 1000.0, 1.0, {}))
+    min_value = config.get(CONF_MIN_VALUE, min_default)
+    max_value = config.get(CONF_MAX_VALUE, max_default)
+    step = config.get(CONF_STEP, step_default)
 
     var = cg.new_Pvariable(config[CONF_ID])
     config = dict(config)
