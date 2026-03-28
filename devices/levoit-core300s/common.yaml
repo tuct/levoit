@@ -18,7 +18,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: none
-  output_power: 18dB #prevent connection issues
+  output_power: 15dB #prevent connection issues, brownout 
   ap:
     ssid: "${wifi_ap_ssid}"
     password: !secret wifi_ap_password
@@ -81,6 +81,8 @@ number:
     levoit: levoitcore300
     name: "Auto Mode Room Size"
     type: efficiency_room_size
+    min_value: 9
+    max_value: 50
   - platform: levoit
     levoit: levoitcore300
     name: "Filter Months"

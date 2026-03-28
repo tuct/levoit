@@ -1,89 +1,114 @@
-[← Back to Free Levoit Project](../README.md)
+[← Back to Free Levoit Project](../../README.md)
 
 # Levoit Core 400S - Custom Firmware (ESPHome)
 
 Started from community projects ([acvigue](https://github.com/acvigue/esphome-levoit-air-purifier), [mulcmu](https://github.com/mulcmu/esphome-levoit-core300s)) and evolved into a generic Levoit ESPHome component for Core/Vital models.
 
-See [Levoit Component](../../../components/levoit/README.md) for complete component documentation.
-
 ## Quick Facts
 
 | Item | Value |
-| --- | --- |
+|------|-------|
 | Model | Core 400S |
-| Tested MCU FW | 3.0.0 (status: untested) |
-| ESP | ESP32-SOLO-1C |
+| Tested MCU FW | 3.0.0 |
+| ESP Module | ESP32-SOLO-1C |
 | Board | CORE400S Ctrl V1.2 |
-| Speeds | 4 levels |
+| Fan Speeds | 4 |
 | CADR (spec) | 415 m³/h |
-| ESPHome | 2025.12.5+ |
-| Entities | Fan (manual/auto/sleep), Current CADR, Filter Life Left, Filter Low (binary), Reset Filter Stats (button) |
+| Room Size | 9–83 m² (97–894 ft²) |
+| ESPHome | 2026.1.2+ |
+| PM Sensor | PM2008MS  |
 
 ## Features
 
-* Fan component with modes (Manual, Auto, Sleep)
-* Current CADR sensor (m³/h), Filter Life Left (%) sensor
-* Filter Low binary sensor (<5%)
-* Reset Filter Stats button (resets CADR/runtime counters)
-* Filter lifetime configurable (months), tracked from runtime and speed
-* Display run time in Home Assistant
+| Feature | Type | Notes |
+|---------|------|-------|
+| Fan | fan | 4 speeds, presets: Manual / Auto / Sleep |
+| Auto Mode | select | Default / Quiet / Room Size |
+| Auto Mode Room Size | number | 9–83 m² |
+| Display | switch | Toggle LED display |
+| Child Lock | switch | |
+| PM2.5 | sensor | µg/m³ |
+| AQI | sensor | As reported by MCU |
+| Current CADR | sensor | m³/h, updated every 5s |
+| Filter Life Left | sensor | % remaining |
+| Filter Low | binary_sensor | On when < 5% |
+| Filter Lifetime | number | Configurable in months |
+| Reset Filter Stats | button | Resets CADR/runtime counters |
+| Timer | number | Run timer in minutes |
+| MCU Version | text_sensor | |
+| Error | text_sensor | "Ok" or "Sensor Error" |
 
-## Disassembly
+## Teardown / Disassembly
 
-Very similar to Core 300s but i had to unplug the pcb from the carry holes to get to it after i removed the filter and filter hosing.
-* Place upside down and remove base cover and filter to expose 8 screws (4 have washers)
-* Remove all 8 screws be careful, as these are made out of a soft metal
-* Using a pry tool slide in between tabs
-* Separate base and top sleeve
-* Unplug logic board - done with screwdriver/kitchen knife from the side
-* Remove Fan unit to get to the logic board
+Very similar to Core 300S but the PCB needs to be unclipped from the carry holes after removing the filter and filter housing.
 
-J1 - dubug header pinout
-1 - TX
-2 - RX
-3 - GND
-4 - 33.3V
-5 - IO0
-6 - EN
+* Place upside down, remove base cover and filter to expose 8 screws (4 have washers)
+* Remove all 8 screws — they are soft metal, do not overtighten when reassembling
+* Slide a pry tool between the tabs to separate base and top sleeve
+* Unplug the logic board (use a screwdriver or kitchen knife from the side)
+* Remove the fan unit to access the logic board
 
-I was not able to dump the original FW (may be watchdog-protected). Try while the PCB is powered.
+### J1 Debug Header Pinout
 
-## Flash
+| Pin | Signal |
+|-----|--------|
+| 1 | TX |
+| 2 | RX |
+| 3 | GND |
+| 4 | 3.3V |
+| 5 | IO0 |
+| 6 | EN |
 
-* Solder wires to pins TXD0, RXD0, IO0, +3V3, and GND near the ESP32 on the logic board, and connect these to a USB-UART converter. On some boards, if these are through holes, soldering may not be necessary.
-* Connect IO0 to ground during power before connecting USB-UART to boot to bootloader. On some boards, IO0 may not have it's own debug pin and the ESP32 GPIO0 pin on the esp can be used.
+> TODO: add teardown photos
+
+## Flash Original ESP32
+
+### Prerequisites
+
+Connect to the J1 debug header (or solder to TXD0/RXD0/IO0/+3V3/GND) with a USB-UART converter (3.3V TTL).
+
+Connect **IO0 to GND before powering on** to enter bootloader mode.
 
 ### Backup Existing Firmware
-```
-esptool read_flash 0 ALL levoit.bin
-```
-
-This did not work for me, always ended in an error, so i yoloed it and continued without a backup of the original FW
-
-Rename `secrets-example.yaml` to `secrets.yaml` and set your WiFi and encryption key.
-
-Adopt device name in `levoit-core400s.yaml` if you have multiple units.
-
-See [Levoit Component](../../../components/levoit/README.md) for complete component documentation.
-
-### Compile and Install New Firmware
 
 ```bash
-esphome run levoit-core400s.yaml
+esptool read_flash 0 ALL levoit-core400s-backup.bin
+```
+
+> Note: may fail if watchdog-protected. Try while the PCB is externally powered.
+
+### Configure
+
+1. Copy `secrets-example.yaml` → `secrets.yaml` and fill in your Wi-Fi and encryption key
+2. Adjust the device name in the config if running multiple units
+3. Check the [component README](../../components/levoit/README.md) for UART pin mapping per board
+
+### Flash
+
+```bash
+esphome run levoit-core400s-c3.yaml
 ```
 
 Reassemble and enjoy!
 
-#### Restore Original Firmware (if needed)
+### Restore Original Firmware
 
 ```bash
 esptool erase_flash
-esptool write_flash 0x00 levoit.bin
+esptool write_flash 0x00 levoit-core400s-backup.bin
 ```
 
+## Install New ESP32 (Recommended)
 
+Replacing the original ESP32 lets you keep the original firmware intact and switch back easily.
 
+**Recommended modules:**
+- Seeed XIAO ESP32-C3
+- Seeed XIAO ESP32-S3
 
+**Wiring:** 4 wires — `+3.3V`, `GND`, `RX`, `TX`
 
+> The RX/TX pads are **not** on the pin header — use the test pads near the original ESP32 on the board.
+> Pull the `EN` pin of the original ESP32 to GND to disable it.
 
-
+> TODO: add wiring photos and placement photos

@@ -78,6 +78,8 @@ number:
     levoit: levoitcore600
     name: "Auto Mode Room Size"
     type: efficiency_room_size
+    min_value: 9
+    max_value: 147
   - platform: levoit
     levoit: levoitcore600
     name: "Filter Months"

@@ -1,53 +1,49 @@
-[← Back to Free Levoit Project](../README.md)
+[← Back to Free Levoit Project](../../README.md)
 
 # Levoit Core 200S - Custom Firmware (ESPHome)
-
-##WIP !!
-
-See [Levoit Component](../../../components/levoit/README.md) for complete component documentation.
 
 ## Quick Facts
 
 | Item | Value |
-| --- | --- |
+|------|-------|
 | Model | Core 200S |
 | Tested MCU FW | 2.0.11 |
-| ESP | ESP32-SOLO-1C |
-| Board | EH-BY-41916-C-V1.0(SinOne) |
-| Speeds | 3 levels |
+| ESP Module | ESP32-SOLO-1C |
+| Board | EH-BY-41916-C-V1.0 (SinOne) |
+| Fan Speeds | 3 |
 | CADR (spec) | 167 m³/h |
+| Room Size | up to 40 m² (430 ft²) |
 | ESPHome | 2026.1.2+ |
-| Entities | Fan (manual/sleep), Current CADR, Filter Life Left, Filter Low (binary), Reset Filter Stats (button) |
-
+| PM Sensor | None  |
 
 ## Features
 
-* Fan component with modes (Manual, Sleep) and correct 3-speed model limits
-* Current CADR sensor (m³/h), updated every few seconds; Filter Life Left (%) sensor
-* Filter Low binary sensor (<5%)
-* Reset Filter Stats button (resets CADR/runtime counters)
-* Filter lifetime configurable (months), tracked from runtime and speed
-* Display run time in Home Assistant
+| Feature | Type | Notes |
+|---------|------|-------|
+| Fan | fan | 3 speeds, presets: Manual / Sleep |
+| Display | switch | Toggle LED display |
+| Child Lock | switch | |
+| Night Light | select | Off / Mid / Full |
+| Current CADR | sensor | m³/h, updated every 5s |
+| Filter Life Left | sensor | % remaining |
+| Filter Low | binary_sensor | On when < 5% |
+| Filter Lifetime | number | Configurable in months |
+| Reset Filter Stats | button | Resets CADR/runtime counters |
+| Timer | number | Run timer in minutes |
+| MCU Version | text_sensor | |
 
-
-Supported / Tested MCU Version: 2.0.11
-ESPHome: 2026.1.2+
-
-## Disassembly
-
-TBD
+> No PM2.5 / AQI sensor on this model. No Auto mode.
 
 ## PCB
 
 ![PCB back](./images/pcb_back.jpg)
 ![PCB front](./images/pcb_front.jpg)
 
+## Install New ESP32 (Recommended)
 
-## Use new ESP32-S3 
+Replacing the original ESP32 lets you keep the original firmware intact and switch back easily.
 
-Connect ESP32-S3 to PCB - This allows us to keep the original ESP32 firmware 
-
-![PCB esp32-s3](./images/pcb_wire_s3.jpg)
+**Wiring (ESP32-S3 example):**
 
 | PCB | ESP32-S3 |
 |-----|----------|
@@ -57,43 +53,51 @@ Connect ESP32-S3 to PCB - This allows us to keep the original ESP32 firmware
 | RX | GPIO05 |
 | TX | GPIO04 |
 
-## Flash existing ESP32-C1-SOLO
+![PCB ESP32-S3 wiring](./images/pcb_wire_s3.jpg)
 
-* Solder wires to pins TXD0, RXD0, IO0, +5V, and GND near the ESP32 on the logic board, and connect these to a USB-UART converter. On some boards, if these are through holes, soldering may not be necessary.
-* Connect IO0 to ground during power before connecting USB-UART to boot to bootloader. On some boards, IO0 may not have it's own debug pin and the ESP32 GPIO0 pin on the esp can be used.
+> Pull the `EN` pin of the original ESP32 to GND to disable it.
 
+**Recommended modules:**
+- Seeed XIAO ESP32-C3
+- Seeed XIAO ESP32-S3
 
+## Flash Original ESP32
+
+### Prerequisites
+
+Solder wires to **TXD0, RXD0, IO0, +3V3, GND** near the ESP32 on the logic board and connect to a USB-UART converter (3.3V TTL).
+
+Connect **IO0 to GND before powering on** to enter bootloader mode.
 
 ### Backup Existing Firmware
+
+```bash
+esptool read_flash 0 ALL levoit-core200s-backup.bin
 ```
-esptool read_flash 0 ALL levoit.bin
-```
 
-This did not work for me, always ended in an error, so i yoloed it and continued without a backup of the original FW
+> Note: backup may fail on some boards — proceed at your own risk.
 
-### Update name and set secrets
+### Configure
 
-Rename `secrets-example.yaml` to `secrets.yaml` and set your wifi and encryption key, ...
+1. Copy `secrets-example.yaml` → `secrets.yaml` and fill in your Wi-Fi and encryption key
+2. Adjust the device name in the config if running multiple units
+3. Check the [component README](../../components/levoit/README.md) for UART pin mapping per board
 
-Adopt device name if needed in `core200s.yaml` (multiple units!)
+### Flash
 
-See [Levoit Component](../../../components/levoit/README.md) for more details! -> adopt esp32 to used esp32!
-
-### Compile and Install New Firmware
-
-```
-esphome run levoit-core200s.yaml
+```bash
+esphome run levoit-core200s-c3.yaml
 ```
 
 Reassemble and enjoy!
 
-#### Restore Original Firmware (if needed)
+### Restore Original Firmware
 
 ```bash
 esptool erase_flash
-esptool write_flash 0x00 levoit.bin
+esptool write_flash 0x00 levoit-core200s-backup.bin
 ```
 
+## Teardown / Disassembly
 
-
-
+> TODO: add teardown steps and photos

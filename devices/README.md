@@ -5,11 +5,9 @@
 * [Levoit Core 200s](./levoit-core200s) – Custom ESPHome Firmware 
 * [Levoit Core 300s](./levoit-core300s) – Custom ESPHome Firmware
 * [Levoit Core 400s](./levoit-core400s) – Custom ESPHome Firmware
+* [Levoit Core 600s](./levoit-core600s) – Custom ESPHome Firmware 
 * [Levoit Vital 100s](./levoit-vital100s) – Custom ESPHome Firmware
-
-Soon:
-* [Levoit Core 600s](./levoit-core600s) – Custom ESPHome Firmware - WIP
-* [Levoit Vital 200S](./levoit-vital200s) – Custom ESPHome Firmware - WIP
+* [Levoit Vital 200S](./levoit-vital200s) – Custom ESPHome Firmware 
 
 Special:
 * [Levoit LV PUR 131s](./levoit-lv131s/) – Custom Firmware + MCU & sensor upgrade + hardware hack

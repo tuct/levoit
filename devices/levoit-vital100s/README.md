@@ -1,161 +1,138 @@
-[← Back to Free Levoit Project](../README.md)
+[← Back to Free Levoit Project](../../README.md)
 
 # Levoit Vital 100S - Custom Firmware (ESPHome)
-
-Started from community projects and evolved into a generic Levoit ESPHome component for Core/Vital models.
-
-See [Levoit Component](../../../components/levoit/README.md) for complete component documentation.
 
 ## Quick Facts
 
 | Item | Value |
-| --- | --- |
+|------|-------|
 | Model | Vital 100S |
 | Tested MCU FW | 1.0.5 |
-| ESP | ESP32-C3-SOLO-1 |
+| ESP Module | ESP32-C3-SOLO-1 |
 | Board | Vital 100S-C_V1.3P1.4 20221027 |
-| Speeds | 4 levels |
-| CADR (spec) | ~400 m³/h |
-| ESPHome | 2025.12.5+ |
-| Entities | Fan (manual/auto/sleep), Current CADR, Filter Life Left, Filter Low (binary), Reset Filter Stats (button) |
+| Fan Speeds | 4 |
+| CADR (spec) | 221 m³/h |
+| Room Size | 9–52 m² (97–560 ft²) |
+| ESPHome | 2026.1.2+ |
 
 ## Features
 
-* Fan component with modes (Manual, Auto, Sleep, Pet mode) and 5-speed control
-* Current CADR sensor (m³/h), updated every few seconds; Filter Life Left (%) sensor
-* Filter Low binary sensor (<5%)
-* Reset Filter Stats button (resets CADR/runtime counters)
-* Filter lifetime configurable (months), tracked from runtime and speed
-* TLV-based protocol with extensible command/response structure
-* Display control and brightness adjustment
+| Feature | Type | Notes |
+|---------|------|-------|
+| Fan | fan | 4 speeds, presets: Manual / Auto / Sleep / Pet |
+| Auto Mode | select | Default / Quiet / Efficient |
+| Auto Mode Room Size | number | 9–52 m² |
+| Auto Mode High Fan Time | text_sensor | Remaining high-speed runtime in efficient mode |
+| Efficiency Counter | sensor | Seconds remaining at high fan speed |
+| Display | switch | Toggle LED display |
+| Child Lock | switch | |
+| Light Detect | switch | Auto-dims display when ambient light is low |
+| PM2.5 | sensor | µg/m³ |
+| AQI | sensor | As reported by MCU |
+| Current CADR | sensor | m³/h, updated every 5s |
+| Filter Life Left | sensor | % remaining |
+| Filter Low | binary_sensor | On when < 5% |
+| Filter Lifetime | number | Configurable in months |
+| Reset Filter Stats | button | Resets CADR/runtime counters |
+| Timer | number | Run timer in minutes |
+| MCU Version | text_sensor | |
+| Error | text_sensor | "Ok" or "Sensor Error" |
 
 ## Disassembly
 
-
-
-The Top needs to be removed in order to get access to the pcb.
-Start by carfully opening the left side, i used a palstic plunger and kitchen knife:
+Remove the top cover to access the PCB. Start by carefully opening the left side with a plastic pry tool or kitchen knife:
 
 ![Open Vital 100s](./images/Vital100s-open_top_01_small.jpg)
 
-There are hooks on each side that you need to get out, will need some force, but be gentle!
+There are hooks on each side — you need some force, but be gentle:
 
 ![Open Vital 100s](./images/Vital100s-open_top_03_small.jpg)
 
-Open both sides and then pull gently but firm up and out, more up
+Open both sides, then pull firmly upward:
 
 ![Open Vital 100s](./images/Vital100s-open_top_04_small.jpg)
 
-Be careful with the cables, you need to slide them out of the holder on the right side
+Be careful with the cables — slide them out of the holder on the right side:
 
 ![Open Vital 100s](./images/Vital100s-open_top_05_cables_small.jpg)
 
-Now we have full access to the PCB!
+PCB fully accessible:
 
 ![Open Vital 100s](./images/Vital100s-open_top_06_small.jpg)
 
-
 ## Debug Header Pinout
 
-The Vital series typically has a debug header or solder pads near the ESP32:
+| Pin | Signal |
+|-----|--------|
+| 1 | EN (reset) |
+| 2 | GND |
+| 3 | 3.3V |
+| 4 | TX |
+| 5 | RX |
+| 6 | IO0 |
 
-* Pin 1: EN (reset)
-* Pin 2: GND 
-* Pin 3: 3.3V
-* Pin 4: TX
-* Pin 5: RX
-* Pin 6: IO0 (for bootloader mode)
+![Board pinout](./images/Vital100s-board_pinout_small.jpg)
+![Board connector](./images/Vital100s-board_connector_small.jpg)
 
-![Open Vital 100s](./images/Vital100s-board_pinout_small.jpg)
+## Flash Original ESP32
 
-![Open Vital 100s](./images/Vital100s-board_connector_small.jpg)
-## Flash
+### Prerequisites
 
-* Solder wires to the debug header pins or use a pogo pin connector for easier access
-* Connect to a USB-UART adapter (TTL 3.3V), making sure TX/RX are crossed:
-  - Adapter TX → MCU RX
-  - Adapter RX → MCU TX
-* Connect IO0 to GND during power-up to enter bootloader mode
-* Disconnect IO0 once in bootloader
+Connect to the debug header with a USB-UART adapter (3.3V TTL), crossing TX/RX:
+- Adapter TX → MCU RX
+- Adapter RX → MCU TX
+
+Connect **IO0 to GND before powering on** to enter bootloader mode.
 
 ### Backup Existing Firmware
 
 ```bash
-esptool read_flash 0 ALL levoit_vital100s.bin
+esptool read_flash 0 ALL levoit-vital100s-backup.bin
 ```
 
-Note: Some devices may have watchdog protection. Try backing up while powered externally.
+> Note: may fail if watchdog-protected. Try while powered externally.
 
-### Update Configuration and Secrets
+### Configure
 
-Rename `secrets-example.yaml` to `secrets.yaml` and set your WiFi credentials and Home Assistant encryption key.
+1. Copy `secrets-example.yaml` → `secrets.yaml` and fill in your Wi-Fi and encryption key
+2. Adjust the device name in the config if running multiple units
+3. Check the [component README](../../components/levoit/README.md) for UART pin mapping per board
 
-Adopt the device name in `levoit-vital100s.yaml` if you have multiple units.
-
-See [Levoit Component](../../../components/levoit/README.md) for complete component documentation.
-
-### Compile and Install New Firmware
+### Flash
 
 ```bash
 esphome run levoit-vital100s.yaml
 ```
 
-Once flashing completes, reassemble the device and enjoy!
+Reassemble and enjoy!
 
-#### Restore Original Firmware (if needed)
+### Restore Original Firmware
 
 ```bash
 esptool erase_flash
-esptool write_flash 0x00 levoit_vital100s.bin
+esptool write_flash 0x00 levoit-vital100s-backup.bin
 ```
 
-## Protocol Notes
+## Custom Hardware (if PCB/MCU is fried)
 
-The Vital 100S uses the **TLV (Type-Length-Value)** protocol for communication:
+Parts used for a full custom replacement build:
 
-* All responses use TLV blocks (ID, length, value pairs)
-* Most commands also use TLV encoding for extensibility
-* This differs from the fixed-field protocol used by Core models
-* See [main project README](../README.md) for protocol details and TLV ID mappings
-
-
-
-# Custom Hardware - What todo if you PCB/MCU is fried
-
-I managed to fry my PCB for the Vital 100s, killed the 2nd MCU...
-
-So i decided to repair my now broken Levoit 100S with some parts:
-
-* 7 * [Touch buttons](https://amzn.to/4sZdCNO)
-* 1* [4-Digit Display -> for the TM1637 ;)](https://www.az-delivery.de/products/4-digit-display)
-* 16 Leds, 3mm white, 2,7V
+* 7× [Touch buttons](https://amzn.to/4sZdCNO)
+* 1× [4-Digit TM1637 Display](https://www.az-delivery.de/products/4-digit-display)
+* 16× LEDs, 3mm white, 2.7V
 * Diode 1N4000
 * [ESP32 dev kit V4](https://amzn.to/4qLOvwh)
-  
-  ![esp32](./images/esp32.jpg)
 * Level Shifter
 * DC-DC Converter MP1584
 
+**Fan PWM info:** 24V, 5V signal, 1.6kHz, duty cycle 10–90% (`min: 0.1`, `max: 0.9`)
+**Fan speed signal:** 5V, frequency = speed (0=off, 60Hz=slowest, 185Hz=max)
 
-PWM info
-PWR, GND, PWM, SPEED
-24V
-PWM: 5V, 1.6kHz, max 90% duty cycle, min 10% -> esphome ,min 0.1 to 0.9
-Speed: 5V Frequency is speed - 0 = OFF, min 60Hz slowest speed max: 185
+### Custom Schematics
 
-## Schematics
+![Schematics](./images/custom_schematics.png)
 
-![schamtics](./images/custom_schematics.png)
+Using AZ-Delivery TM1637 display to drive 16 LEDs: SEG1=LED1, SEG2=LED2, ...
 
-We are using a clock display from az-delivery which has a TM1637 to drive the 16 leds
-
-SEG1 = LED1 (in schematics), SEG2 = LED2, ...
-
-![schamtics](./images/TM1637.jpg)
-
-![schamtics](./images/leds_to_tm1637.png)
-
-
-
-
-
+![TM1637](./images/TM1637.jpg)
+![LEDs to TM1637](./images/leds_to_tm1637.png)
