@@ -227,10 +227,14 @@ namespace esphome
 
           break;
         case 0x10:
-          ESP_LOGV(TAG_VITAL, "EfficientValue=%u (0x%04X)", (unsigned)t.value_u32, (unsigned)t.value_u32);
+        {
+          // raw = sq_ft × 1.3, convert back to m²: m² = raw / (10.764 × 1.3)
+          float efficency_area_m2 = static_cast<float>(t.value_u32) / (10.764f * 1.3f);
+          ESP_LOGV(TAG_VITAL, "EfficientValue=%u (0x%04X) -> %.1f m²", (unsigned)t.value_u32, (unsigned)t.value_u32, efficency_area_m2);
           if (self != nullptr)
-            self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, (unsigned)t.value_u32);
+            self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, efficency_area_m2);
           break;
+        }
         case 0x11:
           ESP_LOGV(TAG_VITAL, "EfficientCounter=%u (0x%04X)", (unsigned)t.value_u32, (unsigned)t.value_u32);
           if (self != nullptr){
