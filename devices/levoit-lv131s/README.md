@@ -1,4 +1,4 @@
-[← Back to Free Levoit Project](../README.md)
+[← Back](../README.md)
 
 # Levoit LV-PUR 131S - Custom Firmware (ESPHome)
 

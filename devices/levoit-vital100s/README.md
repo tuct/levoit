@@ -1,4 +1,4 @@
-[← Back to Free Levoit Project](../../README.md)
+[← Back](../../README.md)
 
 # Levoit Vital 100S - Custom Firmware (ESPHome)
 
@@ -38,7 +38,7 @@
 | MCU Version | text_sensor | |
 | Error | text_sensor | "Ok" or "Sensor Error" |
 
-## Disassembly
+## Teardown / Disassembly
 
 Remove the top cover to access the PCB. Start by carefully opening the left side with a plastic pry tool or kitchen knife:
 
