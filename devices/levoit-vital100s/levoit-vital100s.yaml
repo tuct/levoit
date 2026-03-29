@@ -9,10 +9,10 @@ esphome:
   name: ${device_name}
 
 esp32:
-  board: esp32dev
+  board: esp32-c3-devkitm-1
   framework:
     type: esp-idf
-    sdkconfig_options:
-      CONFIG_FREERTOS_UNICORE: y
+#    sdkconfig_options:
+#      CONFIG_FREERTOS_UNICORE: y
 
 <<: !include common.yaml
