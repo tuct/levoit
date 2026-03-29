@@ -101,7 +101,7 @@ esptool read_flash 0 ALL levoit-core400s-backup.bin
 ### Flash
 
 ```bash
-esphome run levoit-core400s-c3.yaml
+esphome run levoit-core400s.yaml
 ```
 
 Reassemble and enjoy!

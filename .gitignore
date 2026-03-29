@@ -7,3 +7,5 @@ components/levoit/.claude/settings.local.json
 components/vk16d32_dev.yaml
 to_move_out/
 **/PXL_*
+**/*_dev.yaml
+**/common_dev.yaml
