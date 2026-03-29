@@ -113,9 +113,9 @@ namespace esphome
         auto *num = self->get_number(NumberType::EFFICIENCY_ROOM_SIZE);
         if (num != nullptr)
         {
-          // Convert m² → raw MCU value: 1 m² = 10.764 sq ft, MCU uses sq_ft × 3.15
+          // Convert m² → raw MCU value: 1 m² = 10.764 sq ft, Vital MCU uses sq_ft × 1.3
           float m2 = num->state;
-          uint32_t room_size = static_cast<uint32_t>(m2 * 10.764f * 3.15f + 0.5f);
+          uint32_t room_size = static_cast<uint32_t>(m2 * 10.764f * 1.3f + 0.5f);
           uint8_t size_low = room_size & 0xFF;
           uint8_t size_high = (room_size >> 8) & 0xFF;
 
