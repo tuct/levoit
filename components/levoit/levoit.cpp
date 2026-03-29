@@ -403,8 +403,11 @@ namespace esphome
                 ESP_LOGI(TAG, "Initialized total_runtime to 0");
             }
                                
-            // Set LED to blink on initial connect until WiFi is connected
-            this->sendCommand(CommandType::setWifiLedBlinking);
+            // Set LED to blink on initial connect until WiFi is connected.
+            // Delay slightly so the MCU has time to finish booting before we send commands.
+            this->set_timeout("wifi_led_init", 2000, [this]() {
+                this->sendCommand(CommandType::setWifiLedBlinking);
+            });
             this->sendCommand(CommandType::setFilterLedOn);
             filter_led_on_ = true;
             filter_blinking_ = true;
@@ -539,6 +542,7 @@ namespace esphome
                     {
                         ESP_LOGD(TAG, "WiFi connected - setting LED solid");
                         wifi_led_solid_ = true;
+                        wifi_led_blink_sent_ = false;
                         this->sendCommand(CommandType::setFilterLedOff);
                         filter_led_on_ = false;
                         filter_blinking_ = false;
@@ -561,6 +565,13 @@ namespace esphome
                         ESP_LOGD(TAG, "WiFi connecting - setting LED blinking");
                         this->sendCommand(CommandType::setWifiLedBlinking);
                         wifi_led_solid_ = false;
+                    }
+                    else if (is_connecting && !wifi_led_solid_ && !wifi_led_blink_sent_)
+                    {
+                        // Retry blinking on initial boot in case the setup() command was missed
+                        ESP_LOGD(TAG, "WiFi connecting - initial blink retry");
+                        this->sendCommand(CommandType::setWifiLedBlinking);
+                        wifi_led_blink_sent_ = true;
                     }
                     else if (is_disabled && wifi_led_solid_)
                     {

@@ -4,6 +4,8 @@
 
 Collection of custom ESPHome firmware and hardware projects for Levoit air purifiers, eliminating cloud dependency and enabling native Home Assistant integration.
 
+![header](./header.jpg)
+
 ## [Esphome external component for Levoit Air Purifiers](./components/levoit/README.md)
 
 The Core and Vital Series share quite a lot on the protocol level, while having some differences based on model and MCU version.
@@ -19,11 +21,11 @@ Can be flashed to the original ESP32-SOLO-C1 or also installed on top (replace o
 | Model | MCU Version | Status |
 |-------|-------------|--------|
 | [Levoit Core 200s](./devices/levoit-core200s) | 2.0.11 | ✅ Tested |
-| [Levoit Core 300s](./devices/levoit-core300s) | 2.0.7, 2.0.11 | ✅ Tested (with new ESP) |
-| [Levoit Core 400s](./devices/levoit-core400s) | 3.0.0 | ✅ Tested (with original ESP) |
-| [Levoit Core 600s](./devices/levoit-core600s) | 2.0.1 | ✅ Tested (with new ESP) |
+| [Levoit Core 300s](./devices/levoit-core300s) | 2.0.7, 2.0.11 | ✅ Tested  |
+| [Levoit Core 400s](./devices/levoit-core400s) | 3.0.0 | ✅ Tested  |
+| [Levoit Core 600s](./devices/levoit-core600s) | 2.0.1 | ✅ Tested |
 | [Levoit Vital 100s](./devices/levoit-vital100s) | 1.0.5 | ✅ Tested |
-| [Levoit Vital 200s (Pro)](./devices/levoit-vital200s) | 1.0.5 | Same protocol as Vital 100S, ✅ Tested (with original ESP, thanks @dnsefe) |
+| [Levoit Vital 200s (Pro)](./devices/levoit-vital200s) | 1.0.5 |  ✅ Tested |
 
 ### Features
 
