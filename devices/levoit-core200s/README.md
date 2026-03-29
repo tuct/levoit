@@ -36,11 +36,19 @@
 
 ## Teardown / Disassembly
 
-> TODO: add teardown steps and photos
+
+* Place upside down, remove base cover and filter to expose screws 
+* Remove all screws — they are soft metal, do not overtighten when reassembling
+* Slide a pry tool between the tabs to separate base and top sleeve, the top should go inside
+* Unscrew the logic board / top module 
+* Unplug the logic board
+
+![Teardown](./images/teardown_1.jpg)
 
 ## PCB
 
 ![PCB back](./images/pcb_back.jpg)
+
 ![PCB front](./images/pcb_front.jpg)
 
 ## Install New ESP32 (Recommended)
@@ -64,6 +72,24 @@ Replacing the original ESP32 lets you keep the original firmware intact and swit
 **Recommended modules:**
 - Seeed XIAO ESP32-C3
 - Seeed XIAO ESP32-S3
+
+**Placement of new ESP**
+
+No room to fit the esp32! i placed mine outside in the airstream. I had to break out a small part to get the wires through.
+
+![custom esp](./images/esp_1.jpg)
+
+![custom esp](./images/esp_2.jpg)
+
+![custom esp](./images/esp_3.jpg)
+
+![custom esp](./images/esp_4.jpg)
+
+![custom esp](./images/esp_5.jpg)
+
+![custom esp](./images/esp_6.jpg)
+
+
 
 ## Flash Original ESP32
 

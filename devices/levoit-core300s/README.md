@@ -37,9 +37,9 @@
 | Error | text_sensor | "Ok" or "Sensor Error" |
 
 ![Updated UI in Home Assistant](./photos/UpdatedUiInHa.png)
+
 ![Core 300S Fan](./photos/fan.png)
-![Filters](./photos/filters.png)
-![Config](./photos/config.png)
+
 
 ## Teardown / Disassembly
 
@@ -48,7 +48,15 @@
 * Slide a pry tool between the tabs to separate base and top sleeve
 * Unplug the logic board
 
-For a visual teardown walkthrough see the [blog post](https://vigue.me/posts/levoit-air-purifier-esphome-conversion).
+![Teardown](./photos/teardown_1.jpg)
+
+![Teardown](./photos/teardown_2.jpg)
+
+![Teardown](./photos/teardown_3.jpg)
+
+![Teardown](./photos/teardown_4.jpg)
+
+
 
 ## Flash Original ESP32
 
@@ -57,6 +65,10 @@ For a visual teardown walkthrough see the [blog post](https://vigue.me/posts/lev
 Solder wires to **TXD0, RXD0, IO0, +3V3, GND** near the ESP32 on the logic board and connect to a USB-UART converter. On some boards these are through-holes and soldering may not be needed.
 
 Connect **IO0 to GND before powering on** to enter bootloader mode.
+
+![PCB](./photos/pcb_front.jpg)
+
+For flashing you only need to solder to the pin header, the black and white are connected to dump esp to mcu communication 
 
 ### Backup Existing Firmware
 
@@ -99,3 +111,13 @@ Replacing the original ESP32 allows switching back to original firmware without 
 
 > The RX/TX pads are **not** on the pin header — use the test pads near the original ESP32 on the board.
 > Pull the `EN` pin of the original ESP32 to GND to disable it.
+
+![Custom ESP wires](./photos/custom_esp_wire.jpg)
+
+**Placement of new ESP**
+
+The small xiao seeeds fit into the small existing space, make sure to isolate and solder the connections.
+
+I connected to 5V, cause i had issues on the 3.3v with my xioa seeed s3. It rebooted with brownout (power issues). I think my en to gnd connection might not have been stable but still decided to use 5V.
+
+![Custom ESP wires](./photos/custom_esp_placement.jpg)

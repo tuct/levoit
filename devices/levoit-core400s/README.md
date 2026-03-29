@@ -38,6 +38,8 @@ Started from community projects ([acvigue](https://github.com/acvigue/esphome-le
 | MCU Version | text_sensor | |
 | Error | text_sensor | "Ok" or "Sensor Error" |
 
+![ha](./images/ha.png)
+
 ## Teardown / Disassembly
 
 Very similar to Core 300S but the PCB needs to be unclipped from the carry holes after removing the filter and filter housing.
@@ -47,6 +49,19 @@ Very similar to Core 300S but the PCB needs to be unclipped from the carry holes
 * Slide a pry tool between the tabs to separate base and top sleeve
 * Unplug the logic board (use a screwdriver or kitchen knife from the side)
 * Remove the fan unit to access the logic board
+
+I had to use extended wires for re-assembly, did not find another way!
+
+![ha](./images/teardown_1.jpg)
+
+![ha](./images/teardown_11.jpg)
+
+![ha](./images/teardown_2.jpg)
+
+![ha](./images/teardonw_3.jpg)
+
+![ha](./images/teardown_33.jpg)
+
 
 ### J1 Debug Header Pinout
 
@@ -59,7 +74,7 @@ Very similar to Core 300S but the PCB needs to be unclipped from the carry holes
 | 5 | IO0 |
 | 6 | EN |
 
-> TODO: add teardown photos
+
 
 ## Flash Original ESP32
 
