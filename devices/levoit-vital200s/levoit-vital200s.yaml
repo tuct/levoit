@@ -2,17 +2,15 @@
 substitutions:
   device_name: levoit-vital200s
   wifi_ap_ssid: "Levoit-Vital200S"
-  rx_pin: GPIO05
-  tx_pin: GPIO06
+  rx_pin: GPIO18                            
+  tx_pin: GPIO19                     
 
 esphome:
   name: ${device_name}
 
 esp32:
-  board: esp32dev
+  board: esp32-c3-devkitm-1    
   framework:
     type: esp-idf
-    sdkconfig_options:
-      CONFIG_FREERTOS_UNICORE: y
 
 <<: !include common.yaml
