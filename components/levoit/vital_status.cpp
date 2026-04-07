@@ -109,6 +109,17 @@ namespace esphome
       uint32_t mode = 0;
       uint32_t speed = 0; // choose FanLevel or FanSpeed, see notes below
 
+      // Sprout LED ring state — collected across tag24/tag25/tag26, applied after loop
+      bool sprout_nightlight_on = false;
+      bool sprout_breathing_on = false;
+      uint8_t sprout_nightlight_ct = 0;
+      uint16_t sprout_nightlight_bri = 0;
+      bool sprout_breathing_params_known = false;
+      uint8_t sprout_breathing_speed = 0;
+      uint16_t sprout_breathing_max = 0;
+      uint8_t sprout_breathing_min = 0;
+      uint8_t sprout_breathing_ct = 0;
+
       // Map Vital response to compoenent state
       for (const auto &t : tlvs)
       {
@@ -304,12 +315,102 @@ namespace esphome
           ESP_LOGV(TAG_VITAL, "DaytimeFanLevel=%u", (unsigned)t.value_u32);
           break;
 
+        // Sprout-specific tags (also present in CMD=02 00 55, same TLV format)
+        case 0x0C:
+          ESP_LOGV(TAG_VITAL, "PM1.0_raw=%u", (unsigned)t.value_u32);
+          if (self != nullptr && model == ModelType::SPROUT)
+            self->publish_sensor(SensorType::PM1_0, (unsigned)t.value_u32);
+          break;
+        case 0x0D:
+          ESP_LOGV(TAG_VITAL, "PM10_raw=%u", (unsigned)t.value_u32);
+          if (self != nullptr && model == ModelType::SPROUT)
+            self->publish_sensor(SensorType::PM10, (unsigned)t.value_u32);
+          break;
+        case 0x24:
+          // Sprout: 4-byte nightlight state: {on, ct, bri_lo, bri_hi}
+          //   byte0: 0x01=nightlight active, 0x00=off
+          //   byte1: color temperature (0–255)
+          //   bytes 2-3: brightness LE16 (0–4095)
+          // Confirmed from captures: changes with CMD=02 0B 55 nightlight commands
+          if (t.value_len == 4 && t.value_ptr != nullptr && model == ModelType::SPROUT)
+          {
+            sprout_nightlight_on = (t.value_ptr[0] != 0);
+            sprout_nightlight_ct  = t.value_ptr[1];
+            sprout_nightlight_bri = (uint16_t)t.value_ptr[2] | ((uint16_t)t.value_ptr[3] << 8);
+            ESP_LOGV(TAG_VITAL, "Sprout Nightlight: on=%u ct=%u bri=%u",
+                     sprout_nightlight_on, sprout_nightlight_ct, sprout_nightlight_bri);
+          }
+          break;
+        case 0x25:
+          // Sprout: 6-byte breathing state: {mode, speed_sec, max_lo, max_hi, min_bri, ct}
+          //   mode=0x01 → breathing active; mode=0x00 → breathing inactive (off or nightlight)
+          //   speed_sec: breathing cycle time in seconds (1–10)
+          //   max_lo/max_hi: maximum brightness LE16
+          //   min_bri: minimum brightness (0–255)
+          //   ct: color temperature (0–255)
+          // LIGHT_MODE requires combining tag24+tag25+tag26 — applied after loop
+          if (t.value_len == 6 && t.value_ptr != nullptr && model == ModelType::SPROUT)
+          {
+            sprout_breathing_on = (t.value_ptr[0] == 0x01);
+            sprout_breathing_speed = t.value_ptr[1];
+            sprout_breathing_max   = (uint16_t)t.value_ptr[2] | ((uint16_t)t.value_ptr[3] << 8);
+            sprout_breathing_min   = t.value_ptr[4];
+            sprout_breathing_ct    = t.value_ptr[5];
+            sprout_breathing_params_known = true;
+            ESP_LOGV(TAG_VITAL, "Sprout Breathing: on=%u speed=%u max=%u min=%u ct=%u",
+                     sprout_breathing_on, sprout_breathing_speed,
+                     sprout_breathing_max, sprout_breathing_min, sprout_breathing_ct);
+          }
+          break;
+        case 0x26:
+          // Sprout: breathing-active indicator (mirrors tag25 mode byte)
+          // 0x01 = breathing currently running; 0x00 = nightlight or off
+          ESP_LOGV(TAG_VITAL, "Sprout BreathingActive=%u", (unsigned)t.value_u32);
+          // (state is derived from tag25 above; this tag is informational only)
+          break;
+        case 0x27:
+          ESP_LOGV(TAG_VITAL, "FanRPM=%u", (unsigned)t.value_u32);
+          if (self != nullptr && model == ModelType::SPROUT)
+            self->publish_sensor(SensorType::FAN_RPM, (unsigned)t.value_u32);
+          break;
+
         default:
           ESP_LOGV(TAG_VITAL, "UnknownTag=0x%02X len=%u val=%u (0x%08X)",
                    t.tag, t.value_len, (unsigned)t.value_u32, (unsigned)t.value_u32);
           break;
         }
       }
+      // Sprout: apply LED ring state from combined tag24/tag25/tag26 readings
+      if (self != nullptr && model == ModelType::SPROUT)
+      {
+        bool led_on = sprout_nightlight_on || sprout_breathing_on;
+        self->publish_switch(SwitchType::LED_RING, led_on);
+
+        uint32_t light_mode_idx;
+        if (sprout_breathing_on)
+        {
+          light_mode_idx = 2; // Breathing
+          if (sprout_breathing_params_known)
+          {
+            self->publish_number(NumberType::LED_VALUE, sprout_breathing_max);
+            self->publish_number(NumberType::LED_BRIGHTNESS_MIN, sprout_breathing_min);
+            self->publish_number(NumberType::LED_SPEED, sprout_breathing_speed);
+            self->publish_number(NumberType::LED_COLOR_TEMP, sprout_breathing_ct);
+          }
+        }
+        else if (sprout_nightlight_on)
+        {
+          light_mode_idx = 1; // Nightlight
+          self->publish_number(NumberType::LED_VALUE, sprout_nightlight_bri);
+          self->publish_number(NumberType::LED_COLOR_TEMP, sprout_nightlight_ct);
+        }
+        else
+        {
+          light_mode_idx = 0; // Off
+        }
+        self->publish_select(SelectType::LIGHT_MODE, light_mode_idx);
+      }
+
       // Apply to ESPHome fan once, with consistent values
       auto *fan = (self != nullptr) ? self->get_fan() : nullptr;
       if (fan != nullptr)

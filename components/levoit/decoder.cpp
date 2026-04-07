@@ -1,6 +1,7 @@
 #include "decoder.h"
 #include "vital_status.h"
 #include "core_status.h"
+#include "sprout_status.h"
 #include "esphome/core/log.h"
 #include "types.h"
 
@@ -170,22 +171,27 @@ namespace esphome
             decode_core_timer(self, model, payload, payload_len);
           }
         }
-        if (model == ModelType::VITAL100S || model == ModelType::VITAL200S)
+        if (model == ModelType::VITAL100S || model == ModelType::VITAL200S || model == ModelType::SPROUT)
         {
-          // Vital models: payload is TLV 0x00 0x55
+          // Vital/Sprout models: status payload is flat TLV, CMD=02 00 55
           if (msg_type == 0x22 && ptype0 == 0x00 && ptype1 == 0x55)
           {
             decode_vital_status(self, model, payload, payload_len);
           }
-          // Vital models: timer ack payload, send after status requested
+          // Timer ack payload, sent after status requested
           if (msg_type == 0x12 && ptype0 == 0x1A && ptype1 == 0x50)
           {
             decode_vital_timer(self, model, payload, payload_len);
           }
-          // Vital models: timer updated from device msg
+          // Timer update pushed from device
           if (msg_type == 0x22 && ptype0 == 0x1B && ptype1 == 0x50)
           {
             decode_vital_timer(self, model, payload, payload_len);
+          }
+          // Sprout: async MCU event notifications (CMD=02 08 55)
+          if (model == ModelType::SPROUT && msg_type == 0x22 && ptype0 == 0x08 && ptype1 == 0x55)
+          {
+            decode_sprout_event(self, payload, payload_len);
           }
         }
       }

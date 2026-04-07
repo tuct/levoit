@@ -19,6 +19,8 @@
 #include "core_status.h"
 #include "core_commands.h"
 #include "vital_commands.h"
+#include "sprout_commands.h"
+#include "sprout_status.h"
 #ifdef USE_SWITCH
 #include "switch/levoit_switch.h"
 #endif
@@ -194,7 +196,11 @@ namespace esphome
                 break;
 
             case SwitchType::WHITE_NOISE:
-                // TODO: sendCommand(state ? setWhiteNoiseOn : setWhiteNoiseOff);
+                this->sendCommand(state ? setSproutWhiteNoiseOn : setSproutWhiteNoiseOff);
+                break;
+
+            case SwitchType::LED_RING:
+                this->sendCommand(state ? setSproutLightNightlight : setSproutLedOff);
                 break;
 
             default:
@@ -232,6 +238,21 @@ namespace esphome
 
             case NumberType::EFFICIENCY_ROOM_SIZE:
                 this->sendCommand(setAutoModeEfficient); // takes value from number: Room Size
+                break;
+
+            case NumberType::LED_VALUE:
+            case NumberType::LED_COLOR_TEMP:
+                // Re-send the current light mode with updated value
+                this->sendCommand(setSproutLightNightlight);
+                break;
+
+            case NumberType::LED_BRIGHTNESS_MIN:
+            case NumberType::LED_SPEED:
+                this->sendCommand(setSproutLightBreathing);
+                break;
+
+            case NumberType::WHITE_NOISE_VOLUME:
+                this->sendCommand(setSproutWhiteNoiseOn);
                 break;
             }
         }
@@ -291,6 +312,29 @@ namespace esphome
                 default:
                     break;
                 }
+                break;
+
+            case SelectType::LIGHT_MODE:
+                // 0=Off, 1=Nightlight, 2=Breathing
+                switch (value)
+                {
+                case 0:
+                    this->sendCommand(setSproutLedOff);
+                    break;
+                case 1:
+                    this->sendCommand(setSproutLightNightlight);
+                    break;
+                case 2:
+                    this->sendCommand(setSproutLightBreathing);
+                    break;
+                default:
+                    break;
+                }
+                break;
+
+            case SelectType::WHITE_NOISE_SOUND:
+                // Sound changed — re-send WN on with new sound index
+                this->sendCommand(setSproutWhiteNoiseOn);
                 break;
 
             default:
@@ -365,6 +409,8 @@ namespace esphome
                 model_ = ModelType::CORE400S;
             else if (model == "CORE600S")
                 model_ = ModelType::CORE600S;
+            else if (model == "SPROUT")
+                model_ = ModelType::SPROUT;
 
             ESP_LOGI(TAG, "Model set to: %s (ModelType=%d)", model.c_str(), (int)model_);
         }
@@ -384,6 +430,8 @@ namespace esphome
                 cadr = 167;
             if (model_ == ModelType::CORE600S)
                 cadr = 641;
+            if (model_ == ModelType::SPROUT)
+                cadr = 230; // TODO: verify actual CADR from spec sheet
             
             // Initialize preferences for tracking used_cadr and total_runtime
             pref_used_cadr_ = global_preferences->make_preference<uint32_t>(fnv1_hash("levoit_used_cadr"));
@@ -812,6 +860,13 @@ namespace esphome
             {
                 message = build_vital_command(this, commandType);
             }
+            else if (this->model_ == ModelType::SPROUT)
+            {
+                // Try Sprout-specific commands first, fall back to Vital for shared commands
+                message = build_sprout_command(this, commandType);
+                if (message.empty())
+                    message = build_vital_command(this, commandType);
+            }
 
             if (message.size() > 0)
             {
@@ -833,7 +888,7 @@ namespace esphome
         {
 
             uint8_t pv = 0x01;
-            if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S)
+            if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S || this->model_ == ModelType::SPROUT)
             {
                 pv = 0x02;
                 ESP_LOGI("TAG", ">>> Sending VITAL ack for: 0x%02X 0x%02X", ptype0, ptype1);

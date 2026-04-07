@@ -16,6 +16,7 @@ TYPE_MAP = {
     "light_detect": SwitchType.LIGHT_DETECT,
     "quick_clean": SwitchType.QUICK_CLEAN,
     "white_noise": SwitchType.WHITE_NOISE,
+    "led_ring": SwitchType.LED_RING,
 }
 
 CONFIG_SCHEMA = switch.switch_schema(LevoitSwitch).extend(

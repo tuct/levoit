@@ -26,6 +26,9 @@ TYPE_MAP = {
     "efficiency_counter": SensorType.EFFICIENCY_COUNTER,
     "current_cadr": SensorType.CURRENT_CADR,
     "filter_life_left": SensorType.FILTER_LIFE_LEFT,
+    "pm1_0": SensorType.PM1_0,
+    "pm10": SensorType.PM10,
+    "fan_rpm": SensorType.FAN_RPM,
 }
 
 TYPE_PROPS = {
@@ -60,6 +63,22 @@ TYPE_PROPS = {
         CONF_UNIT_OF_MEASUREMENT: "%",
         CONF_ICON: "mdi:air-filter",
         CONF_STATE_CLASS: validate_state_class("measurement"),
+    },
+    "pm1_0": {
+        CONF_DEVICE_CLASS: "pm1",
+        CONF_UNIT_OF_MEASUREMENT: "µg/m³",
+        CONF_STATE_CLASS: validate_state_class("measurement"),
+    },
+    "pm10": {
+        CONF_DEVICE_CLASS: "pm10",
+        CONF_UNIT_OF_MEASUREMENT: "µg/m³",
+        CONF_STATE_CLASS: validate_state_class("measurement"),
+    },
+    "fan_rpm": {
+        CONF_ICON: "mdi:fan",
+        CONF_UNIT_OF_MEASUREMENT: "RPM",
+        CONF_STATE_CLASS: validate_state_class("measurement"),
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC,
     },
 }
 

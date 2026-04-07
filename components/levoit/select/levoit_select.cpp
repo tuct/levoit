@@ -37,6 +37,15 @@ namespace esphome
         case SelectType::NIGHTLIGHT:
           this->traits.set_options({"Off","Mid","Full"});
           break;
+        case SelectType::LIGHT_MODE:
+          this->traits.set_options({"Off", "Nightlight", "Breathing"});
+          break;
+        case SelectType::WHITE_NOISE_SOUND:
+          this->traits.set_options({
+              "Sound 01", "Sound 02", "Sound 03", "Sound 04", "Sound 05",
+              "Sound 06", "Sound 07", "Sound 08", "Sound 09", "Sound 10",
+              "Sound 11", "Sound 12", "Sound 13", "Sound 14", "Sound 15"});
+          break;
         default:
           break;
       }

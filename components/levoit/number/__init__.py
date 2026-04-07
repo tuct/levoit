@@ -11,6 +11,7 @@ from esphome.const import (
     CONF_MIN_VALUE,
     CONF_MAX_VALUE,
     CONF_STEP,
+    CONF_MODE,
 )
 
 from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
@@ -23,14 +24,17 @@ NumberType = levoit_ns.enum("NumberType")
 TYPE_MAP = {
     "timer": NumberType.TIMER,
     "efficiency_room_size": NumberType.EFFICIENCY_ROOM_SIZE,
-     #VITALS only below
+    #VITALS only below
     "quick_clean_min": NumberType.QUICK_CLEAN_MIN,
     "white_noise_min": NumberType.WHITE_NOISE_MIN,
     "sleep_mode_min": NumberType.SLEEP_MODE_MIN,
-    "quick_clean_fan_level": NumberType.QUICK_CLEAN_FAN_LEVEL,
-    "white_noise_fan_level": NumberType.WHITE_NOISE_FAN_LEVEL,
-    "sleep_mode_fan_mode_level": NumberType.SLEEP_MODE_FAN_MODE_LEVEL,
     "filter_lifetime_months": NumberType.FILTER_LIFETIME_MONTHS,
+    # Sprout only below
+    "led_value": NumberType.LED_VALUE,
+    "led_brightness_min": NumberType.LED_BRIGHTNESS_MIN,
+    "led_speed": NumberType.LED_SPEED,
+    "led_color_temp": NumberType.LED_COLOR_TEMP,
+    "white_noise_volume": NumberType.WHITE_NOISE_VOLUME,
 }
 
 # (min_value, max_value, step, extra_props)
@@ -47,6 +51,28 @@ TYPE_RANGE = {
     "filter_lifetime_months": (1.0, 12.0, 1.0, {
         CONF_UNIT_OF_MEASUREMENT: "months",
         CONF_ICON: "mdi:air-filter",
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
+    }),
+    "led_value": (0.0, 4095.0, 1.0, {
+        CONF_ICON: "mdi:brightness-6",
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
+        CONF_MODE: "slider",
+    }),
+    "led_brightness_min": (0.0, 255.0, 1.0, {
+        CONF_ICON: "mdi:brightness-3",
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
+    }),
+    "led_speed": (1.0, 10.0, 1.0, {
+        CONF_ICON: "mdi:timer-outline",
+        CONF_UNIT_OF_MEASUREMENT: "s",
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
+    }),
+    "led_color_temp": (0.0, 255.0, 1.0, {
+        CONF_ICON: "mdi:thermometer",
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
+    }),
+    "white_noise_volume": (0.0, 255.0, 1.0, {
+        CONF_ICON: "mdi:volume-high",
         CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
     }),
 }
@@ -81,6 +107,17 @@ async def to_code(config):
         step=step,
     )
     await cg.register_component(var, config)
+
+    if CONF_MODE in config:
+        number_ns = cg.esphome_ns.namespace("number")
+        NumberMode = number_ns.enum("NumberMode")
+        mode_map = {
+            "auto":   NumberMode.NUMBER_MODE_AUTO,
+            "box":    NumberMode.NUMBER_MODE_BOX,
+            "slider": NumberMode.NUMBER_MODE_SLIDER,
+        }
+        if config[CONF_MODE] in mode_map:
+            cg.add(var.set_mode(mode_map[config[CONF_MODE]]))
 
     # parent pointer for write_state -> send UART command
     cg.add(var.set_parent(parent))

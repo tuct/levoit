@@ -12,12 +12,17 @@ BinarySensorType = levoit_ns.enum("BinarySensorType")
 
 TYPE_MAP = {
     "filter_low": BinarySensorType.FILTER_LOW,
+    "cover_open": BinarySensorType.COVER_OPEN,
 }
 
 TYPE_PROPS = {
     "filter_low": {
         CONF_DEVICE_CLASS: "battery",
         CONF_ICON: "mdi:air-filter",
+    },
+    "cover_open": {
+        CONF_DEVICE_CLASS: "door",
+        CONF_ICON: "mdi:door-open",
     },
 }
 

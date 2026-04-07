@@ -77,6 +77,7 @@ class Levoit : public Component, public uart::UARTDevice {
   void set_fan(LevoitFan *fan) { this->fan_ = fan; }
   LevoitFan *get_fan() const { return this->fan_; }
   LevoitNumber *get_number(NumberType type) const { return numbers_[nt_idx_(type)]; }
+  LevoitSelect *get_select(SelectType type) const { return selects_[sl_idx_(type)]; }
   class LevoitBinarySensor *get_binary_sensor(BinarySensorType type) const { return binary_sensors_[bs_idx_(type)]; }
   bool get_binary_sensor_state(BinarySensorType type) const { return binary_sensor_states_[bs_idx_(type)]; }
   void start_timer(){this->timer_active_ = true; this->timer_stop_pending_ = false;};
