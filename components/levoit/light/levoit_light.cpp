@@ -59,6 +59,15 @@ void LevoitSproutLight::apply_from_mcu(bool on, float brightness, float color_te
   if (state_ == nullptr) return;
   // Don't override HA's in-flight transition with stale MCU status
   if (state_->is_transformer_active()) return;
+
+  // MCU turned on from device button: bri=0 means ESP must supply last known settings
+  if (on && brightness < 0.01f && !breathing && parent_ != nullptr) {
+    uint8_t bri_pct = parent_->get_pending_led_bri();
+    if (bri_pct < 1) bri_pct = 50;
+    parent_->sendSproutLightDirect(true, false, bri_pct, parent_->get_pending_led_ct());
+    brightness = bri_pct / 100.0f;
+  }
+
   publishing_ = true;
   auto call = state_->make_call();
   call.set_transition_length(0);
@@ -66,9 +75,8 @@ void LevoitSproutLight::apply_from_mcu(bool on, float brightness, float color_te
     call.set_state(false);
   } else {
     call.set_state(true);
-    call.set_brightness(brightness < 0.01f ? 0.01f : brightness);
+    call.set_brightness(brightness);
     // CT and effect are write-only: syncing them back from MCU causes feedback loops.
-    // Both are exclusively controlled from HA side.
   }
   call.perform();
   // publishing_ is reset inside write_state when the perform()-triggered call arrives
