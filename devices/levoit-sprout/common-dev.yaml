@@ -63,10 +63,6 @@ switch:
     type: light_detect
   - platform: levoit
     levoit: levoitsprout
-    name: "LED Ring"
-    type: led_ring
-  - platform: levoit
-    levoit: levoitsprout
     name: "White Noise"
     type: white_noise
 
@@ -86,16 +82,16 @@ number:
   # Breathing effect params (adjust these to tune the breathing animation)
   - platform: levoit
     levoit: levoitsprout
-    name: "LED Color Temperature"
-    type: led_color_temp
-  - platform: levoit
-    levoit: levoitsprout
     name: "LED Brightness Min"
     type: led_brightness_min
   - platform: levoit
     levoit: levoitsprout
     name: "LED Breathing Time (s)"
     type: led_speed
+  - platform: levoit
+    levoit: levoitsprout
+    name: "AQI Scale"
+    type: aqi_scale
   # White noise
   - platform: levoit
     levoit: levoitsprout
@@ -107,6 +103,7 @@ sensor:
     levoit: levoitsprout
     name: "PM 2.5"
     type: pm25
+    id: sprout_pm25
   - platform: levoit
     levoit: levoitsprout
     name: "PM 1.0"
@@ -115,10 +112,12 @@ sensor:
     levoit: levoitsprout
     name: "PM 10"
     type: pm10
-  - platform: levoit
-    levoit: levoitsprout
+    id: sprout_pm10
+  - platform: aqi
     name: "AQI"
-    type: aqi
+    pm_2_5: sprout_pm25
+    pm_10_0: sprout_pm10
+    calculation_type: AQI
   - platform: levoit
     levoit: levoitsprout
     name: "Fan RPM"
@@ -136,6 +135,8 @@ light:
   - platform: levoit
     levoit: levoitsprout
     name: "LED Ring"
+    gamma_correct: 0
+    default_transition_length: 0s
 
 select:
   - platform: levoit

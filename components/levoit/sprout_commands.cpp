@@ -13,38 +13,36 @@ namespace esphome
     static const char *const TAG_SPROUT_CMD = "levoit.sprout_cmd";
 
     // CMD=02 0B 55  —  Nightlight mode
-    // Observed payload: 01 01 {on} 02 01 {color_temp} 03 02 {LE16_brightness}
+    // Observed payload: 01 01 {on} 02 01 {brightness_pct} 03 02 {LE16_color_temp_k}
     //   tag01: on/off (01=on, 00=off)
-    //   tag02: color temperature (uint8, 0x3A=58 is default warm white)
-    //   tag03: brightness (LE16, 0–4095 observed range)
-    static std::vector<uint8_t> build_nightlight_command(uint8_t on, uint8_t color_temp, uint16_t brightness)
+    //   tag02: brightness 0–100 (uint8 percentage)
+    //   tag03: color temperature in Kelvin (LE16, e.g. 0x07D0=2000K, 0x0DAC=3500K)
+    static std::vector<uint8_t> build_nightlight_command(uint8_t on, uint8_t brightness_pct, uint16_t color_temp_k)
     {
       std::vector<uint8_t> msg_type = {0x02, 0x0B, 0x55};
       std::vector<uint8_t> payload = {
           0x01, 0x01, on,
-          0x02, 0x01, color_temp,
-          0x03, 0x02, (uint8_t)(brightness & 0xFF), (uint8_t)(brightness >> 8)};
+          0x02, 0x01, brightness_pct,
+          0x03, 0x02, (uint8_t)(color_temp_k & 0xFF), (uint8_t)(color_temp_k >> 8)};
       return build_levoit_message(msg_type, payload, messageUpCounter);
     }
 
     // CMD=02 0C 55  —  Breathing mode
-    // Observed payload: 01 01 01 03 02 {LE16_max} 02 01 {speed} 04 01 {min} 05 01 48
-    //   tag01: mode (01=breathing)
+    // Confirmed payload order (tags appear out of numeric order):
+    //   tag01: 0x01 = breathing on
+    //   tag03: color temperature Kelvin LE16 (e.g. 0x0DAC=3500K)
     //   tag02: breathing cycle time in seconds (1–10)
-    //   tag03: max brightness (LE16)
-    //   tag04: min brightness (uint8)
-    //   tag05: 0x48 = color (fixed, warm white)
-    // Note: tags appear out of numeric order — match observed payload order exactly.
-    // tag05 = color temperature, same as nightlight (observed: 0x48, 0x4A, 0x61 in captures)
-    static std::vector<uint8_t> build_breathing_command(uint16_t max_brightness, uint8_t min_brightness, uint8_t speed_sec, uint8_t color_temp)
+    //   tag04: min brightness 0–100 (uint8 percentage)
+    //   tag05: max brightness 0–100 (uint8 percentage)
+    static std::vector<uint8_t> build_breathing_command(uint8_t max_brightness_pct, uint8_t min_brightness_pct, uint8_t speed_sec, uint16_t color_temp_k)
     {
       std::vector<uint8_t> msg_type = {0x02, 0x0C, 0x55};
       std::vector<uint8_t> payload = {
           0x01, 0x01, 0x01,
-          0x03, 0x02, (uint8_t)(max_brightness & 0xFF), (uint8_t)(max_brightness >> 8),
+          0x03, 0x02, (uint8_t)(color_temp_k & 0xFF), (uint8_t)(color_temp_k >> 8),
           0x02, 0x01, speed_sec,
-          0x04, 0x01, min_brightness,
-          0x05, 0x01, color_temp};
+          0x04, 0x01, min_brightness_pct,
+          0x05, 0x01, max_brightness_pct};
       return build_levoit_message(msg_type, payload, messageUpCounter);
     }
 
@@ -76,30 +74,31 @@ namespace esphome
       {
       case CommandType::setSproutLedOff:
         ESP_LOGD(TAG_SPROUT_CMD, "setSproutLedOff");
-        return build_nightlight_command(0x00, 0x3A, 0x0000);
+        return build_nightlight_command(0x00, 0x00, 0x0000);
 
       case CommandType::setSproutLightNightlight:
       {
-        auto *n_bri = self->get_number(NumberType::LED_VALUE);
-        auto *n_ct = self->get_number(NumberType::LED_COLOR_TEMP);
-        uint16_t brightness = (n_bri != nullptr) ? static_cast<uint16_t>(n_bri->state) : 0x0C80;
-        uint8_t color_temp = (n_ct != nullptr) ? static_cast<uint8_t>(n_ct->state) : 0x3A;
-        ESP_LOGD(TAG_SPROUT_CMD, "setSproutLightNightlight: brightness=%u color_temp=%u", brightness, color_temp);
-        return build_nightlight_command(0x01, color_temp, brightness);
+        uint8_t bri_pct = self->get_pending_led_bri();
+        uint16_t ct_k = self->get_pending_led_ct();
+        ESP_LOGD(TAG_SPROUT_CMD, "setSproutLightNightlight: bri_pct=%u ct_k=%u", bri_pct, ct_k);
+        return build_nightlight_command(0x01, bri_pct, ct_k);
       }
 
       case CommandType::setSproutLightBreathing:
       {
-        auto *n_max = self->get_number(NumberType::LED_VALUE);
+        uint8_t max_pct = self->get_pending_led_bri();
+        uint16_t ct_k = self->get_pending_led_ct();
         auto *n_min = self->get_number(NumberType::LED_BRIGHTNESS_MIN);
         auto *n_spd = self->get_number(NumberType::LED_SPEED);
-        auto *n_ct = self->get_number(NumberType::LED_COLOR_TEMP);
-        uint16_t max_bri = (n_max != nullptr) ? static_cast<uint16_t>(n_max->state) : 0x0C80;
-        uint8_t min_bri = (n_min != nullptr) ? static_cast<uint8_t>(n_min->state) : 0x07;
-        uint8_t speed = (n_spd != nullptr) ? static_cast<uint8_t>(n_spd->state) : 0x05;
-        uint8_t color_temp = (n_ct != nullptr) ? static_cast<uint8_t>(n_ct->state) : 0x48;
-        ESP_LOGD(TAG_SPROUT_CMD, "setSproutLightBreathing: max=%u min=%u speed=%u ct=%u", max_bri, min_bri, speed, color_temp);
-        return build_breathing_command(max_bri, min_bri, speed, color_temp);
+        uint8_t min_pct = (n_min != nullptr) ? static_cast<uint8_t>(n_min->state) : 5;
+        uint8_t speed = (n_spd != nullptr) ? static_cast<uint8_t>(n_spd->state) : 5;
+        // Clamp speed to minimum 1
+        if (speed < 1) speed = 1;
+        // If min >= max, pull min down to max-20 (floor 0)
+        if (min_pct >= max_pct)
+          min_pct = (max_pct >= 20) ? max_pct - 20 : 0;
+        ESP_LOGD(TAG_SPROUT_CMD, "setSproutLightBreathing: max_pct=%u min_pct=%u speed=%u ct_k=%u", max_pct, min_pct, speed, ct_k);
+        return build_breathing_command(max_pct, min_pct, speed, ct_k);
       }
 
       case CommandType::setSproutWhiteNoiseOn:
@@ -133,14 +132,15 @@ namespace esphome
         ESP_LOGD(TAG_SPROUT_CMD, "setSproutWhiteNoiseModeOff");
         return build_white_noise_mode_command(false);
 
-      // CMD=02 06 55  —  Sprout WiFi LED blink animation
-      // PAY=01 02 {LE16_period_ms}  — tag01: blink period in ms (LE16)
-      // Original firmware ramps 50→500ms on boot; we use 500ms steady blink for "connecting".
-      case CommandType::setWifiLedBlinking:
+      // CMD=02 06 55  —  Sprout AQI scale: sets the AQI max value shown on device display (0–500)
+      // PAY=01 02 {LE16_value}  — tag01: LE16 AQI value (e.g. 0x0037=55, 0x01F4=500)
+      case CommandType::setSproutAqiScale:
       {
+        auto *n = self->get_number(NumberType::AQI_SCALE);
+        uint16_t aqi = (n != nullptr) ? static_cast<uint16_t>(n->state) : 500;
         std::vector<uint8_t> msg_type = {0x02, 0x06, 0x55};
-        std::vector<uint8_t> payload = {0x01, 0x02, 0xF4, 0x01}; // 500ms period
-        ESP_LOGD(TAG_SPROUT_CMD, "setWifiLedBlinking (CMD=02 06 55, 500ms)");
+        std::vector<uint8_t> payload = {0x01, 0x02, (uint8_t)(aqi & 0xFF), (uint8_t)(aqi >> 8)};
+        ESP_LOGD(TAG_SPROUT_CMD, "setSproutAqiScale: aqi=%u", aqi);
         return build_levoit_message(msg_type, payload, messageUpCounter);
       }
 

@@ -56,6 +56,10 @@ class Levoit : public Component, public uart::UARTDevice {
   void register_light(LevoitSproutLight *light) { sprout_light_ = light; }
   LevoitSproutLight *get_sprout_light() const { return sprout_light_; }
   void publish_sprout_light(bool on, float brightness, float color_temp, bool breathing);
+  // Send nightlight/breathing command with explicit values (bypasses number state read)
+  void sendSproutLightDirect(bool on, bool breathing, uint8_t bri_pct, uint16_t ct_k);
+  uint8_t  get_pending_led_bri() const { return pending_led_bri_; }
+  uint16_t get_pending_led_ct()  const { return pending_led_ct_; }
   // helper to compute and publish filter stats immediately
   void publish_filter_stats_now();
 
@@ -119,6 +123,9 @@ class Levoit : public Component, public uart::UARTDevice {
   LevoitFan *fan_{nullptr};
   LevoitSproutLight *sprout_light_{nullptr};
   ModelType model_{ModelType::VITAL100S};
+  // Last commanded LED values — set by sendSproutLightDirect, read by build_sprout_command
+  uint8_t  pending_led_bri_{100};    // 0–100 percent
+  uint16_t pending_led_ct_{3500};    // Kelvin
 
   uint16_t cadr = 235;
   uint8_t buffer_[512];

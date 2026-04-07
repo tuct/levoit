@@ -46,11 +46,12 @@ namespace esphome
             FILTER_LIFETIME_MONTHS = 5,
             USED_CADR = 6,
             TOTAL_RUNTIME = 7,
-            LED_VALUE = 8,              // Sprout: LED brightness — nightlight LE16, breathing max LE16
-            LED_BRIGHTNESS_MIN = 9,     // Sprout: breathing mode min brightness (uint8, 0-255)
+            // LED_VALUE = 8 — removed, controlled via light component brightness
+            LED_BRIGHTNESS_MIN = 9,     // Sprout: breathing mode min brightness (0-100 pct)
             LED_SPEED = 10,             // Sprout: breathing cycle time in seconds (1-10)
-            LED_COLOR_TEMP = 11,        // Sprout: nightlight color temperature (uint8, 0-255)
+            // LED_COLOR_TEMP = 11 — removed, controlled via light component CT slider
             WHITE_NOISE_VOLUME = 12,    // Sprout: white noise volume (0-255)
+            AQI_SCALE = 13,             // Sprout: AQI display scale max (0–500)
         };
         // Note: indices 0-11 must stay stable (serialized to preferences)
         // NumberType aliases (flat namespace)
@@ -62,11 +63,10 @@ namespace esphome
         static constexpr NumberType FILTER_LIFETIME_MONTHS = NumberType::FILTER_LIFETIME_MONTHS;
         static constexpr NumberType USED_CADR = NumberType::USED_CADR;
         static constexpr NumberType TOTAL_RUNTIME = NumberType::TOTAL_RUNTIME;
-        static constexpr NumberType LED_VALUE = NumberType::LED_VALUE;
         static constexpr NumberType LED_BRIGHTNESS_MIN = NumberType::LED_BRIGHTNESS_MIN;
         static constexpr NumberType LED_SPEED = NumberType::LED_SPEED;
-        static constexpr NumberType LED_COLOR_TEMP = NumberType::LED_COLOR_TEMP;
         static constexpr NumberType WHITE_NOISE_VOLUME = NumberType::WHITE_NOISE_VOLUME;
+        static constexpr NumberType AQI_SCALE = NumberType::AQI_SCALE;
 
         enum class SensorType : uint8_t
         {
@@ -189,13 +189,14 @@ namespace esphome
             setNightlightFull,
             // Sprout LED ring
             setSproutLedOff,            // turn LED ring off (tag01=00)
-            setSproutLightNightlight,   // CMD=02 0B 55 — nightlight: LED_VALUE brightness, LED_COLOR_TEMP
-            setSproutLightBreathing,    // CMD=02 0C 55 — breathing: LED_VALUE max, LED_BRIGHTNESS_MIN, LED_SPEED
+            setSproutLightNightlight,   // CMD=02 0B 55 — nightlight: brightness pct, CT Kelvin (from light component)
+            setSproutLightBreathing,    // CMD=02 0C 55 — breathing: max pct, LED_BRIGHTNESS_MIN, LED_SPEED, CT Kelvin
             // Sprout white noise (CMD=02 07 55 + CMD=02 02 55)
             setSproutWhiteNoiseOn,      // CMD=02 07 55: active=1 (uses WN_VOLUME + WHITE_NOISE_SOUND select)
             setSproutWhiteNoiseOff,     // CMD=02 07 55: active=0
             setSproutWhiteNoiseModeOn,  // CMD=02 02 55: PAY=10 01 01 (enable WN fan mode)
             setSproutWhiteNoiseModeOff, // CMD=02 02 55: PAY=10 01 00 (disable WN fan mode)
+            setSproutAqiScale,          // CMD=02 06 55: sets AQI display scale max (0–500)
             COMMAND_TYPE_MAX
 
             // dedicated command for setSleepModeCustom
@@ -246,6 +247,7 @@ namespace esphome
                 "setSproutWhiteNoiseOff",
                 "setSproutWhiteNoiseModeOn",
                 "setSproutWhiteNoiseModeOff",
+                "setSproutAqiScale",
             };
             static_assert(
                 sizeof(names) / sizeof(names[0]) == COMMAND_TYPE_MAX,

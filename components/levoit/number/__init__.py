@@ -30,11 +30,10 @@ TYPE_MAP = {
     "sleep_mode_min": NumberType.SLEEP_MODE_MIN,
     "filter_lifetime_months": NumberType.FILTER_LIFETIME_MONTHS,
     # Sprout only below
-    "led_value": NumberType.LED_VALUE,
     "led_brightness_min": NumberType.LED_BRIGHTNESS_MIN,
     "led_speed": NumberType.LED_SPEED,
-    "led_color_temp": NumberType.LED_COLOR_TEMP,
     "white_noise_volume": NumberType.WHITE_NOISE_VOLUME,
+    "aqi_scale": NumberType.AQI_SCALE,
 }
 
 # (min_value, max_value, step, extra_props)
@@ -53,12 +52,7 @@ TYPE_RANGE = {
         CONF_ICON: "mdi:air-filter",
         CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
     }),
-    "led_value": (0.0, 4095.0, 1.0, {
-        CONF_ICON: "mdi:brightness-6",
-        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
-        CONF_MODE: "slider",
-    }),
-    "led_brightness_min": (0.0, 255.0, 1.0, {
+    "led_brightness_min": (0.0, 100.0, 1.0, {
         CONF_ICON: "mdi:brightness-3",
         CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
     }),
@@ -67,8 +61,9 @@ TYPE_RANGE = {
         CONF_UNIT_OF_MEASUREMENT: "s",
         CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
     }),
-    "led_color_temp": (0.0, 255.0, 1.0, {
-        CONF_ICON: "mdi:thermometer",
+    "aqi_scale": (0.0, 500.0, 1.0, {
+        CONF_ICON: "mdi:air-filter",
+        CONF_UNIT_OF_MEASUREMENT: "µg/m³",
         CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
     }),
     "white_noise_volume": (0.0, 255.0, 1.0, {

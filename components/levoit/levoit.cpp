@@ -168,6 +168,20 @@ namespace esphome
                 sprout_light_->apply_from_mcu(on, brightness, color_temp, breathing);
         }
 
+        void Levoit::sendSproutLightDirect(bool on, bool breathing, uint8_t bri_pct, uint16_t ct_k)
+        {
+            // Store values so build_sprout_command reads them instead of number states
+            this->pending_led_bri_ = bri_pct;
+            this->pending_led_ct_ = ct_k;
+            if (!on) {
+                this->sendCommand(setSproutLedOff);
+            } else if (breathing) {
+                this->sendCommand(setSproutLightBreathing);
+            } else {
+                this->sendCommand(setSproutLightNightlight);
+            }
+        }
+
         void Levoit::publish_filter_stats_now()
         {
             float filter_left = this->calculate_filter_life_left_percent();
@@ -247,11 +261,6 @@ namespace esphome
                 this->sendCommand(setAutoModeEfficient); // takes value from number: Room Size
                 break;
 
-            case NumberType::LED_VALUE:
-            case NumberType::LED_COLOR_TEMP:
-                // Re-send the current light mode with updated value
-                this->sendCommand(setSproutLightNightlight);
-                break;
 
             case NumberType::LED_BRIGHTNESS_MIN:
             case NumberType::LED_SPEED:
@@ -260,6 +269,10 @@ namespace esphome
 
             case NumberType::WHITE_NOISE_VOLUME:
                 this->sendCommand(setSproutWhiteNoiseOn);
+                break;
+
+            case NumberType::AQI_SCALE:
+                this->sendCommand(setSproutAqiScale);
                 break;
             }
         }
