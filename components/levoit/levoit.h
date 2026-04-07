@@ -11,15 +11,16 @@
 namespace esphome {
 namespace levoit {
 
-// forward declaration 
-class LevoitSwitch;  
-class LevoitNumber;  
+// forward declaration
+class LevoitSwitch;
+class LevoitNumber;
 class LevoitFan;
 class LevoitSensor;
 class LevoitSelect;
 class LevoitTextSensor;
-class LevoitBinarySensor;  
+class LevoitBinarySensor;
 class LevoitButton;
+class LevoitSproutLight;
 
 
 
@@ -51,6 +52,10 @@ class Levoit : public Component, public uart::UARTDevice {
   void register_binary_sensor(BinarySensorType type, class LevoitBinarySensor *bs);
   void register_button(ButtonType type, class LevoitButton *btn);
   void publish_binary_sensor(BinarySensorType type, bool state);
+  // Sprout LED ring light
+  void register_light(LevoitSproutLight *light) { sprout_light_ = light; }
+  LevoitSproutLight *get_sprout_light() const { return sprout_light_; }
+  void publish_sprout_light(bool on, float brightness, float color_temp, bool breathing);
   // helper to compute and publish filter stats immediately
   void publish_filter_stats_now();
 
@@ -112,6 +117,7 @@ class Levoit : public Component, public uart::UARTDevice {
   bool binary_sensor_states_[8] {false};
   class LevoitButton *buttons_[4] {nullptr};
   LevoitFan *fan_{nullptr};
+  LevoitSproutLight *sprout_light_{nullptr};
   ModelType model_{ModelType::VITAL100S};
 
   uint16_t cadr = 235;

@@ -386,29 +386,29 @@ namespace esphome
         bool led_on = sprout_nightlight_on || sprout_breathing_on;
         self->publish_switch(SwitchType::LED_RING, led_on);
 
-        uint32_t light_mode_idx;
-        if (sprout_breathing_on)
+        float brightness = 0.0f;
+        float color_temp = 58.0f; // default warm white
+        if (sprout_breathing_on && sprout_breathing_params_known)
         {
-          light_mode_idx = 2; // Breathing
-          if (sprout_breathing_params_known)
-          {
-            self->publish_number(NumberType::LED_VALUE, sprout_breathing_max);
-            self->publish_number(NumberType::LED_BRIGHTNESS_MIN, sprout_breathing_min);
-            self->publish_number(NumberType::LED_SPEED, sprout_breathing_speed);
-            self->publish_number(NumberType::LED_COLOR_TEMP, sprout_breathing_ct);
-          }
+          brightness = sprout_breathing_max / 4095.0f;
+          color_temp = static_cast<float>(sprout_breathing_ct);
+          self->publish_number(NumberType::LED_VALUE, sprout_breathing_max);
+          self->publish_number(NumberType::LED_BRIGHTNESS_MIN, sprout_breathing_min);
+          self->publish_number(NumberType::LED_SPEED, sprout_breathing_speed);
+          self->publish_number(NumberType::LED_COLOR_TEMP, sprout_breathing_ct);
         }
         else if (sprout_nightlight_on)
         {
-          light_mode_idx = 1; // Nightlight
+          brightness = sprout_nightlight_bri / 4095.0f;
+          color_temp = static_cast<float>(sprout_nightlight_ct);
           self->publish_number(NumberType::LED_VALUE, sprout_nightlight_bri);
           self->publish_number(NumberType::LED_COLOR_TEMP, sprout_nightlight_ct);
         }
-        else
-        {
-          light_mode_idx = 0; // Off
-        }
-        self->publish_select(SelectType::LIGHT_MODE, light_mode_idx);
+
+        // Update light entity (also keeps LIGHT_MODE select in sync if still registered)
+        self->publish_sprout_light(led_on, brightness, color_temp, sprout_breathing_on);
+        self->publish_select(SelectType::LIGHT_MODE,
+                             sprout_breathing_on ? 2 : (sprout_nightlight_on ? 1 : 0));
       }
 
       // Apply to ESPHome fan once, with consistent values

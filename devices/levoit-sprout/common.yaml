@@ -86,18 +86,11 @@ number:
     levoit: levoitsprout
     name: "Filter Months"
     type: filter_lifetime_months
-  # LED ring — shared between modes
-  - platform: levoit
-    levoit: levoitsprout
-    name: "LED Brightness"
-    type: led_value
-    mode: slider
-  # Nightlight-specific
+  # Breathing effect params
   - platform: levoit
     levoit: levoitsprout
     name: "LED Color Temperature"
     type: led_color_temp
-  # Breathing-specific
   - platform: levoit
     levoit: levoitsprout
     name: "LED Brightness Min"
@@ -142,15 +135,16 @@ sensor:
     name: "Filter %"
     type: filter_life_left
 
+light:
+  - platform: levoit
+    levoit: levoitsprout
+    name: "LED Ring"
+
 select:
   - platform: levoit
     levoit: levoitsprout
     name: "Auto Mode"
     type: auto_mode
-  - platform: levoit
-    levoit: levoitsprout
-    name: "Light Mode"
-    type: light_mode
   - platform: levoit
     levoit: levoitsprout
     name: "White Noise Sound"
