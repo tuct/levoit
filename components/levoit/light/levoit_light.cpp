@@ -24,7 +24,10 @@ light::LightTraits LevoitSproutLight::get_traits() {
 }
 
 void LevoitSproutLight::write_state(light::LightState *state) {
-  if (publishing_) return;
+  if (publishing_) {
+    publishing_ = false;  // consume — this write was triggered by apply_from_mcu, not HA
+    return;
+  }
   if (parent_ == nullptr) return;
   bool is_on = state->current_values.is_on();
   // get_color_temperature() returns mireds directly (same value ESPHome logs)
@@ -68,7 +71,7 @@ void LevoitSproutLight::apply_from_mcu(bool on, float brightness, float color_te
     // Both are exclusively controlled from HA side.
   }
   call.perform();
-  publishing_ = false;
+  // publishing_ is reset inside write_state when the perform()-triggered call arrives
 }
 
 }  // namespace levoit

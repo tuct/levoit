@@ -88,10 +88,6 @@ number:
     levoit: levoitsprout
     name: "LED Breathing Time (s)"
     type: led_speed
-  - platform: levoit
-    levoit: levoitsprout
-    name: "AQI Scale"
-    type: aqi_scale
   # White noise
   - platform: levoit
     levoit: levoitsprout
@@ -118,6 +114,9 @@ sensor:
     pm_2_5: sprout_pm25
     pm_10_0: sprout_pm10
     calculation_type: AQI
+    on_value:
+      then:
+        - lambda: id(levoitsprout).send_aqi_to_mcu(static_cast<uint16_t>(x));
   - platform: levoit
     levoit: levoitsprout
     name: "Fan RPM"

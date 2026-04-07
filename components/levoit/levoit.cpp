@@ -92,6 +92,8 @@ namespace esphome
         }
         void Levoit::publish_switch(SwitchType type, bool state)
         {
+            if (type == SwitchType::DISPLAY)
+                display_on_ = state;
 #ifdef USE_SWITCH
             auto *sw = switches_[st_idx_(type)];
             if (!sw)
@@ -180,6 +182,14 @@ namespace esphome
             } else {
                 this->sendCommand(setSproutLightNightlight);
             }
+        }
+
+        void Levoit::send_aqi_to_mcu(uint16_t aqi)
+        {
+            if (!this->display_on_)
+                return;
+            this->pending_aqi_ = aqi;
+            this->sendCommand(setSproutAqiScale);
         }
 
         void Levoit::publish_filter_stats_now()

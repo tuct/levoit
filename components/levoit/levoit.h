@@ -60,6 +60,9 @@ class Levoit : public Component, public uart::UARTDevice {
   void sendSproutLightDirect(bool on, bool breathing, uint8_t bri_pct, uint16_t ct_k);
   uint8_t  get_pending_led_bri() const { return pending_led_bri_; }
   uint16_t get_pending_led_ct()  const { return pending_led_ct_; }
+  // Send calculated AQI value to MCU display (CMD=02 06 55)
+  void send_aqi_to_mcu(uint16_t aqi);
+  uint16_t get_pending_aqi() const { return pending_aqi_; }
   // helper to compute and publish filter stats immediately
   void publish_filter_stats_now();
 
@@ -126,6 +129,9 @@ class Levoit : public Component, public uart::UARTDevice {
   // Last commanded LED values — set by sendSproutLightDirect, read by build_sprout_command
   uint8_t  pending_led_bri_{100};    // 0–100 percent
   uint16_t pending_led_ct_{3500};    // Kelvin
+  // Last AQI value to push to MCU display — set by send_aqi_to_mcu, read by setSproutAqiScale
+  uint16_t pending_aqi_{0};
+  bool display_on_{false};
 
   uint16_t cadr = 235;
   uint8_t buffer_[512];

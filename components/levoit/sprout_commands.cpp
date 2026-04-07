@@ -136,11 +136,10 @@ namespace esphome
       // PAY=01 02 {LE16_value}  — tag01: LE16 AQI value (e.g. 0x0037=55, 0x01F4=500)
       case CommandType::setSproutAqiScale:
       {
-        auto *n = self->get_number(NumberType::AQI_SCALE);
-        uint16_t aqi = (n != nullptr) ? static_cast<uint16_t>(n->state) : 500;
+        uint16_t aqi = self->get_pending_aqi();
         std::vector<uint8_t> msg_type = {0x02, 0x06, 0x55};
         std::vector<uint8_t> payload = {0x01, 0x02, (uint8_t)(aqi & 0xFF), (uint8_t)(aqi >> 8)};
-        ESP_LOGD(TAG_SPROUT_CMD, "setSproutAqiScale: aqi=%u", aqi);
+        ESP_LOGD(TAG_SPROUT_CMD, "setSproutAqi: aqi=%u", aqi);
         return build_levoit_message(msg_type, payload, messageUpCounter);
       }
 
