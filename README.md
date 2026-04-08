@@ -26,6 +26,7 @@ Can be flashed to the original ESP32-SOLO-C1 or also installed on top (replace o
 | [Levoit Core 600s](./devices/levoit-core600s) | 2.0.1 | ✅ Tested |
 | [Levoit Vital 100s](./devices/levoit-vital100s) | 1.0.5 | ✅ Tested |
 | [Levoit Vital 200s (Pro)](./devices/levoit-vital200s) | 1.0.5 |  ✅ Tested |
+| [Levoit Sprout](./devices/levoit-sprout) | 1.0.5 |  ✅ Tested (!) WIP |
 
 ### Features
 
@@ -52,6 +53,7 @@ Available speed levels and presets are based on model.
 | C600S | 1–4 | Auto, Manual, Sleep |
 | V100S | 1–4 | Auto, Manual, Sleep, Pet |
 | V200S | 1–4 | Auto, Manual, Sleep, Pet |
+| Sprout | 1–4 | Auto, Manual |
 
 
 #### Display / Light
@@ -102,6 +104,7 @@ Auto mode options per model:
 | C600S | Default / Quiet / Room Size / ECO | 9–147 m² (97–1,582 ft²) |
 | V100S | Default / Quiet / Efficient | 9–52 m² (97–560 ft²) |
 | V200S | Default / Quiet / Efficient | 9–87 m² (97–936 ft²) |
+| Sprout| Default / Quiet / Efficient | 9–57 m² (97–936 ft²) |
 
 #### Air Quality Sensors
 

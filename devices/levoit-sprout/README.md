@@ -14,12 +14,12 @@ Uses the Vital flat-TLV protocol (`CMD=02 00 55`) as a base, with Sprout-specifi
 | Item | Value |
 |------|-------|
 | Model | Sprout |
-| Tested MCU FW | TBD |
+| Tested MCU FW | 1.0.5 |
 | ESP Module | ESP32-D0WDR2-V3 |
 | Flash | 8 MB |
 | Fan Speeds | 4 |
-| CADR (spec) | TODO m³/h |
-| Room Size | TODO m² |
+| CADR (spec) | 144.5 m³/h |
+| Room Size | 9-30 m² |
 | ESPHome | 2026.1.2+ |
 
 ## Features
@@ -121,6 +121,8 @@ The Sprout uses the same Vital flat-TLV serial protocol. Additional Sprout comma
 ## Teardown / Disassembly
 
 > TODO: add teardown steps and photos
+
+Twist open the top head counter clockwize
 
 ## Debug Header Pinout
 
