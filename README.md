@@ -120,6 +120,10 @@ Auto mode options per model:
 
 ### Change Log
 
+#### ESP Version: 1.4.0 - 2026.04
+
+* Added Levoit Sprout support
+
 #### ESP Version: 1.3.0 - 2026.03.28
 
 * Added Core 600S support: 4 fan speeds, 4 auto modes (Default / Quiet / Room Size / ECO), Light Detect switch, CADR 641 m³/h

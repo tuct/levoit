@@ -62,10 +62,6 @@ switch:
     type: child_lock
   - platform: levoit
     levoit: levoitsprout
-    name: "Light Detect"
-    type: light_detect
-  - platform: levoit
-    levoit: levoitsprout
     name: "White Noise"
     type: white_noise
 
