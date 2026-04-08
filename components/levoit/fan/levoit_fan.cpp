@@ -43,6 +43,7 @@ namespace esphome
             bool isCore200s = model == ModelType::CORE200S;
             bool isCore300s = model == ModelType::CORE300S;
             bool isCoreModel = model == ModelType::CORE200S || model == ModelType::CORE300S || model == ModelType::CORE400S || model == ModelType::CORE600S;
+            bool isSprout = model == ModelType::SPROUT;
             auto restore = this->restore_state_();
             if (restore.has_value())
             {
@@ -56,6 +57,8 @@ namespace esphome
                     continue; // Core models do not have Pet mode
                 if (isCore200s && std::strcmp(m.preset, "Auto") == 0)
                     continue; // Core200S has no Auto mode (no PM2.5 sensor)
+                if (isSprout && (std::strcmp(m.preset, "Sleep") == 0 || std::strcmp(m.preset, "Pet") == 0))
+                    continue; // Sprout only has Manual and Auto modes
                 preset_modes.push_back(m.preset);
             }
 
