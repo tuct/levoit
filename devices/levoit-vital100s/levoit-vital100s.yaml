@@ -1,18 +1,32 @@
-#example levoit-vital100s.yaml for flashing the original ESP32-SOLO-1C
+#example levoit-vital100s.yaml for flashing the original ESP32-C3-SOLO-1
 substitutions:
   device_name: levoit-vital100s
   wifi_ap_ssid: "Levoit-Vital100S"
-  rx_pin: GPIO05
-  tx_pin: GPIO06
+  rx_pin: GPIO018
+  tx_pin: GPIO019
 
 esphome:
   name: ${device_name}
+  platformio_options:
+    board_build.flash_mode: dio
+    board_build.flash_freq: 40m
 
 esp32:
-  board: esp32dev
+  board: esp32-c3-devkitm-1
+  variant: esp32c3
+  flash_size: 4MB
+  cpu_frequency: 160Mhz
   framework:
     type: esp-idf
     sdkconfig_options:
       CONFIG_FREERTOS_UNICORE: y
 
 <<: !include common.yaml
+
+
+
+
+
+
+
+
