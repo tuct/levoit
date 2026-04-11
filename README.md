@@ -169,21 +169,39 @@ Open an issue or pull request in the repo with the dump attached.
 
 ### Capturing a UART Dump
 
-The ESP32 and MCU communicate over UART at **9600 baud, 8N1**. To capture traffic:
+The ESP32 and MCU communicate over UART at **9600 baud, 8N1**. See [Levoit UART Protocol Details](./LEVOIT_UART.md) for a full description of the packet format. To capture traffic:
 
-1. Open the device and locate the UART lines between the ESP32 and MCU (see the device README for pinout)
+> Check the individual device README for teardown steps, PCB photos, and the exact solder points to use for your model.
+
+1. Open the device and locate the correct solder points — see the individual device README for the exact pads
+   > **Note:** The debug pin header RX/TX pins are used to flash the ESP32. They are **not** the UART line between the ESP32 and the MCU. You need to tap into the dedicated ESP↔MCU communication pads (test points or vias near the ESP32), not the header.
 2. Connect a logic analyzer to both the **ESP TX** and **MCU TX** lines, with a shared GND
 3. In **Saleae Logic 2**, add an **Async Serial** analyzer on each channel:
    - Baud rate: `9600`
    - Bits per frame: `8`
    - Stop bits: `1`
    - No parity
-4. Power on the device and capture a session that includes:
-   - Startup / status push from the MCU
-   - Changing fan speed (all speeds)
-   - Changing mode (auto, sleep, etc.)
-   - Any model-specific features (lights, sensors, etc.)
-5. Export the capture as a `.sal` file (Logic 2 session) or export the data table as CSV
+4. Power on the device and capture separate, clearly labelled dumps for each action — one action per capture makes it much easier to identify which bytes correspond to which command:
+
+   | Dump | Action |
+   |------|--------|
+   | `bootup` | Power on → wait until Wi-Fi connected and app shows online |
+   | `speed_1-4_app` | Switch through fan speeds 1 → 2 → 3 → 4 via the **app** |
+   | `speed_1-4_device` | Switch through fan speeds 1 → 2 → 3 → 4 via the **physical buttons** |
+   | `mode_app` | Switch through all modes (Manual / Auto / Sleep / Pet) via the **app** |
+   | `mode_device` | Switch through all modes via the **physical buttons** |
+   | `auto_mode` | Switch through all auto mode sub-options (Default / Quiet / Room Size / etc.) |
+   | `display_on_off` | Toggle the display on and off |
+   | `child_lock` | Enable and disable child lock |
+   | `timer` | Set a timer via the app |
+   | `filter_reset` | Reset filter stats |
+   | *(model-specific)* | Any unique features: lights, white noise, CO₂ sensor, etc. |
+
+   Label each file clearly (e.g. `core300s_2.0.11_speed_app.txt`).
+
+   > **Example:** See [`devices/levoit-sprout/uart/uart_dumps`](./devices/levoit-sprout/uart/uart_dumps) for a real Sprout dump covering boot, speed switching, light modes, and white noise — each section labelled with the action performed.
+
+5. In Logic 2, use **Export Data** → export the analyzer results as a text/CSV file (not the `.sal` session). A plain text file with the decoded HLA output is all that's needed.
 
 ### Decoding with the Logic 2 HLA
 
@@ -215,4 +233,4 @@ Not my projects, but worth checking out:
 * [How to open Levoit's smaller](https://www.youtube.com/watch?v=rAjLNR1jQkw)
 
 ## Details about generic protocol / etc
-[Detailed Info](./components/levoit/DETAILS.md)
+[Levoit UART Protocol Details](./LEVOIT_UART.md)
