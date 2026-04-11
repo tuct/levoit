@@ -7,6 +7,9 @@ substitutions:
   rx_pin: GPIO16
   tx_pin: GPIO17
 
+esphome:
+  name: ${device_name}
+
 esp32:
   board: esp32dev
   framework:
@@ -16,4 +19,4 @@ esp32:
 
 packages:
   common: !include common.yaml
-  source: !include ../packages/source_git.yaml
+  source: !include ../packages/source_local.yaml

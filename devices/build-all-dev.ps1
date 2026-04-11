@@ -1,5 +1,3 @@
-$ErrorActionPreference = "Stop"
-
 $configs = @(
     ".\levoit-core200s\levoit-core200s_dev.yaml",
     ".\levoit-core300s\levoit-core300s_dev.yaml",
