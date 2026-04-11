@@ -76,6 +76,9 @@ CONFIG_SCHEMA = number.number_schema(LevoitNumber).extend(
     {
         cv.Required(CONF_LEVOIT_ID): cv.use_id(Levoit),
         cv.Required(CONF_TYPE): cv.one_of(*TYPE_MAP.keys(), lower=True),
+        cv.Optional(CONF_MIN_VALUE): cv.float_,
+        cv.Optional(CONF_MAX_VALUE): cv.float_,
+        cv.Optional(CONF_STEP): cv.positive_float,
     }
 )
 
