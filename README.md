@@ -28,6 +28,11 @@ Can be flashed to the original ESP32-SOLO-C1 or also installed on top (replace o
 | [Levoit Vital 200s (Pro)](./devices/levoit-vital200s) | 1.0.5 |  ✅ Tested |
 | [Levoit Sprout](./devices/levoit-sprout) | 1.0.5 |  ✅ Tested (!) WIP |
 
+### Other Models / Levoit Projects
+
+* [Levoit LV PUR 131s](./devices/levoit-lv131s/) – Custom Firmware + MCU & sensor upgrade + hardware hack
+* [Levoit Mini](./devices/levoit-mini) – Custom PCB, 3D parts, hardware hack
+
 ### Features
 
 Core200s
@@ -148,9 +153,6 @@ Auto mode options per model:
 
 * The component has been updated for ESPHome 2025.12.5
 
-## Other Models / Levoit Projects
-* [Levoit LV PUR 131s](./devices/levoit-lv131s/) – Custom Firmware + MCU & sensor upgrade + hardware hack
-* [Levoit Mini](./devices/levoit-mini) – Custom PCB, 3D parts, hardware hack
 
 ## Info
 Not my projects, but worth checking out:

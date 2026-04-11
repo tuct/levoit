@@ -1,13 +1,45 @@
+# Levoit UART Extractor — Saleae Logic 2 HLA
 
-  # My Extension
-  
-## Getting started
+A High-Level Analyzer (HLA) for Saleae Logic 2 that decodes the Levoit flat-TLV UART protocol used by Core 300S / 400S / 600S and Vital 100S / 200S air purifiers.
 
-1. Build your extension by updating the Python files for your needs
-2. Create a public Github repo and push your code 
-3. Update this README
-4. Open the Logic app and publish your extension
-5. Create a Github release
-6. Debug your hardware like you've never done before :)
+## Protocol
 
-  
+Packets start with `0xA5`, followed by a message type byte, command bytes, a length byte, and a payload:
+
+```
+A5  <type>  <cmd0> <cmd1> <cmd2>  <len>  [payload...]  <checksum>
+```
+
+| Type byte | Label |
+|-----------|-------|
+| `0x22`    | SEND (ESP→MCU) |
+| `0x12`    | ACKN (MCU→ESP, Core/Vital) |
+| `0x52`    | RESP (MCU→ESP, Core 600S) |
+
+Decoded frames are displayed as:
+
+```
+[ESP->MCU] SEND(0x22) |  CMD=01 40 B0  |  PAY=01
+```
+
+## Installation
+
+1. Open **Logic 2**
+2. Go to **Extensions** (puzzle piece icon) → **Load Existing Extension**
+3. Select the `levoit_uart` folder (the one containing `extension.json`)
+
+## Settings
+
+| Setting | Options | Description |
+|---------|---------|-------------|
+| Channel | ESP->MCU / MCU->ESP / - | Labels each frame with the traffic direction |
+| Include Raw Bytes | No / Yes | Appends the full raw hex bytes to each frame |
+
+## Usage
+
+1. Capture UART traffic at **9600 baud, 8N1** from either the ESP TX or MCU TX line
+2. Add an **Async Serial** analyzer on that channel
+3. Add the **Levoit UART Extractor** HLA on top of the Async Serial analyzer
+4. Set **Channel** to match the wire you captured
+
+Run both channels simultaneously (one HLA per channel) to see the full request/response exchange.

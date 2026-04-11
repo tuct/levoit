@@ -98,27 +98,27 @@ esptool write_flash 0x00 levoit-core600s-backup.bin
 
 Remove the base and filter from the upper assembly. Turn upside down.
 
-![Levoit Core 600S Underside](C600S_underside_annotated.jpg)
+![Levoit Core 600S Underside](images/C600S_underside_annotated.jpg)
 
 Remove the screws highlighted in green. You can also remove the screws highlighted in blue to remove the fan grille and gasket piece to make removing the fan less unwieldy. In that case, the PM2.5 sensor will be lose so be careful.
 
-![Levoit Core 600S Upper Inside](C600S_inside_upper_assembly.jpg)
+![Levoit Core 600S Upper Inside](images/C600S_inside_upper_assembly.jpg)
 
 To release the fan, remove the screws hidden behind plastic plugs in each of the handle.
 
-![Levoit Core 600S Handle Screws](C600S_handle_screws.jpg)
+![Levoit Core 600S Handle Screws](images/C600S_handle_screws.jpg)
 
 Then pop the handles out and carefully slide the fan assembly out slightly. There are a couple of cables connecting to the control board which is clipped into the top fan grille. Luckily the holes left by the handles make it relatively easy to unplug these from the connectors on the control board.
 
-![Levoit 600S Access Hole](C600S_handle_access_hole.jpg)
+![Levoit 600S Access Hole](images/C600S_handle_access_hole.jpg)
 
 Carefully unplug these cables before pulling the fan assembly out.
 
-![Levoit 600S Unplugging Cables](C600S_unplugging_cables.jpg)
+![Levoit 600S Unplugging Cables](images/C600S_unplugging_cables.jpg)
 
 That will get you access to flash the ESP32.
 
-![Levoit 600S Top Case](C600S_top_case.jpg)
+![Levoit 600S Top Case](images/C600S_top_case.jpg)
 
 They were nice enough to silkscreen the ESP32 programming header on both sides so you don't even need to remove the board from the case if you don't want to. Make note of which ESP32 you have if you're not going to replace it. **ESP32-C3-SOLO-1** and **ESP32-SOLO-1C** have been found so far.
 
@@ -126,7 +126,7 @@ The header for the ESP32 is highlighted in blue. Connect your UART adapter here,
 
 The header for the microvontroller is highlighted in yellow. This is not what you're looking for if you're looking to flash esphome.
 
-![Levoit 600S Control Board](C600S_control_board_annotated.jpg)
+![Levoit 600S Control Board](images/C600S_control_board_annotated.jpg)
 
 ## Protocol Notes
 

@@ -36,9 +36,9 @@
 | MCU Version | text_sensor | |
 | Error | text_sensor | "Ok" or "Sensor Error" |
 
-![Updated UI in Home Assistant](./photos/UpdatedUiInHa.png)
+![Updated UI in Home Assistant](./images/UpdatedUiInHa.png)
 
-![Core 300S Fan](./photos/fan.png)
+![Core 300S Fan](./images/fan.png)
 
 
 ## Teardown / Disassembly
@@ -48,13 +48,13 @@
 * Slide a pry tool between the tabs to separate base and top sleeve
 * Unplug the logic board
 
-![Teardown](./photos/teardown_1.jpg)
+![Teardown](./images/teardown_1.jpg)
 
-![Teardown](./photos/teardown_2.jpg)
+![Teardown](./images/teardown_2.jpg)
 
-![Teardown](./photos/teardown_3.jpg)
+![Teardown](./images/teardown_3.jpg)
 
-![Teardown](./photos/teardown_4.jpg)
+![Teardown](./images/teardown_4.jpg)
 
 
 
@@ -66,7 +66,7 @@ Solder wires to **TXD0, RXD0, IO0, +3V3, GND** near the ESP32 on the logic board
 
 Connect **IO0 to GND before powering on** to enter bootloader mode.
 
-![PCB](./photos/pcb_front.jpg)
+![PCB](./images/pcb_front.jpg)
 
 For flashing you only need to solder to the pin header, the black and white are connected to dump esp to mcu communication 
 
@@ -124,7 +124,7 @@ Replacing the original ESP32 allows switching back to original firmware without 
 > The RX/TX pads are **not** on the pin header — use the test pads near the original ESP32 on the board.
 > Pull the `EN` pin of the original ESP32 to GND to disable it.
 
-![Custom ESP wires](./photos/custom_esp_wire.jpg)
+![Custom ESP wires](./images/custom_esp_wire.jpg)
 
 **Placement of new ESP**
 
@@ -132,4 +132,4 @@ The small xiao seeeds fit into the small existing space, make sure to isolate an
 
 I connected to 5V, cause i had issues on the 3.3v with my xioa seeed s3. It rebooted with brownout (power issues). I think my en to gnd connection might not have been stable but still decided to use 5V.
 
-![Custom ESP wires](./photos/custom_esp_placement.jpg)
+![Custom ESP wires](./images/custom_esp_placement.jpg)
