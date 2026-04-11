@@ -37,9 +37,10 @@ Decoded frames are displayed as:
 
 ## Usage
 
-1. Capture UART traffic at **9600 baud, 8N1** from either the ESP TX or MCU TX line
-2. Add an **Async Serial** analyzer on that channel
-3. Add the **Levoit UART Extractor** HLA on top of the Async Serial analyzer
-4. Set **Channel** to match the wire you captured
+1. Capture UART traffic at **9600 baud, 8N1** — connect a logic analyzer to both the **ESP TX** and **MCU TX** lines with shared GND
+2. Add an **Async Serial** analyzer on the **ESP TX** channel (9600 baud, 8N1)
+3. Add a second **Async Serial** analyzer on the **MCU TX** channel
+4. Add a **Levoit UART Extractor** HLA on top of the first Async Serial, set **Channel** to `ESP->MCU`
+5. Add a second **Levoit UART Extractor** HLA on top of the second Async Serial, set **Channel** to `MCU->ESP`
 
-Run both channels simultaneously (one HLA per channel) to see the full request/response exchange.
+Both HLAs run side by side so you can see the full request/response exchange in one view.

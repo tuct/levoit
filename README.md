@@ -42,8 +42,8 @@ Core200s
 
 Core300s - with Air Quality and Auto
 
-![PCB back](./devices/levoit-core300s/photos/filters.png)
-![PCB back](./devices/levoit-core300s/photos/config.png)
+![PCB back](./devices/levoit-core300s/images/filters.png)
+![PCB back](./devices/levoit-core300s/images/config.png)
 
 #### Fan
 
@@ -153,6 +153,56 @@ Auto mode options per model:
 
 * The component has been updated for ESPHome 2025.12.5
 
+
+## Contributing
+
+### Adding a New Device or Firmware Version
+
+If you have a Levoit model that isn't supported yet, or a newer MCU firmware on a supported model, a UART dump is the best way to contribute.
+
+What's needed:
+- A logic analyzer capture of the UART traffic between the ESP32 and the MCU (both directions)
+- The MCU firmware version (visible in the Levoit app or via `mcu_version` sensor once flashed)
+- A description of any features the device has (fan speeds, auto modes, sensors, lights, etc.)
+
+Open an issue or pull request in the repo with the dump attached.
+
+### Capturing a UART Dump
+
+The ESP32 and MCU communicate over UART at **9600 baud, 8N1**. To capture traffic:
+
+1. Open the device and locate the UART lines between the ESP32 and MCU (see the device README for pinout)
+2. Connect a logic analyzer to both the **ESP TX** and **MCU TX** lines, with a shared GND
+3. In **Saleae Logic 2**, add an **Async Serial** analyzer on each channel:
+   - Baud rate: `9600`
+   - Bits per frame: `8`
+   - Stop bits: `1`
+   - No parity
+4. Power on the device and capture a session that includes:
+   - Startup / status push from the MCU
+   - Changing fan speed (all speeds)
+   - Changing mode (auto, sleep, etc.)
+   - Any model-specific features (lights, sensors, etc.)
+5. Export the capture as a `.sal` file (Logic 2 session) or export the data table as CSV
+
+### Decoding with the Logic 2 HLA
+
+A High-Level Analyzer for the Levoit UART protocol is included in [`logic2/levoit_uart/`](./logic2/levoit_uart/).
+
+**Install:**
+1. Open Logic 2 → **Extensions** (puzzle icon) → **Load Existing Extension**
+2. Select the `logic2/levoit_uart/` folder
+
+**Use:**
+1. Add an **Async Serial** analyzer on the **ESP TX** channel (9600 baud, 8N1) — this is ESP→MCU traffic
+2. Add a second **Async Serial** analyzer on the **MCU TX** channel — this is MCU→ESP traffic
+3. Add a **Levoit UART Extractor** HLA on top of the first Async Serial, set **Channel** to `ESP->MCU`
+4. Add a second **Levoit UART Extractor** HLA on top of the second Async Serial, set **Channel** to `MCU->ESP`
+5. Decoded packets appear as: `[MCU->ESP] RESP(0x52) |  CMD=01 40 41  |  PAY=00 01 ...`
+
+Both HLAs run side by side so you can see the full request/response exchange in one view.
+
+See [`logic2/levoit_uart/README.md`](./logic2/levoit_uart/README.md) for full details.
 
 ## Info
 Not my projects, but worth checking out:
