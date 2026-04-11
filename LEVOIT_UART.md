@@ -1,511 +1,377 @@
-# Levoit MCU ⇄ ESP (Core 200/300/400, Vital 100/200)
+# Levoit UART Protocol
 
-UART protocol between the Levoit MCU and the ESP32. Core and Vital share the same framing, but payload layouts differ (Core = fixed fields, Vital = TLV blocks).
+UART protocol between the Levoit MCU and the ESP32, as implemented by the ESPHome component.
 
-Data is aggregated from the community and aligned with the current ESPHome component implementation.
+All models share the same frame format. Payload structure differs by series:
 
-Thanks to
+| Series | Models | Payload format | CMD family |
+|--------|--------|----------------|------------|
+| **Core** | Core 200S, 300S, 400S, 600S | Fixed-field (byte offsets) | cmd[0] = `0x01` |
+| **Vital** | Vital 100S, 200S (Pro) | Flat TLV (tag/len/value) | cmd[0] = `0x02` |
+| **Sprout** | Sprout | Vital TLV base + Sprout extensions | cmd[0] = `0x02` |
 
-- https://github.com/mulcmu/
-- https://github.com/acvigue/
-- https://github.com/targor/
+The Sprout uses the same flat-TLV protocol as Vital (`CMD=02 00 55` for status, `CMD=02 02/03/04 55` for fan control) with additional Sprout-specific CMDs for the LED ring, white noise, CO₂/VOC sensors, and MCU async events.
+
+Data aggregated from the community and aligned with current component implementation.
+
+Thanks to [mulcmu](https://github.com/mulcmu/), [acvigue](https://github.com/acvigue/), [targor](https://github.com/targor/).
 
 Main reference: [protocol sheet](https://docs.google.com/spreadsheets/d/1vSKuPWYplPWVsKXIuISHjPhHEBLqe_wB/edit?usp=sharing&ouid=109862782260450893370&rtpof=true&sd=true) (also [local snapshot](./Levoit%20Uart%20Communication.xlsx)).
 
-## Frame Overview
-- Transport: UART 115200 8N1
-- Start: `0xA5`
-- Message type: `0x22` (send), `0x12` (ack), `0x52` (error)
-- Counter: 1 byte at index 2 (starts at 0x10 in code, increments per packet)
-- Length: byte 3 = bytes after checksum (index 5)
-- Checksum: byte 5 = `0xFF - (sum(all bytes except checksum) & 0xFF)` (see `levoit_checksum()` / `levoit_finalize_message()`)
-- Payload type: indexes 6-8 (model-specific)
-- Reserved: byte 4 = 0, byte 9 = 0
-- Command size: byte 6 meaning depends on model (Core uses 0x01 2-byte cmd; Vital can use 0x02 and extends with bytes 10/11)
+---
 
-### Core Payload Types (examples)
-- Status response: `0x01 0x30 0x40` (Core300/400)
-- Status request: `0x01 0x31 0x40`
-- Timer status: `0x01 0x65 0xA2`
+## Transport
 
-### Vital Payload Types
-- Status response: `0x02 0x00 0x55` (TLV list follows)
+- **Baud rate:** 115200
+- **Format:** 8N1
 
-### Payload Layouts
-- **Core**: fixed fields (power, mode, speed, display, PM2.5, auto-mode config). See per-model tables below.
-- **Vital**: TLV blocks (id, len, value). See table below for known IDs.
+---
 
-### Building Messages (from code)
-- Helper: `build_levoit_message(msg_type, payload, counter)` sets start byte, message type, counter, length, checksum.
-- Counter and checksum logic live in `levoit_message.h` (`levoit_checksum`, `levoit_finalize_message`).
-- Model-specific command builders: `build_core_command()` and `build_vital_command()` assemble payloads and types.
+## Frame Format
 
-
-## Header Formats
-
-- Byte 0: `0xA5` start
-- Byte 1: message type (`0x22` send, `0x12` ack, `0x52` error)
-- Byte 2: counter (set by ESP, echoed by MCU) — starts at 0x10 in code, increments per packet
-- Byte 3: length = bytes after checksum (index 5)
-- Byte 4: reserved `0x00`
-- Byte 5: checksum = `0xFF - (sum(all bytes except checksum) & 0xFF)` (see `levoit_checksum`)
-- Bytes 6-8: payload type / command id (model-specific)
-- Byte 9: reserved `0x00`
-- Byte 10: payload type extension or first payload byte (Vital uses 0x02 with extended type at byte 10)
-
-**Payload starts at byte 11** (after 10-byte header for Core; Vital may vary with TLV structure).
-
-### Command/Payload Type Encoding
-
-**Core Series**: Fixed-field payloads
-- Command size code `0x01` (2-byte command id)
-- Payload after header contains fixed position fields (power, mode, speed, display, PM2.5, etc.)
-- No TLV encoding
-
-**Vital Series**: TLV (Type-Length-Value) encoding
-- Command size code `0x02` (extended command id with bytes 10+)
-- **All responses use TLV blocks**: each block has id (1 byte), length (1 byte), value (1-N bytes)
-- **Most commands use TLV**: commands also send data as TLV blocks (e.g., set auto mode, filter settings)
-- Allows flexible extensibility and model variants without protocol redesign
-
-Examples:
-- Core status response: `01 30 40` → fixed 18-byte payload
-- Core status request: `01 31 40` → 1-byte request
-- Core timer status: `01 65 A2` → variable timer payload
-- Vital status response: `02 00 55` → TLV blocks follow (id/len/value repeating)
-
-Message builder in code: `build_levoit_message(msg_type, payload, counter)` handles start, length, counter, checksum automatically.
-
-## Commands
-
-All protocol details can be found [here](./Levoit%20Uart%20Communication.xlsx)
-
-Core and Vital have different command structures; both use the headers described above.
-
-### Core Series
-
-![core commands](./commands_core.png)
-
-### Vital Series
-
-![vital commands](./commands_vital.png)
-![vital sleep config commands](./commands_vital_sleep_conf.png)
-
-## Responses
-
-|Devices|Type|Start| Message Type  |  Sequence | Payload Size  |  Zero | Checksum  | CMD Size | CMD  |  CMD | Zero ||||||||||
-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-||| B.0 | B.1 | B.2 | B.3 | B.4 | B.5 |B.6 | B.7 | B.8 |B.9| B.10 |B.11 |B.12 |B.13 | B.14 | B.15 |B.16| B.17 ||
-|Core200/300s| Timer running| 0xA5 | 0x22  | 0xXX  | 0x0C | 0x00  | 0xXX  |  **0x01**	|**0x65**	|**0xA2**	|0x00|**0x08**	|**0x0D**	|0x00	|0x00	|**0x10**	|**0x0E**	|0x00|	0x00|	B10/11 = Remaining time & B14/15 >initial timer value int 16|
-|Core200/300s| Filter reset pressed| 0xA5 | 0x22  | 0xXX  | 0x05 | 0x00  | 0xXX  |**0x01**|	**0xE4**|**0xA5**|	0x00| During Timer running|
-
-
-
-### Status Responses
-
-
-
-|Devices|Start| Message Type  |  Sequence | Payload Size  |  Zero | Checksum  | CMD Size | CMD  |  CMD | Zero  | CMD<br>Payload |  CMD<br>Payload|  
-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-|| B.0 | B.1 | B.2 | B.3 | B.4 | B.5 |B.6 | B.7 | B.8 |B.9| B.10 |B.11 |
-|Core200/300s| 0xA5 | 0x22  | 0xXX  | 0x16 | 0x00  | 0xXX  |  **0x01** | **0x1B** | **0x40** |0x00|||
-|Core400s| 0xA5 | 0x22  | 0xXX  | 0x16  | 0x00  | 0xXX  | **0x01** | **0x30**	| **0x40** |0x00|||
-|Vital 100/200s| 0xA5 | 0x22  | 0xXX  | 0x6C | 0x00  | 0xXX  |  **0x02** | **0x00**	| **0x55** | 0x00 | **0x00** | **0x01** |
-
-
-
-
-### Response format for Core versions
-
-Response payload for core versions has a max lenght of 28 bytes total, 10 header, 18 max payload.
-
-Response starts at byte 10, zero on bytes 19 and 27. 
-
-|Byte|Core 200/300s<br>0x01 0x1B 0x40|Description|Core 400s - Difference<br>0x01 0x30 0x40|Core 400s - values|
-|:---|:--------|:----------------|:-------------------|:----------------|
-|B.10|HW Version patch||| |
-|B.11|HW Version minor||| |
-|B.12|HW Version major||| |
-|B.13|Power|00 Off<br>01 On|| |
-|B.14|Fan Mode|00 Manual<br>01 Sleep<br>02 Auto|| |
-|B.15|Manual Fan Speed Selected|00<br>01 Low<br>02 Med<br>03 High|Current Fan Speed|00 Sleep<br>01 Low<br>02 Med<br>03 High<br>04 Highest<br>255 Power Off|
-|B.16|Screen Brightness|00 Screen Off<br>64 Screen Full|Manual Fan Speed Selected|00<br>01 Low<br>02 Med<br>03 High<br>04 Highest|
-|B.17|Screen|00 Off<br>01 On|Screen Brightness|00 Screen Off<br>64 Screen Full|
-|B.18|Current Fan Speed|00 Sleep<br>01 Low<br>02 Med<br>03 High<br>255 Power Off|Screen|00 Off<br>01 On|
-|B.19|Always Zero||| |
-|B.20|PM2.5 AQI|01 - 04|| |
-|B.21 B.22|PM2.5|int16 pm2.5 value|| |
-|B.23|Display Lock|00 Unlocked<br>01 Locked|| |
-|B.24|Fan Auto Mode|00 Default<br>01 Quiet<br>02 Efficient|| |
-|B.25 B.26|Efficient Area|3B 01 100 sq ft (App Minimum) 0x013B is 315<br>EC 04 400 sq ft (App Maximum) 0x04EC is 1,260|| |
-|B.27|Zero Or One||| |
-
-
-
-
-### Response format for Vital versions
-
-Response payload for vital versions has a max lenght of 114 bytes total, 12 header, 102 max payload.
-
-Response starts at byte 13,
-Each part of the response has an ID, 2 bytes => 0x04 0x01, first byte is the id, 2nd the length of data 0x01 = 1 byte and 0x02 = 2 bytes.
-
-|Data ID| Data Size  | Data Payload |Data ID| Data Size  |  Data Payload | Data Payload |  ... |
-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| B.10 | B.11  | B.12  | B.13| B.14  | B.15 |B.16 | B.XX |
-| **0x00**| **0x01** | 0xXX  | **0x01**| **0x02** | 0xXX |0xXX | ... |
-
-
-
-
-Here is a table with all know data from the vital 200s (TLV format)
-
-| TLV ID | Type   | Parameter | Description | ESPHome Entity |
-|--------|--------|-----------|------------|-----------------|
-| 0x00   | u32    | Device ID | Device identification | - |
-| 0x01   | 3xU8   | MCU Version | major.minor.patch | TextSensor: MCU_VERSION |
-| 0x02   | u32    | Power | 0 Off, 1 On | Fan power state |
-| 0x03   | u32    | FAN MODE | 0 Manual, 1 Auto, 2 Sleep, 5 PET mode | Fan mode |
-| 0x04   | u32    | FAN LEVEL | 0 minimum, 1, 2, 3, 4 (circulation), 5 auto | Fan speed |
-| 0x05   | u32    | FAN SPEED | Alternative speed representation | - |
-| 0x06   | u32    | Display Illuminated | 0 Off, 1 On | Switch: DISPLAY |
-| 0x07   | u32    | Display State | Display on/off state | - |
-| 0x08   | u32    | Unknown_08 | (not yet documented) | - |
-| 0x09   | u32    | Air Quality Level (AQI) | 1 - 4 | Sensor: AQI |
-| 0x0A   | u32    | Air Quality Detail | 0 Sensor Error, other Ok | TextSensor: ERROR_MESSAGE |
-| 0x0B   | u32    | PM2.5 | Particulate density | Sensor: PM25 |
-| 0x0E   | u32    | Child Lock | 0 Unlocked, 1 Locked | Switch: CHILD_LOCK |
-| 0x0F   | u32    | Auto Mode | 0 Default, 1 Quiet, 2 Efficient | Select: AUTO_MODE |
-| 0x10   | u32    | Efficiency Room Size | Room size value (100-1800) | Number: EFFICIENCY_ROOM_SIZE |
-| 0x11   | u32    | Efficiency Counter | Time counter for efficiency mode | Sensor: EFFICIENCY_COUNTER |
-| 0x12   | u32    | Auto Mode Profile | (not yet documented) | - |
-| 0x13   | u32    | Light Detect | 0 Off, 1 On | Switch: LIGHT_DETECT |
-| 0x16   | u32    | Wifi Light | Wifi LED state | - |
-| 0x17   | u32    | Dark Detected | Dark/light detection | - |
-| 0x18   | u32    | Sleep Mode Type | Sleep mode configuration | - |
-| 0x19   | u32    | Quick Clean Enabled | 0/1 enable flag | - |
-| 0x1A   | u32    | Quick Clean Minutes | Duration in minutes | - |
-| 0x1B   | u32    | Quick Clean Fan Level | 1-4 | - |
-| 0x1C   | u32    | White Noise Enabled | 0/1 enable flag | - |
-| 0x1D   | u32    | White Noise Minutes | Duration in minutes | - |
-| 0x1E   | u32    | White Noise Fan Level | 1-4 | - |
-| 0x1F   | u32    | Sleep Fan Mode/Level | Sleep mode speed setting | - |
-| 0x20   | u32    | Sleep Mode Minutes | Sleep mode duration | - |
-| 0x21   | u32    | Daytime Enabled | 0/1 daytime schedule | - |
-| 0x22   | u32    | Daytime Fan Mode | Fan mode for daytime | - |
-| 0x23   | u32    | Daytime Fan Level | Fan speed for daytime | - |
-
-
-
-
-# More old stuff
-Just so i don't loose it!
-
-## HW Details
-
-Different FW! 3.0.0
-
-Main changes 
-* Message identifier for status changed from 01 30 40 to 01 B0 40
-* Position of fan speed and display on changed compared to 300s other message ids!
-
-01 B0 40 - Status (MCU to ESP)
-
-Header new 
-
-A5 22 F7 16 00 10 **01 B0 40** 00 00 00 03 
-
-Header Old
-
-A5 22 1D 16 00 E4 **01 30 40** 00 07 00 02 #
-
-Payload New
-
-01 00 01 01 64 01 00 01 FF FF 00 02 BD 00 01
-
-Payload OLD
-
-01 00 01 64 01 00 00 01 03 00 00 00 3B 01 00
-
-
-22 byte long (0x16) status packet payload:
-
-
-### Header - 10 bytes long, 0 after 4 bytes!
-
-- Byte 1 A5 start byte of packet
-- Byte 2 22 send message or 12 ack message (52 might be error response)
-- Byte 3 1-byte sequence number, increments by one each packet
-- Byte 4 1-byte size of payload (after checksum byte)
-- Byte 5 Always 0
-- Byte 6 1-byte checksum. Computed as 255 - ( (sum all of bytes except checksum) % 256 )
-- Byte 7 Always Payload Type /Version
-- Byte 8 Always Payload Type /Version
-- Byte 9 Always Payload Type /Version
-- Byte 10 Always 0
-
-bytes 11 + payload (size includes bytes 7-10 => min value0x04)
-
-
-Bytes 7-9 payload type/ cmd
-
-- case 0x013040:  //Status response core300S
-- case 0x01B040:  //status response core400S
-- case 0x020055:  //Status response Vital 200s/pro
-
-- case 0x013140:  //status request core300s
 ```
-enum class LevoitDeviceModel : uint8_t { NONE, CORE_200S, CORE_300S, CORE_400S };
-enum class LevoitPacketType : uint8_t { SEND_MESSAGE = 0x22, ACK_MESSAGE = 0x12, ERROR = 0x52 };
-enum class LevoitPayloadType : uint32_t {
-  STATUS_REQUEST =        0x01 31 40,
-  STATUS_RESPONSE =       0x01 30 40,
-  AUTO_STATUS =           0x01 60 40, // I only know this value for 200S, so might be wrong  
-  SET_FAN_AUTO_MODE =     0x01 E6 A5,
-  SET_FAN_MANUAL =        0x01 60 A2,
-  SET_FAN_MODE =          0x01 E0 A5,
-  SET_DISPLAY_LOCK =      0x01 00 D1,
-  SET_WIFI_STATUS_LED =   0x01 29 A1,
-  SET_POWER_STATE =       0x01 00 A0,
-  SET_SCREEN_BRIGHTNESS = 0x01 05 A1,
-  SET_FILTER_LED =        0x01 E2 A5,
-  SET_RESET_FILTER =      0x01 E4 A5,
-  TIMER_STATUS =          0x01 65 A2,
-  SET_TIMER_TIME =        0x01 64 A2,
-  TIMER_START_OR_CLEAR =  0x01 66 A2,
-  SET_NIGHTLIGHT =        0x01 03 A0
-};
-
-enum class LevoitState : uint32_t {
-  POWER               = 1 << 0,
-  FAN_MANUAL          = 1 << 1,
-  FAN_AUTO            = 1 << 2,
-  FAN_SLEEP           = 1 << 3,
-  DISPLAY             = 1 << 4,
-  DISPLAY_LOCK        = 1 << 5,
-  FAN_SPEED1          = 1 << 6,
-  FAN_SPEED2          = 1 << 7,
-  FAN_SPEED3          = 1 << 8,
-  FAN_SPEED4          = 1 << 9,
-  NIGHTLIGHT_OFF      = 1 << 10,
-  NIGHTLIGHT_LOW      = 1 << 11,
-  NIGHTLIGHT_HIGH     = 1 << 12,
-  AUTO_DEFAULT        = 1 << 13,
-  AUTO_QUIET          = 1 << 14,
-  AUTO_EFFICIENT      = 1 << 15,
-  AIR_QUALITY_CHANGE  = 1 << 16,
-  PM25_NAN            = 1 << 17,
-  PM25_CHANGE         = 1 << 18,
-  WIFI_CONNECTED      = 1 << 19,
-  HA_CONNECTED        = 1 << 20,
-  FILTER_RESET        = 1 << 21,
-  WIFI_LIGHT_SOLID    = 1 << 22,
-  WIFI_LIGHT_FLASH    = 1 << 23,
-  WIFI_LIGHT_OFF      = 1 << 24
-};
+[0]  0xA5          start byte
+[1]  msg_type      0x22=SEND  0x12=ACK  0x52=ACK (Core600S / Sprout)
+[2]  counter       increments per sent packet, starts at 0x10; MCU echoes ESP's counter
+[3]  length        number of bytes after the checksum byte: msg.size() - 6
+[4]  0x00          reserved
+[5]  checksum      0xFF - (sum of all bytes except [5]) & 0xFF
+[6]  cmd[0]        \
+[7]  cmd[1]         > command / payload type (3 bytes, model-specific)
+[8]  cmd[2]        /
+[9]  0x00          reserved
+[10+] payload      starts here
 ```
 
-
-
-
-
-### Payload New:
-
-Byte 11 HW Version Minor
-
-Byte 12 HW Version Major
-
-Byte 13 Power:
-
-* 00 Off
-* 01 On
-
-Byte 14 Fan mode:
-
-* 00 Manual
-* 01 Sleep
-* 02 Auto
-
-
-
-Byte 15 Current Fan Speed => diff from core300s
-
-* 00 Sleep
-* 01 Low
-* 02 Med
-* 03 High
-* 255 Power Off
-
-Byte 16 Manual Fan Speed Selected => diff from core300s
-
-* 00 (Occurs at startup for 1 packet)
-* 01 Low
-* 02 Med
-* 03 High
-
-Byte 17 Screen Brightness => diff from core300s
-
-* 00 Screen Off
-* 64 Screen Full (Screen illuminates briefly when another button is tapped while screen is off)
-
-Byte 18 Screen
-
-* 00 Off
-* 01 On
-
-
-Byte 19 Always 0
-
-Byte 20 PM2.5 (Normally 1 increased to 4 during filter testing, color ring LEDs)
-
-Byte 21 & 22 PM2.5 0xFFFF when off, samples every 15 minutes when off
-
-Byte 23 Display Lock:
-
-* 00 Unlocked
-* 01 Locked
-
-Byte 24 Fan Auto Mode: (Only configurable by the app)
-
-* 00 Default, speed based on air quality
-* 01 Quiet, air quality but no max speed
-* 02 Efficient, based on room size
-
-Byte 25 & 26 Efficient Area:
-
-3B 01 100 sq ft (App Minimum) 0x013B is 315
-
-EC 04 400 sq ft (App Maximum) 0x04EC is 1,260
-
-Linear scale, not sure what the units are.
-
-Byte 27 Always 0
-
-
-## Commands
-
-### 01 E6 A5 - Configure Fan Auto Mode (ESP to MCU)
-
-Byte 4 Always 0
-
-Byte 5 Fan Auto Mode
-
-- 00 Default, speed based on air quality
-- 01 Quiet, air quality but no max speed
-- 02 Efficient, based on room size
-- Byte 6 & 7 00 00 or Efficient Area
-
-### 01 60 A2 - Set Fan Manual (ESP to MCU)
-
-Byte 4 Always 0
-
-Byte 5 Always 0
-
-Byte 6 Always 1
-
-Byte 7 Fan Speed:
-
-- 01 Low
-- 02 Med
-- 03 High
-- 04 Highest 
-
-### 01 E0 A5 - Set Fan Mode (ESP to MCU)
-
-Byte 4 Always 0
-
-Byte 5 Fan Mode
-
-- 00 Manual (App always uses 01 60 A2 with speed to change to manual mode)
-- 01 Sleep
-- 02 Auto
-
-### 1 0 D1 - Display Lock (ESP to MCU)
-
-Byte 4 Always 0
-
-Byte 5 Display Lock:
-
-- 00 Unlocked
-- 01 Locked
-- 01 29 A1 - Wifi LED state (ESP to MCU)
-
-### Wifi LED toggled at startup and when network connection changes
-
-1	29	A1	0	0	F4	1	F4	1	0 Off
-
-1	29	A1	0	1	7D	0	7D	0	0 On
-
-1	29	A1  0   2   F4  1   F4  1   0 Blink
-
-### 01 31 40 - Request Status (ESP to MCU)
-
-Similar to status packet, occurs when Wifi led state is changed.
-
-### 01 00 A0 - Set Power State (ESP to MCU)
-
-Byte 4 Always 0
-
-Byte 5 Fan Speed:
-
-- 00 Off
-- 01 On
-
-### 01 05 A1 Set Brightness (ESP to MCU)
-
-Byte 4 Always 0
-
-Byte 5 Screen Brightness
-
-00 Screen Off
-64 Screen Full
-
-### 01 E2 A5 - Set Filter LED (ESP to MCU)
-
-Byte 4
-
-- 00 Off
-- 01 On
-
-Byte 5 0
-
-Wasn't in original captures before firmware update
-
-### 01 E4 A5 - Reset Filter (ESP to MCU and MCU to ESP)
-Byte 4 0
-
-Byte 5 0
-
-MCU sends to ESP when sleep button held for 3 seconds
-
-ESP sends to MCU when reset on app.
-
-### 01 65 A2 - Timer Status (MCU to ESP)
-
-MCU sends a packet when timer is running with remaining time
-
-A5 12 27 0C 00 DA 01 65 A2 00 08 0D 00 00 10 0E 00 00
-
-Remaining time and initial time.
-
-0x0D08 remaining seconds
-
-0x0E10 initial seconds
-
-### 1 64 A2 Set Timer Time (ESP to MCU)
-
-Byte 4 Always 0
-
-Byte 5 & 6 Time
-
-Byte 7 & 8 Always 0
-
-### 1 66 A2 Timer Start or Clear (MCU to ESP)
-
-Byte 4 to 12 All 0 to Clear
-
-Byte 5 & 6 and Byte 9 &10 set to same initial timer value
-
-
-
-
+**Checksum** (from `levoit_checksum()`): sum all bytes except byte[5], take `0xFF - (sum & 0xFF)`.
+
+**Counter** starts at `0x10` (16). ESP increments per outgoing packet; MCU echoes the same counter value in its ACK.
+
+---
+
+## Message Types
+
+| Value | Name | Direction | Notes |
+|-------|------|-----------|-------|
+| `0x22` | SEND | both | Normal message carrying payload |
+| `0x12` | ACK  | both | Acknowledgement, minimal or no payload |
+| `0x52` | ACK  | MCU→ESP | Core600S and Sprout — replaces `0x12` with trailing `0x01` |
+
+### `0x22` CMD Families
+
+The first byte of the three CMD bytes (frame bytes [6][7][8]) identifies the protocol family:
+
+**Core series — cmd[0] = `0x01`**
+
+The second byte identifies the subsystem, the third byte identifies the direction/category:
+
+| cmd[1] | cmd[2] | Description |
+|--------|--------|-------------|
+| `0x30` / `0xB0` / `0x60` / `0x40` | `0x40` / `0x41` | Status push (MCU→ESP) — fixed-field payload |
+| `0x00` | `0xA0` | Power on/off |
+| `0x60` | `0xA2` | Set fan speed |
+| `0xE0` | `0xA5` | Set fan mode |
+| `0xE6` | `0xA5` | Set auto mode / room size |
+| `0x05` | `0xA1` | Set display brightness |
+| `0x00` | `0xD1` | Set child lock |
+| `0x29` | `0xA1` | Set Wi-Fi LED |
+| `0xE9` | `0xA5` | Set light detect (Core600S) |
+| `0x03` | `0xA0` | Set nightlight (Core200S) |
+| `0xE2` | `0xA5` | Set filter LED |
+| `0x64` / `0x65` / `0x66` | `0xA2` | Timer (set / request / update) |
+
+**Vital / Sprout series — cmd[0] = `0x02`**
+
+The second byte identifies the function, the third byte is always `0x50` (control/timer) or `0x55` (status/feature):
+
+| cmd[1] | cmd[2] | Description |
+|--------|--------|-------------|
+| `0x00` | `0x55` | Status push (MCU→ESP) — flat TLV payload |
+| `0x00` | `0x50` | Power on/off |
+| `0x02` | `0x55` | Set fan mode / auto mode |
+| `0x03` | `0x55` | Set fan speed |
+| `0x04` | `0x55` | Set display |
+| `0x11` | `0x55` | Set light detect |
+| `0x40` | `0x51` | Set child lock |
+| `0x18` | `0x50` | Set Wi-Fi LED |
+| `0x19` | `0x50` | Set timer |
+| `0x1A` | `0x50` | Request timer status |
+| `0x1B` | `0x50` | Timer update pushed (MCU→ESP) |
+| `0x08` | `0x55` | Sprout: async event (MCU→ESP) |
+| `0x0B` | `0x55` | Sprout: set nightlight |
+| `0x0C` | `0x55` | Sprout: set breathing |
+| `0x07` | `0x55` | Sprout: set white noise |
+| `0x06` | `0x55` | Sprout: set AQI scale |
+
+---
+
+## Command IDs (Status / Inbound from MCU)
+
+| Model | CMD bytes | msg_type | Notes |
+|-------|-----------|----------|-------|
+| Core 200S | `01 60 40` | `0x22` | MCU pushes status |
+| Core 300S | `01 30 40` | `0x22` | MCU pushes status |
+| Core 300S (FW ≥ 3.x) | `01 B0 40` | `0x22` | Newer MCU firmware |
+| Core 400S | `01 30 40` / `01 B0 40` | `0x22` | Same as 300S |
+| Core 600S | `01 40 41` | `0x22` | MCU pushes status |
+| Vital 100/200S, Sprout | `02 00 55` | `0x22` | Flat-TLV payload |
+
+Timer responses (MCU→ESP):
+
+| Series | CMD bytes | msg_type | Notes |
+|--------|-----------|----------|-------|
+| Core | `01 65 A2` | `0x12` | Timer status ACK |
+| Core | `01 66 A2` | `0x22` | Timer update pushed |
+| Vital/Sprout | `02 1A 50` | `0x12` | Timer status ACK |
+| Vital/Sprout | `02 1B 50` | `0x22` | Timer update pushed |
+
+Sprout async events (MCU→ESP):
+
+| CMD bytes | msg_type | Notes |
+|-----------|----------|-------|
+| `02 08 55` | `0x22` | Button events, white noise state, cover sensor |
+
+---
+
+## Core Status Payload (Fixed Fields)
+
+Payload starts at frame byte **[10]** (offset 0 in payload arrays below).
+
+### Common header (all Core models)
+
+| Offset | Frame byte | Field | Values |
+|--------|------------|-------|--------|
+| 0 | B.10 | MCU version patch | — |
+| 1 | B.11 | MCU version minor | — |
+| 2 | B.12 | MCU version major | — |
+| 3 | B.13 | Power | `0x00`=off, `0x01`=on |
+| 4 | B.14 | Fan mode | `0x00`=Manual, `0x01`=Sleep, `0x02`=Auto |
+
+### Core 200S — CMD `01 60 40`
+
+| Offset | Frame byte | Field | Values |
+|--------|------------|-------|--------|
+| 5 | B.15 | Fan speed | `0x01`–`0x03` |
+| 6 | B.16 | Display | `0x00`=off, non-zero=on |
+| 10 | B.20 | Child lock | `0x00`=off, `0x01`=on |
+| 11 | B.21 | Nightlight | `0x00`=off, `0x32`=mid, `0x64`=full |
+
+### Core 300S — CMD `01 30 40` / `01 B0 40`
+
+| Offset | Frame byte | Field | Values |
+|--------|------------|-------|--------|
+| 5 | B.15 | Fan speed | `0x01`–`0x03` |
+| 6 | B.16 | Display | `0x00`=off, non-zero=on |
+| 10 | B.20 | AQI | `0x01`–`0x04` |
+| 11–12 | B.21–B.22 | PM2.5 | LE16 µg/m³ |
+| 13 | B.23 | Child lock | `0x00`=off, `0x01`=on |
+| 14 | B.24 | Auto mode | `0x00`=Default, `0x01`=Quiet, `0x02`=Room Size |
+| 15–16 | B.25–B.26 | Efficiency area | LE16 raw (see [Room Size Encoding](#room-size-encoding)) |
+| 17 | B.27 | Error | `0x00`=ok, non-zero=sensor error |
+
+### Core 400S — CMD `01 30 40` / `01 B0 40`
+
+Same as Core 300S except:
+
+| Offset | Frame byte | Field | Values |
+|--------|------------|-------|--------|
+| 5 | B.15 | Fan speed | `0x00`=sleep, `0x01`–`0x04`=speeds, `0xFF`=off |
+| **7** | **B.17** | Display | `0x00`=off, non-zero=on *(offset differs from 300S)* |
+
+### Core 600S — CMD `01 40 41`
+
+| Offset | Frame byte | Field | Values |
+|--------|------------|-------|--------|
+| 5 | B.15 | Fan speed | `0x01`–`0x04` |
+| 8 | B.18 | Display | `0x00`=off, non-zero=on |
+| 11 | B.21 | AQI | `0x01`–`0x04` |
+| 12–13 | B.22–B.23 | PM2.5 | LE16 µg/m³ |
+| 14 | B.24 | Child lock | `0x00`=off, `0x01`=on |
+| 15 | B.25 | Auto mode | `0x00`=Default, `0x01`=Quiet, `0x02`=Room Size, `0x03`=ECO |
+| 16–17 | B.26–B.27 | Efficiency area | LE16 raw (see [Room Size Encoding](#room-size-encoding)) |
+| 21 | B.31 | Light detect | `0x00`=off, `0x01`=on |
+
+---
+
+## Vital / Sprout Status TLV (CMD `02 00 55`)
+
+Payload is a flat TLV sequence starting at frame byte **[10]**.
+Each block: `[tag:1] [len:1] [value:len]`.
+
+| TLV ID | Len | Field | Values | ESPHome Entity |
+|--------|-----|-------|--------|----------------|
+| `0x00` | 4 | Device ID | u32 identifier | — |
+| `0x01` | 3 | MCU version | bytes: patch, minor, major | `mcu_version` |
+| `0x02` | 1 | Power | `0x00`=off, `0x01`=on | fan power |
+| `0x03` | 1 | Fan mode | `0x00`=Manual, `0x01`=Sleep, `0x02`=Auto, `0x05`=Pet | fan preset |
+| `0x04` | 1 | Fan level | `0x00`=min … `0x04`=max | fan speed % |
+| `0x05` | 1 | Fan speed (alt) | alternative speed representation | — |
+| `0x06` | 1 | Display illuminated | `0x00`=off, `0x01`=on | `display` switch |
+| `0x07` | 1 | Display state | display on/off state | — |
+| `0x08` | 1 | Unknown | — | — |
+| `0x09` | 1 | AQI | `0x01`–`0x04` | `aqi` sensor |
+| `0x0A` | 1 | Air quality detail | `0x00`=sensor error, non-zero=ok | `error_message` |
+| `0x0B` | 2 | PM2.5 | LE16 µg/m³ | `pm25` sensor |
+| `0x0C` | 2 | PM1.0 raw | LE16 raw count *(Sprout only)* | `pm1_0` sensor |
+| `0x0D` | 2 | PM10 raw | LE16 raw count *(Sprout only)* | `pm10` sensor |
+| `0x0E` | 1 | Child lock | `0x00`=off, `0x01`=on | `child_lock` switch |
+| `0x0F` | 1 | Auto mode | `0x00`=Default, `0x01`=Quiet, `0x02`=Efficient | `auto_mode` select |
+| `0x10` | 2 | Efficiency room size | LE16 raw (see [Room Size Encoding](#room-size-encoding)) | `efficiency_room_size` number |
+| `0x11` | 2 | Efficiency counter | LE16 seconds remaining at high speed | `efficiency_counter` sensor |
+| `0x12` | 1 | Auto mode profile | — | — |
+| `0x13` | 1 | Light detect | `0x00`=off, `0x01`=on | `light_detect` switch |
+| `0x16` | 1 | Wi-Fi LED state | — | — |
+| `0x17` | 1 | Dark detected | ambient light sensor | — |
+| `0x18` | 1 | Sleep mode type | — | — |
+| `0x19` | 1 | Quick clean enabled | `0x00`/`0x01` | — |
+| `0x1A` | 1 | Quick clean minutes | duration | — |
+| `0x1B` | 1 | Quick clean fan level | `0x01`–`0x04` | — |
+| `0x1C` | 1 | White noise enabled | `0x00`/`0x01` | — |
+| `0x1D` | 1 | White noise minutes | duration | — |
+| `0x1E` | 1 | White noise fan level | `0x01`–`0x04` | — |
+| `0x1F` | 1 | Sleep fan level | — | — |
+| `0x20` | 1 | Sleep mode minutes | — | — |
+| `0x21` | 1 | Daytime enabled | `0x00`/`0x01` | — |
+| `0x22` | 1 | Daytime fan mode | — | — |
+| `0x23` | 1 | Daytime fan level | `0x01`–`0x04` | — |
+| `0x24` | 4 | Nightlight state *(Sprout)* | `{on, brightness_pct, ct_lo, ct_hi}` — brightness 0–100, color temp Kelvin LE16 | `light` |
+| `0x25` | 6 | Breathing state *(Sprout)* | `{mode, speed_sec, ct_lo, ct_hi, min_pct, max_pct}` — mode `0x01`=breathing; cycle 1–10 s; CT Kelvin LE16; brightness 0–100 | `light` |
+| `0x26` | 1 | Breathing active *(Sprout)* | `0x01`=breathing running, `0x00`=off | — |
+| `0x27` | 2 | Fan RPM *(Sprout)* | LE16 tachometer reading | `fan_rpm` sensor |
+
+---
+
+## Core Commands (ESP→MCU)
+
+| Command | CMD bytes | Payload | Notes |
+|---------|-----------|---------|-------|
+| Power on/off | `01 00 A0` | `{0x01}` / `{0x00}` | |
+| Fan speed 1–4 | `01 60 A2` | `{0x01, 0x01, speed}` | speed = 1–4 |
+| Fan mode | `01 E0 A5` | `{mode}` | 0=Manual, 1=Sleep, 2=Auto |
+| Display on | `01 05 A1` | `{0x64}` | brightness full |
+| Display off | `01 05 A1` | `{0x00}` | |
+| Child lock on/off | `01 00 D1` | `{0x01}` / `{0x00}` | |
+| Auto mode Default | `01 E6 A5` | `{0x00, 0x00, 0x00}` | |
+| Auto mode Quiet | `01 E6 A5` | `{0x01, 0x00, 0x00}` | |
+| Auto mode Room Size | `01 E6 A5` | `{0x02, size_lo, size_hi}` | see [Room Size Encoding](#room-size-encoding) |
+| Auto mode ECO | `01 E6 A5` | `{0x03, 0x00, 0x00}` | Core600S only |
+| Light detect on/off | `01 E9 A5` | `{0x01}` / `{0x00}` | Core600S only |
+| Nightlight off | `01 03 A0` | `{0x00, 0x00}` | Core200S only |
+| Nightlight mid | `01 03 A0` | `{0x00, 0x32}` | Core200S only |
+| Nightlight full | `01 03 A0` | `{0x00, 0x64}` | Core200S only |
+| Filter LED on/off | `01 E2 A5` | `{0x01}` / `{0x00}` | |
+| Wi-Fi LED on | `01 29 A1` | `{0x01, 0x7D, 0x00, 0x7D, 0x00, 0x00}` | solid |
+| Wi-Fi LED off | `01 29 A1` | `{0x00, 0xF4, 0x01, 0xF4, 0x01, 0x00}` | |
+| Wi-Fi LED blink | `01 29 A1` | `{0x02, 0xF4, 0x01, 0xF4, 0x01, 0x00}` | connecting |
+| Timer set | `01 64 A2` | `{sec_b0, sec_b1, sec_b2, sec_b3}` | LE32 seconds |
+| Timer stop | `01 64 A2` | `{0x00, 0x00, 0x00, 0x00}` | |
+| Timer request | `01 65 A2` | — | request current timer |
+
+---
+
+## Vital Commands (ESP→MCU)
+
+Vital commands use flat TLV payloads (same tag/len/value format as status).
+
+| Command | CMD bytes | Payload (TLV) | Notes |
+|---------|-----------|---------------|-------|
+| Power on/off | `02 00 50` | `{01 01 on/off}` | on=`0x01`, off=`0x00` |
+| Fan speed 1–4 | `02 03 55` | `{01 01 speed}` | speed = 1–4 |
+| Fan mode Manual | `02 02 55` | `{01 01 00}` | |
+| Fan mode Sleep | `02 02 55` | `{01 01 01}` | |
+| Fan mode Auto | `02 02 55` | `{01 01 02}` | |
+| Fan mode Pet | `02 02 55` | `{01 01 05}` | |
+| Auto mode Default | `02 02 55` | `{02 01 00  03 02 00 00}` | tag01=mode, tag03=room_size |
+| Auto mode Quiet | `02 02 55` | `{02 01 01  03 02 00 00}` | |
+| Auto mode Efficient | `02 02 55` | `{02 01 02  03 02 size_lo size_hi}` | see [Room Size Encoding](#room-size-encoding) |
+| Display on | `02 04 55` | `{01 01 64}` | |
+| Display off | `02 04 55` | `{01 01 00}` | |
+| Child lock on/off | `02 40 51` | `{01 01 01}` / `{01 01 00}` | |
+| Light detect on/off | `02 11 55` | `{01 01 01}` / `{01 01 00}` | |
+| Timer set | `02 19 50` | `{01 04 b0 b1 b2 b3}` | tag01: LE32 seconds |
+| Timer stop | `02 19 50` | `{01 04 00 00 00 00}` | |
+| Timer request | `02 1A 50` | — | |
+| Wi-Fi LED on | `02 18 50` | `{01 01 01  02 02 7D 00  03 02 7D 00  04 01 00}` | |
+| Wi-Fi LED off | `02 18 50` | `{01 01 00  02 02 F4 01  03 02 F4 01  04 01 00}` | |
+| Wi-Fi LED blink | `02 18 50` | `{01 01 02  02 02 F4 01  03 02 F4 01  04 01 00}` | |
+
+---
+
+## Sprout Commands (ESP→MCU)
+
+Sprout uses the Vital command set plus these additional commands.
+
+### Nightlight — CMD `02 0B 55`
+
+TLV payload:
+
+| Tag | Len | Value | Description |
+|-----|-----|-------|-------------|
+| `01` | 1 | `0x01`/`0x00` | on/off |
+| `02` | 1 | 0–100 | brightness % |
+| `03` | 2 | LE16 Kelvin | color temperature (e.g. `0x07D0`=2000K, `0x0DAC`=3500K) |
+
+### Breathing — CMD `02 0C 55`
+
+TLV payload (tags sent out of numeric order — order matters for MCU):
+
+| Tag | Len | Value | Description |
+|-----|-----|-------|-------------|
+| `01` | 1 | `0x01` | breathing on |
+| `03` | 2 | LE16 Kelvin | color temperature |
+| `02` | 1 | 1–10 | cycle time in seconds |
+| `04` | 1 | 0–100 | min brightness % |
+| `05` | 1 | 0–100 | max brightness % |
+
+### White Noise — CMD `02 07 55`
+
+TLV payload:
+
+| Tag | Len | Value | Description |
+|-----|-----|-------|-------------|
+| `01` | 3 | `{active, volume, sound_index}` | active: 0/1; volume: 0–255; sound_index: 0–14 |
+| `03` | 3 | `{0x05, 0x08, 0xF2}` | constant trailer — purpose unknown |
+
+### White Noise Fan Mode — CMD `02 02 55`
+
+Payload: `{0x10, 0x01, 0x01}` (enable) / `{0x10, 0x01, 0x00}` (disable)
+
+### AQI Scale — CMD `02 06 55`
+
+TLV: `{01 02 aqi_lo aqi_hi}` — LE16 AQI max value (e.g. `0x01F4`=500)
+
+### Async Events — CMD `02 08 55` (MCU→ESP)
+
+TLV:
+
+| Tag | Len | Value | Description |
+|-----|-----|-------|-------------|
+| `01` | 1 | `0x01`/`0x00` | button press / release |
+| `03` | 3 | `{active, volume, sound_index}` | white noise state change |
+| `04` | 1 | `0x01`/`0x00` | cover open / closed |
+
+---
+
+## Room Size Encoding
+
+Room sizes are transmitted as raw integer values derived from square feet.
+
+| Series | Formula | Direction |
+|--------|---------|-----------|
+| Vital (tag `0x10`) | `raw = round(m² × 10.764 × 1.3)` | ESP→MCU |
+| Core / Core600S | `raw = round(m² × 10.764 × 3.15)` | ESP→MCU |
+
+Decode (MCU→ESP): `m² = raw / (10.764 × factor)` where factor = 1.3 (Vital) or 3.15 (Core).
+
+---
+
+## Timer Encoding
+
+| Series | CMD | Payload |
+|--------|-----|---------|
+| Core set/stop | `01 64 A2` | LE32 seconds |
+| Core request | `01 65 A2` | empty |
+| Vital set/stop | `02 19 50` | TLV `{01 04 sec_le32}` |
+| Vital request | `02 1A 50` | empty |
+
+Timer status pushed from MCU contains remaining seconds and initial seconds (Core sends both as two LE32 values; Core200S sends only remaining).

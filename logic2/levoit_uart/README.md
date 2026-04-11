@@ -39,8 +39,8 @@ Decoded frames are displayed as:
 
 1. Locate the correct solder points on the PCB — see the individual device README for the exact pads
    > **Note:** The debug pin header RX/TX pins are used to flash the ESP32. They are **not** the UART line between the ESP32 and the MCU. Tap into the dedicated ESP↔MCU communication pads (test points or vias near the ESP32), not the header.
-2. Capture UART traffic at **9600 baud, 8N1** — connect a logic analyzer to both the **ESP TX** and **MCU TX** lines with shared GND
-2. Add an **Async Serial** analyzer on the **ESP TX** channel (9600 baud, 8N1)
+2. Capture UART traffic at **115200 baud, 8N1** — connect a logic analyzer to both the **ESP TX** and **MCU TX** lines with shared GND
+2. Add an **Async Serial** analyzer on the **ESP TX** channel (115200 baud, 8N1)
 3. Add a second **Async Serial** analyzer on the **MCU TX** channel
 4. Add a **Levoit UART Extractor** HLA on top of the first Async Serial, set **Channel** to `ESP->MCU`
 5. Add a second **Levoit UART Extractor** HLA on top of the second Async Serial, set **Channel** to `MCU->ESP`

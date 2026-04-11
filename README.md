@@ -169,7 +169,7 @@ Open an issue or pull request in the repo with the dump attached.
 
 ### Capturing a UART Dump
 
-The ESP32 and MCU communicate over UART at **9600 baud, 8N1**. See [Levoit UART Protocol Details](./LEVOIT_UART.md) for a full description of the packet format. To capture traffic:
+The ESP32 and MCU communicate over UART at **115200 baud, 8N1**. See [Levoit UART Protocol Details](./LEVOIT_UART.md) for a full description of the packet format. To capture traffic:
 
 > Check the individual device README for teardown steps, PCB photos, and the exact solder points to use for your model.
 
@@ -177,7 +177,7 @@ The ESP32 and MCU communicate over UART at **9600 baud, 8N1**. See [Levoit UART 
    > **Note:** The debug pin header RX/TX pins are used to flash the ESP32. They are **not** the UART line between the ESP32 and the MCU. You need to tap into the dedicated ESP↔MCU communication pads (test points or vias near the ESP32), not the header.
 2. Connect a logic analyzer to both the **ESP TX** and **MCU TX** lines, with a shared GND
 3. In **Saleae Logic 2**, add an **Async Serial** analyzer on each channel:
-   - Baud rate: `9600`
+   - Baud rate: `115200`
    - Bits per frame: `8`
    - Stop bits: `1`
    - No parity
@@ -212,7 +212,7 @@ A High-Level Analyzer for the Levoit UART protocol is included in [`logic2/levoi
 2. Select the `logic2/levoit_uart/` folder
 
 **Use:**
-1. Add an **Async Serial** analyzer on the **ESP TX** channel (9600 baud, 8N1) — this is ESP→MCU traffic
+1. Add an **Async Serial** analyzer on the **ESP TX** channel (115200 baud, 8N1) — this is ESP→MCU traffic
 2. Add a second **Async Serial** analyzer on the **MCU TX** channel — this is MCU→ESP traffic
 3. Add a **Levoit UART Extractor** HLA on top of the first Async Serial, set **Channel** to `ESP->MCU`
 4. Add a second **Levoit UART Extractor** HLA on top of the second Async Serial, set **Channel** to `MCU->ESP`
