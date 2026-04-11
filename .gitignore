@@ -8,3 +8,6 @@ components/levoit/.claude/settings.local.json
 components/vk16d32_dev.yaml
 to_move_out/
 **/PXL_*
+devices/levoit-sprout/data/*.mp3
+devices/levoit-sprout/data/*.ogg
+devices/levoit-sprout/assets_extracted/

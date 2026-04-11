@@ -2,30 +2,37 @@
 
 Files in this folder are built into the `assets` LittleFS partition when you run `esphome run`.
 
-## Pre-loaded (from firmware dump)
+They must be extracted from your own firmware dump before flashing.
+
+
+## Expected files
 
 | File | Sound |
 |------|-------|
 | `100001.ogg` | Summer rain |
 | `100002.mp3` | Gentle sea wave |
+| `100003.mp3` | Sound 03 |
+| `100004.mp3` | Sound 04 |
+| `100005.mp3` | Sound 05 |
 | `100006.mp3` | Insects chirp by the stream |
+| `100007.mp3` | Sound 07 |
+| `100008.mp3` | Sound 08 |
 | `100009.mp3` | Morning seaside |
+| `1000010.mp3` | Sound 10 |
+| `1000011.mp3` | Sound 11 |
 | `1000012.mp3` | Sound 12 |
+| `1000013.mp3` | Sound 13 |
+| `1000014.mp3` | Sound 14 |
+| `1000015.mp3` | Sound 15 |
 | `bgm.mp3` | UI background music |
 | `switch.mp3` | Button click sound effect |
 
-## Adding more sounds
+Only files present here will be included in the LittleFS image — missing files are silently skipped.
 
-Download remaining sounds via the original Levoit app (see Sprout README for procedure),
-then copy them here from `../assets_extracted/`.
+## File size
 
-The other sound filenames are: `100003.mp3` through `1000015.mp3` (except the ones above).
+Keep files small — the `assets` partition is **2 MB** total and files are loaded fully into RAM before decoding.
 
-## How it works
-
-`build_assets.py` runs as a PlatformIO pre-build script. It:
-1. Reads all files from this folder
-2. Builds a LittleFS image using `littlefs-python`
-3. Flashes it to the `assets` partition (offset `0x320000`) alongside the firmware
-
-Install the dependency once: `pip install littlefs-python`
+- Target: **< 500 KB per file**
+- Re-encode if needed: `ffmpeg -i input.mp3 -b:a 32k -ar 32000 -ac 1 output.mp3`
+- The pre-loaded files from the original firmware are already small (mono, low bitrate) around 500KB
