@@ -1,15 +1,36 @@
-#Levoit Sprout — ESP32-C3 variant
+# Levoit Sprout
+#
+# Custom C++ I2S audio driver — plays white noise files directly from the
+# "assets" LittleFS partition on the ESP32 flash.
+#
+# I2S pins (confirmed by logic analyzer):
+#   GPIO 5  — BCLK   (~1.067 MHz, 16-bit stereo @ 32 kHz)
+#   GPIO 18 — LRCLK  (32 kHz word select)
+#   GPIO 17 — SD/DIN (serial data)
+#   GPIO 19 — ENABLE (NS4168 / MAX98357A amp enable)
+
 substitutions:
   device_name: levoit-sprout
   wifi_ap_ssid: "Levoit-Sprout"
-  rx_pin: GPIO23          # TODO: verify actual UART pins
+  rx_pin: GPIO23
   tx_pin: GPIO22
 
 esphome:
   name: ${device_name}
+  includes:
+    - levoit_audio/levoit_audio.h
+  platformio_options:
+    extra_scripts:
+      - pre:build_assets.py
+  on_boot:
+    priority: -100
+    then:
+      - lambda: levoit_audio_setup();
 
 esp32:
   board: esp32dev
+  flash_size: 8MB
+  partitions: partitions_custom.csv
   framework:
     type: esp-idf
 

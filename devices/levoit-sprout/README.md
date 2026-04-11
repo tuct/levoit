@@ -70,12 +70,14 @@ RX: GPIO02
 TX: GPIO15
 or reverse?
 
-Music
-GPIO:17/5/18/19
-17 => data?
-5=clock?/1Mhz
-18=clock/32kHz
-19= on/off
+**I2S Audio** (confirmed by logic analyzer capture)
+
+| GPIO | I2S Signal | Description |
+|------|-----------|-------------|
+| GPIO 5 | BCLK | Bit clock ~1 MHz (= 16 bits × 2 ch × 32kHz) |
+| GPIO 18 | LRCLK / WS | Word select 32 kHz — toggles L/R channel |
+| GPIO 17 | SD | Serial data |
+| GPIO 19 | ENABLE / MUTE | Amp or codec enable on/off |
 
 
 

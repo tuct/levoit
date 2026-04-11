@@ -82,6 +82,9 @@ number:
     levoit: levoitsprout
     name: "White Noise Volume"
     type: white_noise_volume
+    on_value:
+      then:
+        - lambda: levoit_audio_set_volume((uint8_t)x);
 
 sensor:
   - platform: levoit
@@ -181,3 +184,105 @@ binary_sensor:
     levoit: levoitsprout
     name: "Cover Open"
     type: cover_open
+
+# ---------------------------------------------------------------------------
+# Local audio playback — LittleFS + custom C++ decoder
+# ---------------------------------------------------------------------------
+
+globals:
+  - id: audio_sound_idx
+    type: int
+    restore_value: no
+    initial_value: '-1'
+
+select:
+  - platform: template
+    name: "Audio Sound"
+    id: audio_sound_select
+    optimistic: true
+    options:
+      - "Off"
+      - "Summer Rain"
+      - "Gentle Sea Wave"
+      - "Sound 03"
+      - "Sound 04"
+      - "Sound 05"
+      - "Insects by Stream"
+      - "Sound 07"
+      - "Sound 08"
+      - "Morning Seaside"
+      - "Sound 10"
+      - "Sound 11"
+      - "Sound 12"
+      - "Sound 13"
+      - "Sound 14"
+      - "Sound 15"
+    initial_option: "Off"
+    on_value:
+      then:
+        - lambda: |-
+            if (x == "Off") {
+              levoit_audio_stop();
+              id(audio_sound_idx) = -1;
+              return;
+            }
+            // Find index matching selected name
+            for (size_t i = 0; i < levoit_audio_sound_count(); i++) {
+              if (x == levoit_audio_sound_name(i)) {
+                id(audio_sound_idx) = (int)i;
+                levoit_audio_play((uint8_t)i, id(audio_loop_switch).state);
+                return;
+              }
+            }
+
+switch:
+  - platform: template
+    name: "Audio Loop"
+    id: audio_loop_switch
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      then:
+        - lambda: |-
+            levoit_audio_set_loop(true);
+            // Restart current sound with loop if not already playing
+            if (!levoit_audio_is_playing() && id(audio_sound_idx) >= 0)
+              levoit_audio_play((uint8_t)id(audio_sound_idx), true);
+    on_turn_off:
+      then:
+        - lambda: levoit_audio_set_loop(false);
+
+# ---------------------------------------------------------------------------
+# I2S Audio — stream white noise files from Home Assistant media library
+# Copy extracted .ogg/.mp3 files to /config/media/levoit-sprout/ in HA.
+# Play via: service: media_player.play_media
+#   media_content_id: media-source://media_source/local/levoit-sprout/100001.ogg
+#   media_content_type: music
+# ---------------------------------------------------------------------------
+
+i2s_audio:
+  id: i2s_bus
+  i2s_lrclk_pin: GPIO18   # LRCLK / WS  — 32 kHz word select
+  i2s_bclk_pin: GPIO5     # BCLK        — ~1 MHz bit clock
+
+media_player:
+  - platform: i2s_audio
+    id: sprout_audio
+    name: "White Noise Player"
+    i2s_audio_id: i2s_bus
+    dac_type: external
+    i2s_dout_pin: GPIO17  # SD / DIN
+    mode: mono
+    on_state:
+      - if:
+          condition:
+            media_player.is_playing:
+          then:
+            - output.turn_on: amp_enable
+          else:
+            - output.turn_off: amp_enable
+
+output:
+  - platform: gpio
+    id: amp_enable
+    pin: GPIO19            # NS4168 / MAX98357A SD/EN pin

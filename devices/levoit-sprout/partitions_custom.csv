@@ -1,0 +1,14 @@
+# Levoit Sprout — 8MB flash partition table
+# nvs      : NVS key-value store
+# otadata  : OTA state
+# app0/1   : OTA firmware slots (1.5 MB each)
+# spiffs   : ESPHome scratch (not used, kept for compatibility)
+# assets   : LittleFS audio files (white noise + UI sounds)
+#
+# Name,     Type, SubType,  Offset,   Size,    Flags
+nvs,         data, nvs,      0x9000,   0x5000,
+otadata,     data, ota,      0xe000,   0x2000,
+app0,        app,  ota_0,    0x10000,  0x180000,
+app1,        app,  ota_1,    0x190000, 0x180000,
+spiffs,      data, spiffs,   0x310000, 0x10000,
+assets,      data, spiffs,   0x320000, 0x200000,
