@@ -21,7 +21,9 @@
 #include "vital_commands.h"
 #include "sprout_commands.h"
 #include "sprout_status.h"
+#ifdef USE_LIGHT
 #include "light/levoit_light.h"
+#endif
 #ifdef USE_SWITCH
 #include "switch/levoit_switch.h"
 #endif
@@ -164,11 +166,15 @@ namespace esphome
             // Store the desired state; platform entity will publish from its loop
             binary_sensor_states_[bs_idx_(type)] = state;
         }
+#ifdef USE_LIGHT
         void Levoit::publish_sprout_light(bool on, float brightness, float color_temp, bool breathing)
         {
             if (sprout_light_ != nullptr)
                 sprout_light_->apply_from_mcu(on, brightness, color_temp, breathing);
         }
+#else
+        void Levoit::publish_sprout_light(bool on, float brightness, float color_temp, bool breathing) {}
+#endif
 
         void Levoit::sendSproutLightDirect(bool on, bool breathing, uint8_t bri_pct, uint16_t ct_k)
         {
