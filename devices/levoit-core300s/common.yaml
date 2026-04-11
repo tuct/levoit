@@ -1,7 +1,4 @@
 #Do not use this file directly, it is included in the device yaml files. Put common configuration here.
-esphome:
-  name: ${device_name}
-
 # Enable logging
 logger:
   level: VERBOSE
@@ -25,12 +22,6 @@ wifi:
 
 captive_portal:
 
-external_components:
-  - source:
-      type: git
-      url: https://github.com/tuct/levoit
-      ref: main
-    components: [levoit]
 debug:
   update_interval: 5s
 

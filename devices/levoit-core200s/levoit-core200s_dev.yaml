@@ -1,0 +1,21 @@
+#example levoit-core200s.yaml for flashing the original ESP32-SOLO-1C
+substitutions:
+  device_name: levoit-core200s
+  wifi_ap_ssid: "Levoit-Core200S"
+  rx_pin: GPIO17
+  tx_pin: GPIO16
+
+esphome:
+  name: levoit-core200s
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_local.yaml

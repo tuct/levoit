@@ -14,4 +14,6 @@ esp32:
     sdkconfig_options:
       CONFIG_FREERTOS_UNICORE: y
 
-<<: !include common.yaml
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_git.yaml

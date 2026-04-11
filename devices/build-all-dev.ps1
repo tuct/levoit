@@ -29,3 +29,10 @@ if ($failed.Count -eq 0) {
     $failed | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
     exit 1
 }
+
+Write-Host "`n==> Generating builder yamls" -ForegroundColor Cyan
+& "$PSScriptRoot\make-builder-yaml.ps1"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "make-builder-yaml.ps1 failed" -ForegroundColor Red
+    exit 1
+}

@@ -28,13 +28,12 @@ Uses the Vital flat-TLV protocol (`CMD=02 00 55`) as a base, with Sprout-specifi
 
 | Feature | Type | Notes |
 |---------|------|-------|
-| Fan | fan | 4 speeds, presets: Manual / Auto / Sleep / Pet |
+| Fan | fan | 4 speeds, presets: Manual / Auto |
 | Auto Mode | select | Default / Quiet / Efficient |
 | Auto Mode Room Size | number | m² |
 | Auto Mode High Fan Time | text_sensor | Remaining high-speed runtime in efficient mode |
 | Display | switch | Toggle LED display |
 | Child Lock | switch | |
-| Light Detect | switch | Auto-dims display when ambient light is low |
 | PM2.5 | sensor | µg/m³ |
 | AQI | sensor | As reported by MCU |
 | Current CADR | sensor | m³/h, updated every 5s |
@@ -187,6 +186,16 @@ python extract_assets.py firmware-backup.bin
 ```bash
 esphome run levoit-sprout-esp32.yaml
 ```
+
+### ESPHome Web Builder / Dashboard
+
+Use the pre-generated builder yaml to flash without a local clone — all config is inlined, no `!include` or packages needed:
+
+| File | Board |
+|------|-------|
+| `levoit-sprout-builder.yaml` | original ESP32 |
+
+Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. Regenerate with `.\make-builder-yaml.ps1` from the `devices/` folder.
 
 ### Restore Original Firmware
 

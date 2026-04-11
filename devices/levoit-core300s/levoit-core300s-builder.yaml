@@ -1,25 +1,26 @@
-#example levoit-vital200s-s3.yaml for flashing a new ESP32-S3
+﻿#example levoit-core300s.yaml for flashing the original ESP32-SOLO-1C
 substitutions:
-  device_name: levoit-vital200s-s3
-  wifi_ap_ssid: "Levoit-Vital200S"
-  rx_pin: GPIO05
-  tx_pin: GPIO06
+  device_name: levoit-core300s
+  wifi_ap_ssid: "Levoit-Core300S"
+  rx_pin: GPIO16
+  tx_pin: GPIO17
 
 esphome:
   name: ${device_name}
-# platformio_options:
-#    build_flags: -DBOARD_HAS_PSRAM
-#    board_build.arduino.memory_type: qio_opi
-#    board_build.f_flash: 80000000L
-#    board_build.flash_mode: qio
 
 esp32:
-  board: seeed_xiao_esp32c3
+  board: esp32dev
   framework:
     type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
 
-# common.yaml is included in the device yaml files. Put common configuration there.
-# Enable logging
+external_components:
+  - source:
+      type: git
+      url: https://github.com/tuct/levoit
+      ref: main
+    components: [levoit]
 logger:
   level: VERBOSE
 
@@ -35,18 +36,19 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: none
+  output_power: 15dB #prevent connection issues, brownout 
   ap:
     ssid: "${wifi_ap_ssid}"
     password: !secret wifi_ap_password
 
 captive_portal:
 
-external_components:
-  - source:
-      type: git
-      url: https://github.com/tuct/levoit
-      ref: main
-    components: [levoit]
+debug:
+  update_interval: 5s
+
+
+
+
 
 uart:
   - id: uart_mcu2esp
@@ -59,102 +61,112 @@ uart:
     baud_rate: 115200
 
 levoit:
-  id: levoitvital200
-  model: VITAL200S
+  id: levoitcore300
+  model: CORE300S
 
 fan:
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Fan"
     id: levoit_fan1
 
 switch:
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Display"
     type: display
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Child Lock"
     type: child_lock
-  - platform: levoit
-    levoit: levoitvital200
-    name: "Light Detect"
-    type: light_detect
 
 number:
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Timer (min)"
     type: timer
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Auto Mode Room Size"
     type: efficiency_room_size
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Filter Months"
     type: filter_lifetime_months
 
 sensor:
   - platform: levoit
-    levoit: levoitvital200
-    name: "PM 2.5"
+    levoit: levoitcore300
+    name: "AQ - PM 2.5"
     type: pm25
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "AQI"
     type: aqi
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Current CADR"
     type: current_cadr
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Filter %"
     type: filter_life_left
+  - platform: debug
+    free:
+      name: "Heap Free"
+    block:
+      name: "Heap Max Block"
+    min_free:
+      name: "Heap Min Free"
+    fragmentation:
+      name: "Heap Fragmentation"
+    loop_time:
+      name: "Loop Time"
+    cpu_frequency:
+      name: "CPU Frequency"
 
 select:
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Auto Mode"
     type: auto_mode
 
 text_sensor:
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "MCU Version"
     type: mcu_version
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "ESP Version"
     type: esp_version
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Timer Duration"
     type: timer_duration_initial
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Timer Remaining"
     type: timer_duration_remaining
   - platform: levoit
-    levoit: levoitvital200
-    name: "Auto: High remaining run time"
-    type: auto_mode_room_size_high_fan
-  - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Error"
     type: error_message
-
+  - platform: debug
+    device:
+      name: "Device Info"
+      entity_category: diagnostic
+    reset_reason:
+      name: "Reset Reason"
+      entity_category: diagnostic
 button:
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Filter Reset"
     type: reset_filter_stats
 
 binary_sensor:
   - platform: levoit
-    levoit: levoitvital200
+    levoit: levoitcore300
     name: "Filter Low"
     type: filter_low
-

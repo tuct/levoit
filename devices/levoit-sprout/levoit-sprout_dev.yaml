@@ -1,0 +1,18 @@
+#Levoit Sprout — ESP32-C3 variant (local dev build)
+substitutions:
+  device_name: levoit-sprout
+  wifi_ap_ssid: "Levoit-Sprout"
+  rx_pin: GPIO23          # TODO: verify actual UART pins
+  tx_pin: GPIO22
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_local.yaml

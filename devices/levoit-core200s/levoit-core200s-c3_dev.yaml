@@ -1,0 +1,23 @@
+#example levoit-core200s-c3.yaml for flashing a new ESP32-C3
+substitutions:
+  device_name: levoit-core200s-c3
+  wifi_ap_ssid: "Levoit-Core200S"
+  rx_pin: GPIO05 #D3
+  tx_pin: GPIO04 #D2
+
+esphome:
+  name: ${device_name}
+  platformio_options:
+    build_flags: -DBOARD_HAS_PSRAM
+    board_build.arduino.memory_type: qio_opi
+    board_build.f_flash: 80000000L
+    board_build.flash_mode: qio
+
+esp32:
+  board: seeed_xiao_esp32c3
+  framework:
+    type: esp-idf
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_local.yaml

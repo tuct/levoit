@@ -1,0 +1,156 @@
+﻿#example levoit-vital100s-s3.yaml for flashing a new ESP32-S3
+substitutions:
+  device_name: levoit-vital100s-s3
+  wifi_ap_ssid: "Levoit-Vital100S"
+  rx_pin: GPIO05
+  tx_pin: GPIO06
+
+esphome:
+  name: ${device_name}
+  platformio_options:
+    build_flags: -DBOARD_HAS_PSRAM
+    board_build.arduino.memory_type: qio_opi
+    board_build.f_flash: 80000000L
+    board_build.flash_mode: qio
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/tuct/levoit
+      ref: main
+    components: [levoit]
+logger:
+  level: VERBOSE
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+  ap:
+    ssid: "${wifi_ap_ssid}"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+uart:
+  - id: uart_mcu2esp
+    tx_pin:
+      number: ${tx_pin}
+      inverted: false
+    rx_pin:
+      number: ${rx_pin}
+      inverted: false
+    baud_rate: 115200
+
+levoit:
+  id: levoitvital100
+  model: VITAL100S
+
+fan:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Fan"
+    id: levoit_fan1
+
+switch:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Display"
+    type: display
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Child Lock"
+    type: child_lock
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Light Detect"
+    type: light_detect
+
+number:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Timer (min)"
+    type: timer
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Auto Mode Room Size"
+    type: efficiency_room_size
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Filter Months"
+    type: filter_lifetime_months
+
+sensor:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "PM 2.5"
+    type: pm25
+  - platform: levoit
+    levoit: levoitvital100
+    name: "AQI"
+    type: aqi
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Current CADR"
+    type: current_cadr
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Filter %"
+    type: filter_life_left
+
+select:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Auto Mode"
+    type: auto_mode
+
+text_sensor:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "MCU Version"
+    type: mcu_version
+  - platform: levoit
+    levoit: levoitvital100
+    name: "ESP Version"
+    type: esp_version
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Timer Duration"
+    type: timer_duration_initial
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Timer Remaining"
+    type: timer_duration_remaining
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Auto: High remaining run time"
+    type: auto_mode_room_size_high_fan
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Error"
+    type: error_message
+
+button:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Filter Reset"
+    type: reset_filter_stats
+
+binary_sensor:
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Filter Low"
+    type: filter_low

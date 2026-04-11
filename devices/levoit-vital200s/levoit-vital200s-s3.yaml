@@ -18,4 +18,6 @@ esp32:
   framework:
     type: esp-idf
 
-<<: !include common.yaml
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_git.yaml

@@ -1,8 +1,24 @@
-#Do not use this file directly, it is included in the device yaml files. Put common configuration here.
+﻿#Levoit Sprout â€” ESP32-C3 variant
+substitutions:
+  device_name: levoit-sprout
+  wifi_ap_ssid: "Levoit-Sprout"
+  rx_pin: GPIO23          # TODO: verify actual UART pins
+  tx_pin: GPIO22
+
 esphome:
   name: ${device_name}
 
-# Enable logging
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/tuct/levoit
+      ref: main
+    components: [levoit]
 logger:
   level: VERBOSE
 
@@ -23,10 +39,6 @@ wifi:
     password: !secret wifi_ap_password
 
 captive_portal:
-
-external_components:
-  - source: ../../components
-    components: [levoit]
 
 uart:
   - id: uart_mcu2esp
@@ -59,10 +71,6 @@ switch:
     type: child_lock
   - platform: levoit
     levoit: levoitsprout
-    name: "Light Detect"
-    type: light_detect
-  - platform: levoit
-    levoit: levoitsprout
     name: "White Noise"
     type: white_noise
 
@@ -79,7 +87,7 @@ number:
     levoit: levoitsprout
     name: "Filter Months"
     type: filter_lifetime_months
-  # Breathing effect params (adjust these to tune the breathing animation)
+  # Breathing effect params
   - platform: levoit
     levoit: levoitsprout
     name: "LED Brightness Min"

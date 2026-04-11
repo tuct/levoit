@@ -1,8 +1,4 @@
 #Do not use this file directly, it is included in the device yaml files. Put common configuration here.
-esphome:
-  name: levoit-core200s-s3
-  # remove if you use original ESP32-SOLO-1C!
-
 # Enable logging
 logger:  
   level: VERBOSE
@@ -25,13 +21,6 @@ wifi:
     password: !secret wifi_ap_password
 
 captive_portal:
-
-external_components:
-  - source:
-      type: git
-      url: https://github.com/tuct/levoit
-      ref: main
-    components: [levoit]
 
 uart:
   - id: uart_mcu2esp

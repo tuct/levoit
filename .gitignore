@@ -1,5 +1,6 @@
 secret.yaml
 .esphome
+.claude/settings.local.json
 __pycache__
 .github/copilot-instructions.md
 components/secrets.yaml
@@ -7,5 +8,3 @@ components/levoit/.claude/settings.local.json
 components/vk16d32_dev.yaml
 to_move_out/
 **/PXL_*
-**/*_dev.yaml
-**/common_dev.yaml

@@ -1,0 +1,175 @@
+﻿#example levoit-core300s-c3.yaml for flashing a new ESP32-C3
+substitutions:
+  device_name: levoit-core300s-c3
+  wifi_ap_ssid: "Levoit-Core300S"
+  rx_pin: GPIO05
+  tx_pin: GPIO04
+
+esphome:
+  name: ${device_name}
+  platformio_options:
+    build_flags: -DBOARD_HAS_PSRAM
+    board_build.arduino.memory_type: qio_opi
+    board_build.f_flash: 80000000L
+    board_build.flash_mode: qio
+
+esp32:
+  board: seeed_xiao_esp32c3
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/tuct/levoit
+      ref: main
+    components: [levoit]
+logger:
+  level: VERBOSE
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+  output_power: 15dB #prevent connection issues, brownout 
+  ap:
+    ssid: "${wifi_ap_ssid}"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+debug:
+  update_interval: 5s
+
+
+
+
+
+uart:
+  - id: uart_mcu2esp
+    tx_pin:
+      number: ${tx_pin}
+      inverted: false
+    rx_pin:
+      number: ${rx_pin}
+      inverted: false
+    baud_rate: 115200
+
+levoit:
+  id: levoitcore300
+  model: CORE300S
+
+fan:
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Fan"
+    id: levoit_fan1
+
+switch:
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Display"
+    type: display
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Child Lock"
+    type: child_lock
+
+number:
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Timer (min)"
+    type: timer
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Auto Mode Room Size"
+    type: efficiency_room_size
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Filter Months"
+    type: filter_lifetime_months
+
+sensor:
+  - platform: levoit
+    levoit: levoitcore300
+    name: "AQ - PM 2.5"
+    type: pm25
+  - platform: levoit
+    levoit: levoitcore300
+    name: "AQI"
+    type: aqi
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Current CADR"
+    type: current_cadr
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Filter %"
+    type: filter_life_left
+  - platform: debug
+    free:
+      name: "Heap Free"
+    block:
+      name: "Heap Max Block"
+    min_free:
+      name: "Heap Min Free"
+    fragmentation:
+      name: "Heap Fragmentation"
+    loop_time:
+      name: "Loop Time"
+    cpu_frequency:
+      name: "CPU Frequency"
+
+select:
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Auto Mode"
+    type: auto_mode
+
+text_sensor:
+  - platform: levoit
+    levoit: levoitcore300
+    name: "MCU Version"
+    type: mcu_version
+  - platform: levoit
+    levoit: levoitcore300
+    name: "ESP Version"
+    type: esp_version
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Timer Duration"
+    type: timer_duration_initial
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Timer Remaining"
+    type: timer_duration_remaining
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Error"
+    type: error_message
+  - platform: debug
+    device:
+      name: "Device Info"
+      entity_category: diagnostic
+    reset_reason:
+      name: "Reset Reason"
+      entity_category: diagnostic
+button:
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Filter Reset"
+    type: reset_filter_stats
+
+binary_sensor:
+  - platform: levoit
+    levoit: levoitcore300
+    name: "Filter Low"
+    type: filter_low

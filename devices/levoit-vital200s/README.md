@@ -84,6 +84,18 @@ esphome run levoit-vital200s-c3.yaml
 
 Reassemble and enjoy!
 
+### ESPHome Web Builder / Dashboard
+
+Use the pre-generated builder yaml to flash without a local clone — all config is inlined, no `!include` or packages needed:
+
+| File | Board |
+|------|-------|
+| `levoit-vital200s-builder.yaml` | original ESP32-C3-SOLO-1 |
+| `levoit-vital200s-builder-c3.yaml` | ESP32-C3 replacement |
+| `levoit-vital200s-builder-s3.yaml` | ESP32-S3 replacement |
+
+Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. Regenerate with `.\make-builder-yaml.ps1` from the `devices/` folder.
+
 ### Restore Original Firmware
 
 ```bash

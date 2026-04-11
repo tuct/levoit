@@ -1,0 +1,19 @@
+# example levoit-core600s-solo-1c.yaml for flashing stock ESP32-SOLO-1C
+# !!! CHECK YOUR MODEL BEFORE FLASHING !!!
+# There have been sightings of multiple different ESP32s used in retail units.
+substitutions:
+  device_name: levoit-core600s-solo-1c
+  wifi_ap_ssid: free-levoit-Core600S
+  rx_pin: GPIO16
+  tx_pin: GPIO17
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_local.yaml
