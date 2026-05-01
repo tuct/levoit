@@ -630,6 +630,8 @@ namespace esphome
                         this->sendCommand(CommandType::setFilterLedOff);
                         filter_led_on_ = false;
                         filter_blinking_ = false;
+                        // Ensure any blinking is cleared before setting solid LED
+                        this->sendCommand(CommandType::setWifiLedOff);
                         if (this->model_ == ModelType::CORE200S)
                         {
                             this->set_timeout(500, [this]() {
