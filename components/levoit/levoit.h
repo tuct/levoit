@@ -90,6 +90,7 @@ class Levoit : public Component, public uart::UARTDevice {
   LevoitFan *get_fan() const { return this->fan_; }
   LevoitNumber *get_number(NumberType type) const { return numbers_[nt_idx_(type)]; }
   LevoitSelect *get_select(SelectType type) const { return selects_[sl_idx_(type)]; }
+  LevoitSwitch *get_switch(SwitchType type) const { return switches_[st_idx_(type)]; }
   class LevoitBinarySensor *get_binary_sensor(BinarySensorType type) const { return binary_sensors_[bs_idx_(type)]; }
   bool get_binary_sensor_state(BinarySensorType type) const { return binary_sensor_states_[bs_idx_(type)]; }
   void start_timer(){this->timer_active_ = true; this->timer_stop_pending_ = false;};
@@ -112,14 +113,48 @@ class Levoit : public Component, public uart::UARTDevice {
     total_runtime_ = value;
     pref_total_runtime_.save(&total_runtime_);
   }
-  
- 
+
+  // Bulk-prefs cache — mirrors the 12 status TLVs (0x18..0x23) the MCU
+  // emits on every push for the sleep / quick-clean / white-noise /
+  // daytime preference clusters. Used by the upcoming setBulkPrefs SET
+  // command (Stage 3) to echo non-edited fields back to the MCU in a
+  // single 12-TLV bulk write. Populated by `update_bulk_pref` from
+  // `vital_status.cpp` cases 0x18..0x23. The cache is filled by the
+  // first boot-time decode (see "ESPHome × MCU interaction — boot-time
+  // FIFO retention decode" in docs/MCU_2.0.0_baseline.md); after that,
+  // status pushes with identical payloads are dedup-skipped and the
+  // cache stays valid for the entire session.
+  //
+  // seen_mask bit layout: bit i = status TLV (0x18 + i) has been seen
+  // at least once since boot. valid() requires all 12 bits set.
+  struct BulkPrefsCache {
+    uint8_t  sleep_type{0};   // TLV 0x18, bit 0
+    uint8_t  qc_enabled{0};   // TLV 0x19, bit 1
+    uint16_t qc_min{0};       // TLV 0x1A, bit 2
+    uint8_t  qc_fan{0};       // TLV 0x1B, bit 3
+    uint8_t  wn_enabled{0};   // TLV 0x1C, bit 4
+    uint16_t wn_min{0};       // TLV 0x1D, bit 5
+    uint8_t  wn_fan{0};       // TLV 0x1E, bit 6
+    uint8_t  sleep_fan{0};    // TLV 0x1F, bit 7
+    uint16_t sleep_min{0};    // TLV 0x20, bit 8
+    uint8_t  dt_enabled{0};   // TLV 0x21, bit 9
+    uint8_t  dt_mode{0};      // TLV 0x22, bit 10
+    uint8_t  dt_level{0};     // TLV 0x23, bit 11
+    uint16_t seen_mask{0};
+    bool valid() const { return (seen_mask & 0x0FFF) == 0x0FFF; }
+  };
+  const BulkPrefsCache &get_bulk_prefs() const { return bulk_prefs_; }
+  void update_bulk_pref(uint8_t tlv_id, uint32_t value);
+
   protected:
-  LevoitSwitch *switches_[16] {nullptr};  // enough for your types; or use exact count
-  LevoitNumber *numbers_[16] {nullptr};  // enough for your types; or use exact count
-  LevoitSensor *sensors_[16] {nullptr};  // enough for your types; or use exact count
-  LevoitSelect *selects_[16] {nullptr};  // enough for your types; or use exact count
-  LevoitTextSensor *text_sensor_[16] {nullptr};  // enough for your types; or use exact count
+  LevoitSwitch *switches_[16] {nullptr};   // max SwitchType index = 6 (LED_RING)
+  // Bumped from [16] to [24] in Stage 5: max NumberType index is now 16
+  // (DAYTIME_FAN_LEVEL). At [16], register_number for that slot would have
+  // written out of bounds. [24] leaves headroom for future additions.
+  LevoitNumber *numbers_[24] {nullptr};
+  LevoitSensor *sensors_[16] {nullptr};    // max SensorType index = 8 (FAN_RPM)
+  LevoitSelect *selects_[16] {nullptr};    // max SelectType index = 9 (SLEEP_PREFERENCE)
+  LevoitTextSensor *text_sensor_[16] {nullptr};  // max TextSensorType index = 6 (SPROUT_EVENT)
   class LevoitBinarySensor *binary_sensors_[8] {nullptr};
   bool binary_sensor_states_[8] {false};
   class LevoitButton *buttons_[4] {nullptr};
@@ -150,6 +185,7 @@ class Levoit : public Component, public uart::UARTDevice {
   uint32_t total_runtime_{0};
   ESPPreferenceObject pref_used_cadr_;
   ESPPreferenceObject pref_total_runtime_;
+  BulkPrefsCache bulk_prefs_;
   // helper to convert enum to index
   static constexpr uint8_t st_idx_(SwitchType t) { return (uint8_t)t; }
   static constexpr uint8_t nt_idx_(NumberType t) { return (uint8_t)t; }

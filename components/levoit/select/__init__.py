@@ -15,13 +15,16 @@ SelectType = levoit_ns.enum("SelectType")
 TYPE_MAP = {
     "auto_mode": SelectType.AUTO_MODE,
     "sleep_mode": SelectType.SLEEP_MODE,
-    "quick_clean_fan_level": SelectType.QUICK_CLEAN_FAN_LEVEL,
+    # "quick_clean_fan_level" removed — Vital quick-clean fan level is a
+    # NumberType (1–5 integer), not a select. Old SelectType entry was
+    # dead code (no YAML used it).
     "white_noise_fan_level": SelectType.WHITE_NOISE_FAN_LEVEL,
     "sleep_mode_fan_mode_level": SelectType.SLEEP_MODE_FAN_MODE_LEVEL,
-    "daytime_fan_mode_level": SelectType.DAYTIME_FAN_MODE_LEVEL,
+    "daytime_fan_mode": SelectType.DAYTIME_FAN_MODE,
     "nightlight": SelectType.NIGHTLIGHT,
     "light_mode": SelectType.LIGHT_MODE,
     "white_noise_sound": SelectType.WHITE_NOISE_SOUND,
+    "sleep_preference": SelectType.SLEEP_PREFERENCE,
 }
 
 CONFIG_SCHEMA = select.select_schema(LevoitSelect).extend(

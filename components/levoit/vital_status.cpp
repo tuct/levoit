@@ -270,49 +270,84 @@ namespace esphome
           // TODO!
           break;
         case 0x17:
-          ESP_LOGV(TAG_VITAL, "Dark Dedected=%u", (unsigned)t.value_u32);
-          // TODO!
+          ESP_LOGV(TAG_VITAL, "Dark Detected=%u", (unsigned)t.value_u32);
+          if (self != nullptr)
+            self->publish_binary_sensor(BinarySensorType::DARK_DETECTED, t.value_u32 == 1);
           break;
         case 0x18:
           ESP_LOGV(TAG_VITAL, "SleepModeType=%u", (unsigned)t.value_u32);
-          // TODO!
+          if (self != nullptr) {
+            self->publish_select(SelectType::SLEEP_PREFERENCE, t.value_u32);
+            self->update_bulk_pref(0x18, t.value_u32);
+          }
           break;
         case 0x19:
-        {
           ESP_LOGV(TAG_VITAL, "QuickCleanEnabled=%u", (unsigned)t.value_u32);
-          // TODO!
+          if (self != nullptr) {
+            self->publish_switch(SwitchType::QUICK_CLEAN, t.value_u32 == 1);
+            self->update_bulk_pref(0x19, t.value_u32);
+          }
           break;
-        }
-        // TODO!
         case 0x1A:
           ESP_LOGV(TAG_VITAL, "QuickCleanMinutes=%u", (unsigned)t.value_u32);
+          if (self != nullptr) {
+            self->publish_number(NumberType::QUICK_CLEAN_MIN, t.value_u32);
+            self->update_bulk_pref(0x1A, t.value_u32);
+          }
           break;
         case 0x1B:
           ESP_LOGV(TAG_VITAL, "QuickCleanFanLevel=%u", (unsigned)t.value_u32);
+          if (self != nullptr) {
+            self->publish_number(NumberType::QUICK_CLEAN_FAN_LEVEL, t.value_u32);
+            self->update_bulk_pref(0x1B, t.value_u32);
+          }
           break;
         case 0x1C:
           ESP_LOGV(TAG_VITAL, "WhiteNoiseEnabled=%u", (unsigned)t.value_u32);
+          if (self != nullptr) self->update_bulk_pref(0x1C, t.value_u32);
           break;
         case 0x1D:
           ESP_LOGV(TAG_VITAL, "WhiteNoiseMinutes=%u", (unsigned)t.value_u32);
+          if (self != nullptr) self->update_bulk_pref(0x1D, t.value_u32);
           break;
         case 0x1E:
           ESP_LOGV(TAG_VITAL, "WhiteNoiseFanLevel=%u", (unsigned)t.value_u32);
+          if (self != nullptr) self->update_bulk_pref(0x1E, t.value_u32);
           break;
         case 0x1F:
-          ESP_LOGV(TAG_VITAL, "SleepFanModeOrLevel=%u", (unsigned)t.value_u32);
+          ESP_LOGV(TAG_VITAL, "SleepFanLevel=%u", (unsigned)t.value_u32);
+          if (self != nullptr) {
+            self->publish_number(NumberType::SLEEP_FAN_LEVEL, t.value_u32);
+            self->update_bulk_pref(0x1F, t.value_u32);
+          }
           break;
         case 0x20:
           ESP_LOGV(TAG_VITAL, "SleepModeMinutes=%u", (unsigned)t.value_u32);
+          if (self != nullptr) {
+            self->publish_number(NumberType::SLEEP_MODE_MIN, t.value_u32);
+            self->update_bulk_pref(0x20, t.value_u32);
+          }
           break;
         case 0x21:
           ESP_LOGV(TAG_VITAL, "DaytimeEnabled=%u", (unsigned)t.value_u32);
+          if (self != nullptr) {
+            self->publish_switch(SwitchType::DAYTIME_ENABLED, t.value_u32 == 1);
+            self->update_bulk_pref(0x21, t.value_u32);
+          }
           break;
         case 0x22:
           ESP_LOGV(TAG_VITAL, "DaytimeFanMode=%u", (unsigned)t.value_u32);
+          if (self != nullptr) {
+            self->publish_select(SelectType::DAYTIME_FAN_MODE, t.value_u32);
+            self->update_bulk_pref(0x22, t.value_u32);
+          }
           break;
         case 0x23:
           ESP_LOGV(TAG_VITAL, "DaytimeFanLevel=%u", (unsigned)t.value_u32);
+          if (self != nullptr) {
+            self->publish_number(NumberType::DAYTIME_FAN_LEVEL, t.value_u32);
+            self->update_bulk_pref(0x23, t.value_u32);
+          }
           break;
 
         // Sprout-specific tags (also present in CMD=02 00 55, same TLV format)
