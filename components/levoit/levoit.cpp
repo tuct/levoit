@@ -100,6 +100,13 @@ namespace esphome
             auto *sw = switches_[st_idx_(type)];
             if (!sw)
                 return;
+            // Flip has_state_ before the dedup early-return below: a
+            // decoder publish whose value matches the entity's default
+            // (false against default sw->state=false) would otherwise
+            // skip publish_state and leave has_state() returning false
+            // forever. See companion fix in LevoitSwitch::write_state
+            // for the rationale on why Switch needs this explicitly.
+            sw->set_has_state(true);
             if (sw->state == state)
                 return;
             sw->publish_state(state);
