@@ -13,6 +13,7 @@ BinarySensorType = levoit_ns.enum("BinarySensorType")
 TYPE_MAP = {
     "filter_low": BinarySensorType.FILTER_LOW,
     "cover_open": BinarySensorType.COVER_OPEN,
+    "dark_detected": BinarySensorType.DARK_DETECTED,
 }
 
 TYPE_PROPS = {
@@ -23,6 +24,10 @@ TYPE_PROPS = {
     "cover_open": {
         CONF_DEVICE_CLASS: "door",
         CONF_ICON: "mdi:door-open",
+    },
+    "dark_detected": {
+        CONF_DEVICE_CLASS: "light",
+        CONF_ICON: "mdi:weather-night",
     },
 }
 

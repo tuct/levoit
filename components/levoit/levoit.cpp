@@ -100,6 +100,13 @@ namespace esphome
             auto *sw = switches_[st_idx_(type)];
             if (!sw)
                 return;
+            // Mark the entity as "has state" BEFORE the dedup early-return below,
+            // so a decoder publish that matches the entity's default-initialized
+            // value (e.g. boot decode of qc_enabled=0 against the default sw->state=false)
+            // still flips has_state_ from false to true. ESPHome's Switch::publish_state
+            // doesn't do this itself (unlike Select/Number); see comment in
+            // LevoitSwitch::write_state for the rationale.
+            sw->set_has_state(true);
             if (sw->state == state)
                 return;
             sw->publish_state(state);
@@ -166,6 +173,46 @@ namespace esphome
             // Store the desired state; platform entity will publish from its loop
             binary_sensor_states_[bs_idx_(type)] = state;
         }
+
+        void Levoit::update_bulk_pref(uint8_t tlv_id, uint32_t value)
+        {
+            // Maps status TLV id (0x18..0x23) to BulkPrefsCache field +
+            // seen_mask bit. The seen_mask uses (tlv_id - 0x18) as bit
+            // position so the 12 TLVs map linearly to bits 0..11.
+            if (tlv_id < 0x18 || tlv_id > 0x23) {
+                ESP_LOGW("levoit.bulk_prefs", "update_bulk_pref: out-of-range tlv_id=0x%02X", tlv_id);
+                return;
+            }
+            const bool was_valid = bulk_prefs_.valid();
+            switch (tlv_id) {
+                case 0x18: bulk_prefs_.sleep_type = (uint8_t)value; break;
+                case 0x19: bulk_prefs_.qc_enabled = (uint8_t)value; break;
+                case 0x1A: bulk_prefs_.qc_min    = (uint16_t)value; break;
+                case 0x1B: bulk_prefs_.qc_fan    = (uint8_t)value; break;
+                case 0x1C: bulk_prefs_.wn_enabled= (uint8_t)value; break;
+                case 0x1D: bulk_prefs_.wn_min    = (uint16_t)value; break;
+                case 0x1E: bulk_prefs_.wn_fan    = (uint8_t)value; break;
+                case 0x1F: bulk_prefs_.sleep_fan = (uint8_t)value; break;
+                case 0x20: bulk_prefs_.sleep_min = (uint16_t)value; break;
+                case 0x21: bulk_prefs_.dt_enabled= (uint8_t)value; break;
+                case 0x22: bulk_prefs_.dt_mode   = (uint8_t)value; break;
+                case 0x23: bulk_prefs_.dt_level  = (uint8_t)value; break;
+            }
+            bulk_prefs_.seen_mask |= (uint16_t)(1u << (tlv_id - 0x18));
+            ESP_LOGD("levoit.bulk_prefs",
+                     "update tlv=0x%02X val=%u seen_mask=0x%03X",
+                     tlv_id, (unsigned)value, (unsigned)bulk_prefs_.seen_mask);
+            if (!was_valid && bulk_prefs_.valid()) {
+                ESP_LOGI("levoit.bulk_prefs",
+                         "cache now VALID — sleep[type=%u fan=%u min=%u] "
+                         "QC[en=%u fan=%u min=%u] WN[en=%u fan=%u min=%u] "
+                         "DT[en=%u mode=%u lvl=%u]",
+                         bulk_prefs_.sleep_type, bulk_prefs_.sleep_fan, bulk_prefs_.sleep_min,
+                         bulk_prefs_.qc_enabled, bulk_prefs_.qc_fan, bulk_prefs_.qc_min,
+                         bulk_prefs_.wn_enabled, bulk_prefs_.wn_fan, bulk_prefs_.wn_min,
+                         bulk_prefs_.dt_enabled, bulk_prefs_.dt_mode, bulk_prefs_.dt_level);
+            }
+        }
 #ifdef USE_LIGHT
         void Levoit::publish_sprout_light(bool on, float brightness, float color_temp, bool breathing)
         {
@@ -227,9 +274,14 @@ namespace esphome
                 this->sendCommand(state ? setLightDetectOn : setLightDetectOff);
                 break;
 
-            // You’ll need to add command types for these if not present yet:
             case SwitchType::QUICK_CLEAN:
-                // TODO: sendCommand(state ? setQuickCleanOn : setQuickCleanOff);
+            case SwitchType::DAYTIME_ENABLED:
+                // Part of the 12-TLV bulk write — see setBulkPrefs. The new
+                // switch state has already been optimistically published by
+                // LevoitSwitch::write_state before this handler runs (and
+                // set_has_state(true) is now called explicitly there — see
+                // e567c31), so the builder reads it via get_switch(...)->state.
+                this->sendCommand(setBulkPrefs);
                 break;
 
             case SwitchType::WHITE_NOISE:
@@ -277,6 +329,20 @@ namespace esphome
                 this->sendCommand(setAutoModeEfficient); // takes value from number: Room Size
                 break;
 
+            case NumberType::SLEEP_MODE_MIN:
+            case NumberType::SLEEP_FAN_LEVEL:
+            case NumberType::QUICK_CLEAN_MIN:
+            case NumberType::QUICK_CLEAN_FAN_LEVEL:
+            case NumberType::DAYTIME_FAN_LEVEL:
+                // Bulk-prefs cluster fields — all route through the same 12-TLV
+                // write at CMD 02 02 55 tags 0x04..0x0F. The builder reads the
+                // new value via get_number(...)->state (optimistically published
+                // by LevoitNumber::control before this handler fires) and the
+                // rest from bulk_prefs_ cache. Sleep_type byte must be non-zero
+                // (Custom1/Custom2) for writes to non-type fields to apply —
+                // see docs/STOCK_FIRMWARE_FINDINGS.md "Gate behavior".
+                this->sendCommand(setBulkPrefs);
+                break;
 
             case NumberType::LED_BRIGHTNESS_MIN:
             case NumberType::LED_SPEED:
@@ -331,6 +397,20 @@ namespace esphome
                 default:
                     break;
                 }
+                break;
+
+            case SelectType::SLEEP_PREFERENCE:
+            case SelectType::DAYTIME_FAN_MODE:
+                // Bulk-prefs SET: SLEEP_PREFERENCE is the gate byte (TLV 0x18);
+                // DAYTIME_FAN_MODE is the daytime preset's fan-mode enum
+                // (TLV 0x22). The builder reads the new option index via
+                // active_index() on the optimistically-published select. For
+                // SLEEP_PREFERENCE, value 0 (Default) locks tags 0x05..0x0F;
+                // values 1/2 (Custom1/Custom2) unlock writes to the rest of
+                // the cluster (see docs/STOCK_FIRMWARE_FINDINGS.md "Gate
+                // behavior"). DAYTIME_FAN_MODE is a non-gate field that
+                // requires sleep_type ≠ 0 to apply.
+                this->sendCommand(setBulkPrefs);
                 break;
 
             case SelectType::NIGHTLIGHT:

@@ -16,6 +16,7 @@ TYPE_MAP = {
     "light_detect": SwitchType.LIGHT_DETECT,
     "quick_clean": SwitchType.QUICK_CLEAN,
     "white_noise": SwitchType.WHITE_NOISE,
+    "daytime_enabled": SwitchType.DAYTIME_ENABLED,
     "led_ring": SwitchType.LED_RING,
 }
 

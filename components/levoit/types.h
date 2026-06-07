@@ -52,6 +52,9 @@ namespace esphome
             // LED_COLOR_TEMP = 11 — removed, controlled via light component CT slider
             WHITE_NOISE_VOLUME = 12,    // Sprout: white noise volume (0-255)
             AQI_SCALE = 13,             // Sprout: AQI display scale max (0–500)
+            SLEEP_FAN_LEVEL = 14,       // Vital: sleep mode fan level (TLV 0x1F)
+            QUICK_CLEAN_FAN_LEVEL = 15, // Vital: quick clean fan level (TLV 0x1B)
+            DAYTIME_FAN_LEVEL = 16,     // Vital: daytime fan level (TLV 0x23)
         };
         // Note: indices 0-11 must stay stable (serialized to preferences)
         // NumberType aliases (flat namespace)
@@ -67,6 +70,9 @@ namespace esphome
         static constexpr NumberType LED_SPEED = NumberType::LED_SPEED;
         static constexpr NumberType WHITE_NOISE_VOLUME = NumberType::WHITE_NOISE_VOLUME;
         static constexpr NumberType AQI_SCALE = NumberType::AQI_SCALE;
+        static constexpr NumberType SLEEP_FAN_LEVEL = NumberType::SLEEP_FAN_LEVEL;
+        static constexpr NumberType QUICK_CLEAN_FAN_LEVEL = NumberType::QUICK_CLEAN_FAN_LEVEL;
+        static constexpr NumberType DAYTIME_FAN_LEVEL = NumberType::DAYTIME_FAN_LEVEL;
 
         enum class SensorType : uint8_t
         {
@@ -94,9 +100,11 @@ namespace esphome
         enum class BinarySensorType : uint8_t {
             FILTER_LOW = 0,
             COVER_OPEN = 1,     // Sprout: cover/filter door open (CMD=02 08 55 tag 0x04)
+            DARK_DETECTED = 2,  // Vital: ambient light sensor reads dark (TLV 0x17)
         };
         static constexpr BinarySensorType FILTER_LOW = BinarySensorType::FILTER_LOW;
         static constexpr BinarySensorType COVER_OPEN = BinarySensorType::COVER_OPEN;
+        static constexpr BinarySensorType DARK_DETECTED = BinarySensorType::DARK_DETECTED;
 
         enum class ButtonType : uint8_t {
             RESET_FILTER_STATS = 0,
@@ -127,23 +135,30 @@ namespace esphome
         {
             AUTO_MODE = 0,
             SLEEP_MODE = 1,
-            QUICK_CLEAN_FAN_LEVEL = 2,
+            // = 2 reserved (was SelectType::QUICK_CLEAN_FAN_LEVEL, never used
+            // by any YAML; quick-clean fan level is now NumberType::QUICK_CLEAN_FAN_LEVEL)
             WHITE_NOISE_FAN_LEVEL = 3,
             SLEEP_MODE_FAN_MODE_LEVEL = 4,
-            DAYTIME_FAN_MODE_LEVEL = 5,
+            DAYTIME_FAN_MODE = 5,           // Vital: daytime preset fan-mode enum (TLV 0x22).
+                                            // Renamed from DAYTIME_FAN_MODE_LEVEL — the
+                                            // old name was misleading (TLV 0x22 is a fan-mode
+                                            // enum, not a level value).
             NIGHTLIGHT = 6,
             LIGHT_MODE = 7,         // Sprout: Off / Nightlight / Breathing
             WHITE_NOISE_SOUND = 8,  // Sprout: white noise sound index (0-14, 15 sounds)
+            SLEEP_PREFERENCE = 9,   // Vital: sleep mode preference type (TLV 0x18)
         };
         static constexpr SelectType AUTO_MODE = SelectType::AUTO_MODE;
         static constexpr SelectType SLEEP_MODE = SelectType::SLEEP_MODE;
-        static constexpr SelectType QUICK_CLEAN_FAN_LEVEL = SelectType::QUICK_CLEAN_FAN_LEVEL;
+        // (SelectType QUICK_CLEAN_FAN_LEVEL alias removed; the flat-namespace
+        // name now refers to NumberType::QUICK_CLEAN_FAN_LEVEL above.)
         static constexpr SelectType WHITE_NOISE_FAN_LEVEL = SelectType::WHITE_NOISE_FAN_LEVEL;
         static constexpr SelectType SLEEP_MODE_FAN_MODE_LEVEL = SelectType::SLEEP_MODE_FAN_MODE_LEVEL;
-        static constexpr SelectType DAYTIME_FAN_MODE_LEVEL = SelectType::DAYTIME_FAN_MODE_LEVEL;
+        static constexpr SelectType DAYTIME_FAN_MODE = SelectType::DAYTIME_FAN_MODE;
         static constexpr SelectType NIGHTLIGHT = SelectType::NIGHTLIGHT;
         static constexpr SelectType LIGHT_MODE = SelectType::LIGHT_MODE;
         static constexpr SelectType WHITE_NOISE_SOUND = SelectType::WHITE_NOISE_SOUND;
+        static constexpr SelectType SLEEP_PREFERENCE = SelectType::SLEEP_PREFERENCE;
 
 
 
@@ -197,6 +212,7 @@ namespace esphome
             setSproutWhiteNoiseModeOn,  // CMD=02 02 55: PAY=10 01 01 (enable WN fan mode)
             setSproutWhiteNoiseModeOff, // CMD=02 02 55: PAY=10 01 00 (disable WN fan mode)
             setSproutAqiScale,          // CMD=02 06 55: sets AQI display scale max (0–500)
+            setBulkPrefs,               // CMD=02 02 55 tags 0x04..0x0F: bulk sleep/QC/WN/DT prefs (12 TLVs, Vital)
             COMMAND_TYPE_MAX
 
             // dedicated command for setSleepModeCustom
@@ -248,6 +264,7 @@ namespace esphome
                 "setSproutWhiteNoiseModeOn",
                 "setSproutWhiteNoiseModeOff",
                 "setSproutAqiScale",
+                "setBulkPrefs",
             };
             static_assert(
                 sizeof(names) / sizeof(names[0]) == COMMAND_TYPE_MAX,
