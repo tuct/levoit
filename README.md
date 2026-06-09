@@ -13,7 +13,7 @@ This is an external ESPHome component that supports all (WIP!) Core and Vital Ai
 
 Can be flashed to the original ESP32-SOLO-C1 or also installed on top (replace original), [check 'Installation'](./components/levoit/README.md)
 
-**Requires:** ESPHome 2026.01.2+
+**Requires:** ESPHome 2026.05.3+
 
 
 ### [Supported Models](./devices/README.md)
@@ -130,12 +130,14 @@ Auto mode options per model:
 
 #### ESP Version: 1.3.1 - 2026.06.09
 
+* ESPHome min version updated to **2026.5.3**
 * Correct Core400S CADR and Room Size limits (@EdenNelson)
 * Fix ESPHome fan preset deprecation warning (@EdenNelson)
 * Add Vital 200S Pro support for MCU FW 2.0.0 with bulk-prefs SET (@TheDave94)
 * LevoitSwitch: set has_state on publish to match Select/Number behavior (@TheDave94)
 * Fix race condition where the led stays blinking even after conenction is restored (@Ahmed-max)
 * Remove error handling for sensor status for core series
+
 
 #### ESP Version: 1.3.0 - 2026.03.28
 
