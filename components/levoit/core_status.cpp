@@ -145,8 +145,6 @@ namespace esphome
       uint8_t fan_auto_mode = payload[14];
       uint16_t efficency_area = (payload[16] << 8) | payload[15];
       float efficency_area_m2 = static_cast<float>(efficency_area) / (10.764f * 3.15f);
-      bool has_error = payload[17] != 0;
-
       bool display_on = false;
       uint8_t fan_speed = 0;
       if (model == ModelType::CORE300S)
@@ -160,10 +158,7 @@ namespace esphome
         display_on = payload[7] != 0;
       }
 
-      if (has_error)
-        self->publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Sensor error");
-      else
-        self->publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Ok");
+      self->publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Ok");
 
       self->publish_switch(SwitchType::CHILD_LOCK, child_lock);
       self->publish_switch(SwitchType::DISPLAY, display_on);
