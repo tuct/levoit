@@ -171,9 +171,9 @@ namespace esphome
             decode_core_timer(self, model, payload, payload_len);
           }
         }
-        if (model == ModelType::VITAL100S || model == ModelType::VITAL200S || model == ModelType::SPROUT)
+        if (model == ModelType::VITAL100S || model == ModelType::VITAL200S || model == ModelType::SPROUT || model == ModelType::EVERESTAIR)
         {
-          // Vital/Sprout models: status payload is flat TLV, CMD=02 00 55
+          // Vital/Sprout/EverestAir models: status payload is flat TLV, CMD=02 00 55
           if (msg_type == 0x22 && ptype0 == 0x00 && ptype1 == 0x55)
           {
             decode_vital_status(self, model, payload, payload_len);

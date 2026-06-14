@@ -1,0 +1,22 @@
+# Example levoit-everest-air.yaml for flashing the original ESP32-SOLO-1.
+# NOTE: UART pins below are placeholders (original ESP32-SOLO-1 mapping) —
+# verify against your wiring, see this device's README "Wiring New ESP".
+substitutions:
+  device_name: levoit-everest-air
+  wifi_ap_ssid: "Levoit-EverestAir"
+  rx_pin: GPIO16
+  tx_pin: GPIO17
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_git.yaml

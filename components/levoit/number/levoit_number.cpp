@@ -23,6 +23,10 @@ namespace esphome
           this->traits.set_mode(number::NumberMode::NUMBER_MODE_SLIDER);
           break;
 
+        case NumberType::VENT_ANGLE:
+          this->traits.set_mode(number::NumberMode::NUMBER_MODE_SLIDER);
+          break;
+
         case NumberType::FILTER_LIFETIME_MONTHS:
           this->traits.set_mode(number::NumberMode::NUMBER_MODE_SLIDER);
 

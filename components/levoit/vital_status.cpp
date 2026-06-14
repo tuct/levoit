@@ -211,7 +211,12 @@ namespace esphome
             // map AutoMode to Select index, in this case both are identical
             uint8_t auto_mode = static_cast<uint8_t>(t.value_u32);
             uint8_t select_idx;
-            if (auto_mode < 3)
+            if (model == ModelType::EVERESTAIR)
+            {
+              // EverestAir options {"Default"(0), "Eco"(1)}; device value 3 = Eco
+              select_idx = (auto_mode == 3) ? 1 : 0;
+            }
+            else if (auto_mode < 3)
             {
               select_idx = auto_mode;
             }
@@ -265,6 +270,20 @@ namespace esphome
             self->publish_switch(SwitchType::LIGHT_DETECT, t.value_u32 == 1);
           break;
         }
+        case 0x14:
+          // EverestAir: vent louver angle (45–90°), echoes CMD=02 12 55.
+          // Reads 0 when the unit is off; only meaningful while running.
+          ESP_LOGV(TAG_VITAL, "VentAngle=%u", (unsigned)t.value_u32);
+          if (self != nullptr && model == ModelType::EVERESTAIR && t.value_u32 != 0)
+            self->publish_number(NumberType::VENT_ANGLE, (float)t.value_u32);
+          break;
+        case 0x15:
+          // EverestAir: back/cover door sensor. 0x01 = open, 0x00 = closed.
+          // Opening the back powers the unit off (tag 0x02 Power -> 0).
+          ESP_LOGV(TAG_VITAL, "CoverOpen=%u", (unsigned)t.value_u32);
+          if (self != nullptr && model == ModelType::EVERESTAIR)
+            self->publish_binary_sensor(BinarySensorType::COVER_OPEN, t.value_u32 == 1);
+          break;
         case 0x16:
           ESP_LOGV(TAG_VITAL, "WifiLight=%u", (unsigned)t.value_u32);
           // TODO!

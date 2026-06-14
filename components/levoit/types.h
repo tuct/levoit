@@ -14,7 +14,8 @@ namespace esphome
             CORE400S = 3,
             CORE200S = 4,
             CORE600S = 5,
-            SPROUT = 6
+            SPROUT = 6,
+            EVERESTAIR = 7
         };
 
         enum class SwitchType : uint8_t
@@ -55,6 +56,7 @@ namespace esphome
             SLEEP_FAN_LEVEL = 14,       // Vital: sleep mode fan level (TLV 0x1F)
             QUICK_CLEAN_FAN_LEVEL = 15, // Vital: quick clean fan level (TLV 0x1B)
             DAYTIME_FAN_LEVEL = 16,     // Vital: daytime fan level (TLV 0x23)
+            VENT_ANGLE = 17,            // EverestAir: vent louver angle 45–90° (CMD 02 12 55, status TLV 0x14)
         };
         // Note: indices 0-11 must stay stable (serialized to preferences)
         // NumberType aliases (flat namespace)
@@ -73,6 +75,7 @@ namespace esphome
         static constexpr NumberType SLEEP_FAN_LEVEL = NumberType::SLEEP_FAN_LEVEL;
         static constexpr NumberType QUICK_CLEAN_FAN_LEVEL = NumberType::QUICK_CLEAN_FAN_LEVEL;
         static constexpr NumberType DAYTIME_FAN_LEVEL = NumberType::DAYTIME_FAN_LEVEL;
+        static constexpr NumberType VENT_ANGLE = NumberType::VENT_ANGLE;
 
         enum class SensorType : uint8_t
         {
@@ -196,6 +199,7 @@ namespace esphome
             setLightDetectOn,
             setLightDetectOff,
             setFanModePet,
+            setFanModeTurbo,    // EverestAir: CMD=02 02 55 PAY=01 01 04 (fan mode 4 = Turbo)
             setPowerMode,
             setSleepModeDefault,
             // Core200S nightlight
@@ -213,6 +217,7 @@ namespace esphome
             setSproutWhiteNoiseModeOff, // CMD=02 02 55: PAY=10 01 00 (disable WN fan mode)
             setSproutAqiScale,          // CMD=02 06 55: sets AQI display scale max (0–500)
             setBulkPrefs,               // CMD=02 02 55 tags 0x04..0x0F: bulk sleep/QC/WN/DT prefs (12 TLVs, Vital)
+            setVentAngle,               // CMD=02 12 55: EverestAir vent louver angle (45–90°)
             COMMAND_TYPE_MAX
 
             // dedicated command for setSleepModeCustom
@@ -251,6 +256,7 @@ namespace esphome
                 "setLightDetectOn",
                 "setLightDetectOff",
                 "setFanModePet",
+                "setFanModeTurbo",
                 "setPowerMode",
                 "setSleepModeDefault",
                 "setNightlightOff",
@@ -265,6 +271,7 @@ namespace esphome
                 "setSproutWhiteNoiseModeOff",
                 "setSproutAqiScale",
                 "setBulkPrefs",
+                "setVentAngle",
             };
             static_assert(
                 sizeof(names) / sizeof(names[0]) == COMMAND_TYPE_MAX,

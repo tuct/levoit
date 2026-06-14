@@ -19,6 +19,7 @@ namespace esphome
             {0, "Manual"},
             {1, "Sleep"},
             {2, "Auto"},
+            {4, "Turbo"},  // EverestAir top speed, exposed as a fan mode
             {5, "Pet"},
         };
         static int preset_to_device_mode(const char *preset)
@@ -44,6 +45,7 @@ namespace esphome
             bool isCore300s = model == ModelType::CORE300S;
             bool isCoreModel = model == ModelType::CORE200S || model == ModelType::CORE300S || model == ModelType::CORE400S || model == ModelType::CORE600S;
             bool isSprout = model == ModelType::SPROUT;
+            bool isEverest = model == ModelType::EVERESTAIR;
             auto restore = this->restore_state_();
             if (restore.has_value())
             {
@@ -53,6 +55,10 @@ namespace esphome
             std::vector<const char *> preset_modes;
             for (const auto &m : MODE_MAP)
             {
+                if (!isEverest && std::strcmp(m.preset, "Turbo") == 0)
+                    continue; // Turbo is EverestAir-only (fan mode 4)
+                if (isEverest && std::strcmp(m.preset, "Pet") == 0)
+                    continue; // EverestAir has no Pet mode
                 if (isCoreModel && std::strcmp(m.preset, "Pet") == 0)
                     continue; // Core models do not have Pet mode
                 if (isCore200s && std::strcmp(m.preset, "Auto") == 0)
@@ -63,8 +69,10 @@ namespace esphome
             }
 
             // Set speed count based on model
-            if (isCore200s || isCore300s) {
-                this->speed_count_ = 3;  // Core200S and Core300S have 3 speeds
+            if (isCore200s || isCore300s || isEverest) {
+                // Core200S/Core300S have 3 speeds; EverestAir manual range is 1-3
+                // (its 4th step is the "Turbo" preset, not a fan level).
+                this->speed_count_ = 3;
             } else {
                 this->speed_count_ = 4;  // Other models have 4 speeds
             }

@@ -33,9 +33,9 @@ The Levoit Sprout additionally uses the [levoit_audio component](./components/le
 
 | Model | MCU Version | Status |
 |-------|-------------|--------|
-| [Levoit Sprout](./devices/levoit-sprout) | 1.0.5 |  ✅ Tested (!) WIP | 
+| [Levoit Sprout](./devices/levoit-sprout) | 1.0.5 |  🚧 WIP | 
 | [Levoit Core 400S-P Plasma Pro](./devices/xxx) | ??? | ??? |
-| [Levoit EverestAir Smart](./devices/xxx) | ??? | ??? |
+| [Levoit Everest Air](./devices/levoit-everest-air) | 1.0.02 | 🚧 WIP (Vital protocol + vent angle) |
 
 ### Other Models / Levoit Projects
 
@@ -137,15 +137,24 @@ Auto mode options per model:
 
 ### Change Log
 
+#### ESP Version: 1.4.0 - 2026.06.14
+
+* Added Levoit Everest Air support 
+* Everest Air motorized vent louver as a number (45–90°, `vent_angle`, CMD `02 12 55`)
+* Everest Air back/cover door sensor as a binary_sensor (`cover_open`, status tag `0x15`) — unit powers off while open
+
+
+
 #### ESP Version: 1.3.1 - 2026.06.09
 
 * ESPHome min version updated to **2026.5.3**
 * Correct Core400S CADR and Room Size limits (@EdenNelson)
-* Fix ESPHome fan preset deprecation warning (@EdenNelson)
+* Fix fan preset modes for newer ESPHome (`set_supported_preset_modes` moved to `FanTraits`) (@EdenNelson)
+* Fix Core300S/400S falsely reporting "Sensor error" (removed incorrect status byte mapping)
 * Add Vital 200S Pro support for MCU FW 2.0.0 with bulk-prefs SET (@TheDave94)
 * LevoitSwitch: set has_state on publish to match Select/Number behavior (@TheDave94)
 * Fix race condition where the led stays blinking even after conenction is restored (@Ahmed-max)
-* Remove error handling for sensor status for core series
+
 
 
 #### ESP Version: 1.3.0 - 2026.03.28

@@ -1,0 +1,24 @@
+# Dev variant of levoit-everest-air.yaml — builds against the LOCAL component
+# (../../components) instead of the published GitHub source. Use this while
+# developing/testing changes to the levoit component.
+# NOTE: UART pins below are placeholders (original ESP32-SOLO-1 mapping) —
+# verify against your wiring, see this device's README "Wiring New ESP".
+substitutions:
+  device_name: levoit-everest-air
+  wifi_ap_ssid: "Levoit-EverestAir"
+  rx_pin: GPIO16
+  tx_pin: GPIO17
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_local.yaml

@@ -14,7 +14,9 @@ namespace esphome
     void LevoitSelect::setup() {
       switch (this->type_) {
         case SelectType::AUTO_MODE:
-          if (parent_ && parent_->get_model() == ModelType::CORE600S)
+          if (parent_ && parent_->get_model() == ModelType::EVERESTAIR)
+            this->traits.set_options({"Default", "Eco"});  // EverestAir: only Default(0) and Eco(3)
+          else if (parent_ && parent_->get_model() == ModelType::CORE600S)
             this->traits.set_options({"Default", "Quiet", "Room Size", "ECO"});
           else
             this->traits.set_options({"Default", "Quiet", "Room Size"});

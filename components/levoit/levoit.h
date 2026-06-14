@@ -28,7 +28,7 @@ class LevoitSproutLight;
 
 class Levoit : public Component, public uart::UARTDevice {
  public:
-  const char* get_version() const { return "1.3.1 esphome"; }
+  const char* get_version() const { return "1.4.0 esphome"; }
 
   // called from python codegen
   void register_switch(SwitchType type, LevoitSwitch *sw);

@@ -70,6 +70,12 @@ namespace esphome
         payload = {0x01, 0x01, 0x05};
         break;
 
+      case CommandType::setFanModeTurbo:
+        // EverestAir top speed. Sent as a fan mode (0x04), not a fan level.
+        msg_type = {0x02, 0x02, 0x55};
+        payload = {0x01, 0x01, 0x04};
+        break;
+
       case CommandType::setLightDetectOn:
         msg_type = {0x02, 0x11, 0x55};
         payload = {0x01, 0x01, 0x01};
@@ -133,6 +139,12 @@ namespace esphome
         }
         break;
       }
+
+      case CommandType::setAutoModeEco:
+        // EverestAir auto mode "Eco" = fan-mode byte 0x03 (vs 0x00 Default).
+        msg_type = {0x02, 0x02, 0x55};
+        payload = {0x02, 0x01, 0x03, 0x03, 0x02, 0x00, 0x00};
+        break;
 
       case CommandType::setTimerStop:
         msg_type = {0x02, 0x19, 0x50};
@@ -307,6 +319,24 @@ namespace esphome
         msg_type = {0x02, 0x06, 0x55};
         payload = {0x01, 0x01, 0x00};
         break;
+
+      case CommandType::setVentAngle:
+      {
+        // EverestAir vent louver angle. CMD=02 12 55, PAY=01 01 <deg>.
+        // Status echoes the angle back in TLV tag 0x14. Hardware range 45–90°.
+        msg_type = {0x02, 0x12, 0x55};
+        uint8_t angle = 75;  // default louver position on power-up
+        if (auto *num = self->get_number(NumberType::VENT_ANGLE))
+        {
+          if (num->has_state())
+            angle = static_cast<uint8_t>(num->state);
+        }
+        if (angle < 45) angle = 45;
+        if (angle > 90) angle = 90;
+        ESP_LOGD(TAG_VITAL_CMD, "setVentAngle: %u deg", angle);
+        payload = {0x01, 0x01, angle};
+        break;
+      }
 
       default:
         ESP_LOGW(TAG_VITAL_CMD, "Command not implemented: %s", command_type_to_string(cmd));

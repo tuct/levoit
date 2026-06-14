@@ -356,6 +356,10 @@ namespace esphome
             case NumberType::AQI_SCALE:
                 this->sendCommand(setSproutAqiScale);
                 break;
+
+            case NumberType::VENT_ANGLE:
+                this->sendCommand(setVentAngle);
+                break;
             }
         }
         void Levoit::on_select_command(SelectType type, uint32_t value)
@@ -366,6 +370,12 @@ namespace esphome
             switch (type)
             {
             case SelectType::AUTO_MODE:
+                if (this->model_ == ModelType::EVERESTAIR)
+                {
+                    // EverestAir options are {"Default"(idx0→mode0), "Eco"(idx1→mode3)}
+                    this->sendCommand(value == 1 ? setAutoModeEco : setAutoModeDefault);
+                    break;
+                }
                 switch (value)
                 {
                 case 0:
@@ -500,6 +510,9 @@ namespace esphome
                 case 2:
                     this->sendCommand(setFanModeAuto);
                     break;
+                case 4:
+                    this->sendCommand(setFanModeTurbo);
+                    break;
                 case 5:
                     this->sendCommand(setFanModePet);
                     break;
@@ -527,6 +540,8 @@ namespace esphome
                 model_ = ModelType::CORE600S;
             else if (model == "SPROUT")
                 model_ = ModelType::SPROUT;
+            else if (model == "EVERESTAIR")
+                model_ = ModelType::EVERESTAIR;
 
             ESP_LOGI(TAG, "Model set to: %s (ModelType=%d)", model.c_str(), (int)model_);
         }
@@ -548,6 +563,8 @@ namespace esphome
                 cadr = 641;
             if (model_ == ModelType::SPROUT)
                 cadr = 230; // TODO: verify actual CADR from spec sheet
+            if (model_ == ModelType::EVERESTAIR)
+                cadr = 612;
             
             // Initialize preferences for tracking used_cadr and total_runtime
             pref_used_cadr_ = global_preferences->make_preference<uint32_t>(fnv1_hash("levoit_used_cadr"));
@@ -974,7 +991,7 @@ namespace esphome
             {
                 message = build_core_command(this, commandType);
             }
-            else if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S)
+            else if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S || this->model_ == ModelType::EVERESTAIR)
             {
                 message = build_vital_command(this, commandType);
             }
@@ -1006,7 +1023,7 @@ namespace esphome
         {
 
             uint8_t pv = 0x01;
-            if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S || this->model_ == ModelType::SPROUT)
+            if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S || this->model_ == ModelType::SPROUT || this->model_ == ModelType::EVERESTAIR)
             {
                 pv = 0x02;
                 ESP_LOGI("TAG", ">>> Sending VITAL ack for: 0x%02X 0x%02X", ptype0, ptype1);

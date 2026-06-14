@@ -39,6 +39,8 @@ TYPE_MAP = {
     "led_speed": NumberType.LED_SPEED,
     "white_noise_volume": NumberType.WHITE_NOISE_VOLUME,
     "aqi_scale": NumberType.AQI_SCALE,
+    # EverestAir only below
+    "vent_angle": NumberType.VENT_ANGLE,
 }
 
 # (min_value, max_value, step, extra_props)
@@ -98,6 +100,11 @@ TYPE_RANGE = {
     }),
     "daytime_fan_level": (1.0, 5.0, 1.0, {
         CONF_ICON: "mdi:fan",
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
+    }),
+    "vent_angle": (45.0, 90.0, 1.0, {
+        CONF_ICON: "mdi:angle-acute",
+        CONF_UNIT_OF_MEASUREMENT: "°",
         CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
     }),
 }

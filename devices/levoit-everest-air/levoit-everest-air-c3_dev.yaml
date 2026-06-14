@@ -1,0 +1,26 @@
+# Dev variant of levoit-everest-air-c3.yaml — builds against the LOCAL component
+# (../../components) for flashing a replacement ESP32-C3.
+# NOTE: UART pins below are placeholders — verify against your wiring, see this
+# device's README "Wiring New ESP".
+substitutions:
+  device_name: levoit-everest-air-c3
+  wifi_ap_ssid: "Levoit-EverestAir"
+  rx_pin: GPIO05
+  tx_pin: GPIO06
+
+esphome:
+  name: ${device_name}
+  platformio_options:
+    build_flags: -DBOARD_HAS_PSRAM
+    board_build.arduino.memory_type: qio_opi
+    board_build.f_flash: 80000000L
+    board_build.flash_mode: qio
+
+esp32:
+  board: seeed_xiao_esp32c3
+  framework:
+    type: esp-idf
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_local.yaml
