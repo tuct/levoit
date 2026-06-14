@@ -28,14 +28,15 @@ The Levoit Sprout additionally uses the [levoit_audio component](./components/le
 | [Levoit Core 600s](./devices/levoit-core600s) | 2.0.1 | ✅ Tested |
 | [Levoit Vital 100s](./devices/levoit-vital100s) | 1.0.5, 2.0.0(?) | ✅ Tested |
 | [Levoit Vital 200s (Pro)](./devices/levoit-vital200s) | 1.0.5, 2.0.0 Thanks @TheDave94 !|  ✅ Tested |
+| [Levoit Everest Air](./devices/levoit-everest-air) | 1.0.2 | ✅ Tested  |
 
 #### Missing /WIP
 
 | Model | MCU Version | Status |
 |-------|-------------|--------|
-| [Levoit Sprout](./devices/levoit-sprout) | 1.0.5 |  🚧 WIP | 
+| [Levoit Sprout](./devices/levoit-sprout) | 1.0.5 |  🚧 WIP - Vital like + more| 
 | [Levoit Core 400S-P Plasma Pro](./devices/xxx) | ??? | ??? |
-| [Levoit Everest Air](./devices/levoit-everest-air) | 1.0.02 | 🚧 WIP (Vital protocol + vent angle) |
+
 
 ### Other Models / Levoit Projects
 
@@ -68,6 +69,19 @@ Available speed levels and presets are based on model.
 | V100S | 1–4 | Auto, Manual, Sleep, Pet |
 | V200S | 1–4 | Auto, Manual, Sleep, Pet |
 | Sprout | 1–4 | Auto, Manual |
+| EverestAir | 1–3 | Auto, Turbo, Manual |
+
+
+#### Vent Angle & Cover (EverestAir)
+
+The Everest Air adds a **motorized vent louver** and a **cover/door sensor** not present on the other models:
+
+| Feature | Type | Config Key | Description |
+|---------|----|------------|-------------|
+| Vent Angle | number | `vent_angle` | Motorized louver angle, 45–90° (CMD `02 12 55`, status TLV `0x14`) **EverestAir only** |
+| Cover Open | binary_sensor | `cover_open` | Back/filter door open — the unit powers itself off while open (TLV `0x15`) **Sprout + EverestAir** |
+
+The vent angle is set as a number entity (45° = nearly closed/upward, 90° = fully open/forward). The MCU echoes the current angle back in status tag `0x14`, and it reads `0` while the unit is powered off.
 
 
 #### Display / Light
@@ -76,7 +90,7 @@ Available speed levels and presets are based on model.
 |---------|----|------------|-------------|
 | Display | switch | `display` | Toggle the LED display on/off |
 | Child Lock | switch | `child_lock` | Disable physical buttons on the device |
-| Light Detect | switch | `light_detect` | Auto-dim display when ambient light is low **Vital Series + Core 600S** |
+| Light Detect | switch | `light_detect` | Auto-dim display when ambient light is low **Vital Series + Core 600S + EverestAir** |
 | Night Light | select | `nightlight` | Night light brightness: Off / Mid / Full **Only Core200S** |
 
 #### Timer
@@ -104,7 +118,7 @@ Available speed levels and presets are based on model.
 | Feature | Type | Config Key | Description |
 |---------|----|------------|-------------|
 | Auto Mode | select | `auto_mode` | Auto mode type — options vary by model (see below) **Not for Core200S** |
-| Auto Mode Room Size | number | `efficiency_room_size` | Target room area for efficient auto mode in m² **Not for Core200S** |
+| Auto Mode Room Size | number | `efficiency_room_size` | Target room area for efficient auto mode in m² **Not for Core200S / EverestAir** |
 | Efficiency Counter | sensor | `efficiency_counter` | Seconds remaining at high fan speed in efficient auto mode **Vital only** |
 | Auto Mode High Fan Time | text_sensor | `auto_mode_room_size_high_fan` | Time still running at high speed in efficient auto mode, human readable **Vital only** |
 
@@ -119,12 +133,15 @@ Auto mode options per model:
 | V100S | Default / Quiet / Efficient | 9–52 m² (97–560 ft²) |
 | V200S | Default / Quiet / Efficient | 9–87 m² (97–936 ft²) |
 | Sprout| Default / Quiet / Efficient | 9–57 m² (97–936 ft²) |
+| EverestAir| Default / Eco | — (no room-size setting) |
 
 #### Air Quality Sensors
 
 | Feature | Type | Config Key | Description |
 |---------|----|------------|-------------|
 | PM2.5 | sensor | `pm25` | Particulate matter concentration in µg/m³ from built-in sensor **Not for Core200S** |
+| PM1.0 | sensor | `pm1_0` | Particulate matter concentration in µg/m³ from built-in sensor **only Sprout and EverestAir** |
+| PM10 | sensor | `pm10` | Particulate matter concentration in µg/m³ from built-in sensor **only Sprout and EverestAir** |
 | AQI | sensor | `aqi` | Air Quality Index as reported by the MCU **Not for Core200S** |
 
 #### Info and Debug
