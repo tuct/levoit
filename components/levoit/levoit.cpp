@@ -562,7 +562,7 @@ namespace esphome
             if (model_ == ModelType::CORE600S)
                 cadr = 641;
             if (model_ == ModelType::SPROUT)
-                cadr = 230; // TODO: verify actual CADR from spec sheet
+                cadr = 145; // spec smoke CADR 144.5 m³/h (rounded)
             if (model_ == ModelType::EVERESTAIR)
                 cadr = 612;
             

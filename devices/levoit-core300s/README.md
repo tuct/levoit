@@ -12,6 +12,7 @@
 | Board | CORE300S Ctrl Board V1.4.1 |
 | Fan Speeds | 3 |
 | CADR (spec) | 214 m³/h |
+| Noise | 24–50 dB |
 | Room Size | 9–50 m² (97–538 ft²) |
 | ESPHome | 2026.1.2+ |
 | PM Sensor | PM2008MS  |

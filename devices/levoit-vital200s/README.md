@@ -14,6 +14,7 @@ Same protocol as the Vital 100S. Tested with original ESP by @dnsefe.
 | Board | TODO |
 | Fan Speeds | 4 |
 | CADR (spec) | 415 m³/h |
+| Noise | 23–58 dB |
 | Room Size | 9–87 m² (97–936 ft²) |
 | ESPHome | 2026.1.2+ |
 

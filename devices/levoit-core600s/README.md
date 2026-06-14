@@ -11,6 +11,7 @@
 | ESP Module | ESP32-C3-SOLO-1 |
 | Fan Speeds | 4 |
 | CADR (spec) | 641 m³/h |
+| Noise | 26–54 dB |
 | Room Size | 9–147 m² (97–1,582 ft²) |
 | ESPHome | 2026.1.2+ |
 | PM Sensor | Luftme LD15  |

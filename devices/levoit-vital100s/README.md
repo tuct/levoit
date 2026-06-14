@@ -12,6 +12,7 @@
 | Board | Vital 100S-C_V1.3P1.4 20221027 |
 | Fan Speeds | 4 |
 | CADR (spec) | 221 m³/h |
+| Noise | 23–52 dB |
 | Room Size | 9–52 m² (97–560 ft²) |
 | ESPHome | 2026.1.2+ |
 

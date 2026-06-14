@@ -12,7 +12,7 @@
 | Board | xxx |
 | Fan Speeds | 3 + Turbo |
 | CADR (spec) | 612 m³/h |
-| Noise | 24–52dB |
+| Noise | 24–56 dB |
 | Room Size | 9–123 m² (97–1328 ft²) |
 | ESPHome | 2026.5.3+ |
 

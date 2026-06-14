@@ -14,6 +14,7 @@ Started from community projects ([acvigue](https://github.com/acvigue/esphome-le
 | Board | CORE400S Ctrl V1.2 |
 | Fan Speeds | 4 |
 | CADR (spec) | 442 m³/h |
+| Noise | 24–52 dB |
 | Room Size | 9–38 m² (97–409 ft²) |
 | ESPHome | 2026.1.2+ |
 | PM Sensor | PM2008MS  |

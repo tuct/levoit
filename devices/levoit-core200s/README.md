@@ -12,6 +12,7 @@
 | Board | EH-BY-41916-C-V1.0 (SinOne) |
 | Fan Speeds | 3 |
 | CADR (spec) | 167 m³/h |
+| Noise | 24–48 dB |
 | Room Size | up to 40 m² (430 ft²) |
 | ESPHome | 2026.1.2+ |
 | PM Sensor | None  |
