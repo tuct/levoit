@@ -22,15 +22,15 @@ The Levoit Sprout additionally uses the [levoit_audio component](./components/le
 
 ### [Supported Models](./devices/README.md)
 
-| Model | MCU Version | Status |
-|-------|-------------|--------|
-| [Levoit Core 200s](./devices/levoit-core200s) | 2.0.11 | ✅ Tested |
-| [Levoit Core 300s](./devices/levoit-core300s) | 2.0.7, 2.0.11 | ✅ Tested  |
-| [Levoit Core 400s](./devices/levoit-core400s) | 3.0.0 | ✅ Tested  |
-| [Levoit Core 600s](./devices/levoit-core600s) | 2.0.1 | ✅ Tested |
-| [Levoit Vital 100s](./devices/levoit-vital100s) | 1.0.5, 2.0.0(?) | ✅ Tested |
-| [Levoit Vital 200s (Pro)](./devices/levoit-vital200s) | 1.0.5, 2.0.0 Thanks @TheDave94 !|  ✅ Tested |
-| [Levoit Everest Air](./devices/levoit-everest-air) | 1.0.2 | ✅ Tested  |
+| Model | MCU Version | Status | Amazon Link |
+|-------|-------------|--------|------|
+| [Levoit Core 200s](./devices/levoit-core200s) | 2.0.11 | ✅ Tested |[Amazon](https://amzn.to/3SGH513)|
+| [Levoit Core 300s](./devices/levoit-core300s) | 2.0.7, 2.0.11 | ✅ Tested  |[Amazon](https://amzn.to/4aMVbnO)|
+| [Levoit Core 400s](./devices/levoit-core400s) | 3.0.0 | ✅ Tested  |[Amazon](https://amzn.to/4vOT9vt)|
+| [Levoit Core 600s](./devices/levoit-core600s) | 2.0.1 | ✅ Tested |[Amazon](https://amzn.to/4opVx9z)|
+| [Levoit Vital 100s](./devices/levoit-vital100s) | 1.0.5, 2.0.0(?) | ✅ Tested |[Amazon](https://amzn.to/3SaFron)|
+| [Levoit Vital 200s (Pro)](./devices/levoit-vital200s) | 1.0.5, 2.0.0 Thanks @TheDave94 !|  ✅ Tested |[Amazon](https://amzn.to/4xMiJn1)|
+| [Levoit Everest Air](./devices/levoit-everest-air) | 1.0.2 | ✅ Tested  |[Amazon](https://amzn.to/3Q1cMB)|
 
 #### Missing /WIP
 
