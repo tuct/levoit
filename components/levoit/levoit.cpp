@@ -664,6 +664,20 @@ namespace esphome
             if (this->fan_ == nullptr || !this->fan_->state)
                 return 0;
             int speed = this->fan_->speed;
+
+            // EverestAir: 3 manual levels at 1/4, 1/2, 3/4 of full CADR + Turbo = full.
+            // Turbo reports FanLevel 4 but the fan clamps speed to 3 (speed_count_=3),
+            // so it can't be told apart from level 3 by speed — detect it via preset.
+            if (this->model_ == ModelType::EVERESTAIR)
+            {
+                esphome::StringRef preset = this->fan_->get_preset_mode();
+                if (!preset.empty() && preset == "Turbo")
+                    return cadr;  // full CADR
+                if (speed >= 1 && speed <= 3)
+                    return (cadr * (uint32_t)speed) / 4u;  // 1/4, 1/2, 3/4
+                return 0;
+            }
+
             // Determine max speed based on model (Core300S has 3 speeds)
             uint32_t max_speed = (this->model_ == ModelType::CORE300S) ? 3u : 4u;
             if (speed <= 0 || (uint32_t)speed > max_speed)
