@@ -1,12 +1,65 @@
 
 
-# Project - Free Levoit Air Purifiers
+# Project - ESPHome hacked Air Purifiers for Home Assistant
+
+- Collection of air purifiers that can be more or less easily hacked to run ESPHome instead of cloud-based firmware.
+- Eliminating cloud dependency and enabling native Home Assistant integration for air purifiers.
+
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P4P721ETB5)
 
-Collection of custom ESPHome firmware and hardware projects for Levoit air purifiers, eliminating cloud dependency and enabling native Home Assistant integration.
+I like Wi-Fi enabled air purifiers! But I hate the fact that they all depend on a cloud service.
+
+I've run Home Assistant and custom-built ESPHome devices at home for quite some time, and found a project that let me flash custom, ESPHome-based firmware onto a Levoit Core 300S (which I already owned).
+Wi-Fi enabled air purifiers often use an ESP32 for the Wi-Fi side plus a separate MCU to manage the purifier itself (speeds, air-quality sensor, auto mode, …), with a UART link between the two.
+
+
+This started as a handful of custom ESPHome firmware and hardware projects for Levoit air purifiers, and is slowly growing into the broader collection you see here.
 
 ![header](./header.jpg)
+
+
+## Overview of existing / tested esphome-ified Air Purifiers
+
+Every purifier covered here at a glance — how it's converted to ESPHome, its specs, and how involved the teardown is. Click a model or its **Guide** for the full write-up.
+
+| Model | Manufacturer | Methods | CADR (spec) | Noise | Disassembly | Guide | Links | Comments |
+|-------|--------------|---------|-------------|-------|-------------|-------|-------|----------|
+| [Core 200S](./devices/levoit-core200s) | Levoit | 🟢 Flash / 🔵 Add ESP | 167 m³/h | 24–48 dB | Easy | [Guide](./devices/levoit-core200s) | [Amazon](https://amzn.to/3SGH513) | ✅ Tested · 3 speeds, no air-quality sensor |
+| [Core 300S](./devices/levoit-core300s) | Levoit | 🟢 Flash / 🔵 Add ESP | 214 m³/h | 24–50 dB | Easy | [Guide](./devices/levoit-core300s) | [Amazon](https://amzn.to/4aMVbnO) | ✅ Tested · PM2.5 + Auto mode |
+| [Core 400S](./devices/levoit-core400s) | Levoit | 🟢 Flash / 🔵 Add ESP | 442 m³/h | 24–52 dB | Hard | [Guide](./devices/levoit-core400s) | [Amazon](https://amzn.to/4vOT9vt) | ✅ Tested · 4 speeds |
+| [Core 600S](./devices/levoit-core600s) | Levoit | 🟢 Flash / 🔵 Add ESP | 641 m³/h | 26–54 dB | Hard | [Guide](./devices/levoit-core600s) | [Amazon](https://amzn.to/4opVx9z) | ✅ Tested · 4 auto modes |
+| [Vital 100S](./devices/levoit-vital100s) | Levoit | 🟢 Flash / 🔵 Add ESP | 221 m³/h | 23–52 dB | Easy | [Guide](./devices/levoit-vital100s#teardown--disassembly) | [Amazon](https://amzn.to/3SaFron) | ✅ Tested · Pet mode; detailed teardown |
+| [Vital 200S (Pro)](./devices/levoit-vital200s) | Levoit | 🟢 Flash / 🔵 Add ESP | 415 m³/h | 23–58 dB | Easy | [Guide](./devices/levoit-vital200s) | [Amazon](https://amzn.to/4xMiJn1) | ✅ Tested |
+| [Everest Air](./devices/levoit-everest-air) | Levoit | 🟢 Flash / 🔵 Add ESP | 612 m³/h | 24–56 dB | Easy | [Guide](./devices/levoit-everest-air) | [Amazon](https://amzn.to/3Q1cMB) | ✅ Tested · vent louver, PM1.0/2.5/10, Turbo |
+| [Sprout](./devices/levoit-sprout) | Levoit | 🟢 Flash / 🔵 Add ESP | 145 m³/h | 22–47 dB | Easy | [Guide](./devices/levoit-sprout) | [Amazon](https://amzn.to/4oAJs1n) | 🚧 WIP · white-noise audio (I2S MP3) |
+| [LV PUR 131S](./devices/levoit-lv131s/) | Levoit | 🔴 Custom HW | — | — | Medium | [Guide](./devices/levoit-lv131s/) | — | Custom FW + MCU & sensor upgrade |
+| [Levoit Mini](./devices/levoit-mini) | Levoit | 🔴 Custom HW | 78 m³/h | 41.8 – 53.6 dBA | Easy | [Guide](./devices/levoit-mini) | [Amazon](https://amzn.to/4acovEh) | Full custom PCB + 3D parts |
+| [Philips / MUJI AC0650](./devices/philips-600-series) | Philips (Versuni) / MUJI | 🔵 Add ESP | 170 m³/h | 19–49 dB | Easy | [Guide](./devices/philips-600-series) | [Amazon](https://amzn.to/4vS5Ohs) | ✅ Tested · secure boot → replace module; no AQ sensor |
+| [Philips / MUJI AC0651](./devices/philips-600-series) | Philips (Versuni) / MUJI | 🔵 Add ESP | 170 m³/h | 19–49 dB | Easy | [Guide](./devices/philips-600-series) | [Amazon](https://amzn.to/4elkSyg) | ✅ Tested · adds PM2.5 (PM1003) + Auto mode |
+| [IKEA Förnuftig](https://edvoncken.net/2024/04/ikea-fornuftig-with-esphome/) | IKEA | 🔴 Custom HW | 120 m³/h | 28–60 dB | Easy | [Blog ↗](https://edvoncken.net/2024/04/ikea-fornuftig-with-esphome/) · [C6 ↗](https://github.com/horvathgergo/esp32c6-for-fornuftig) | — | 🔗 External · dumb 3-speed fan, ESP added for control |
+| [IKEA Uppåtvind](https://github.com/jonathonlui/esphome-ikea-uppatvind) | IKEA | 🔴 Custom HW | 95 m³/h | 42.5–53.8 dB | Easy | [GitHub ↗](https://github.com/jonathonlui/esphome-ikea-uppatvind) | — | 🔗 External · small desk purifier, ESP added for control |
+
+**Methods** — how the custom firmware ends up on the device:
+- 🟢 **Flash** — flash ESPHome straight onto the device's own ESP32 (works where it isn't locked — most Levoits). Easiest; back up the stock firmware first.
+- 🔵 **Add ESP** — wire in a separate ESP32 and disable the original (`EN`→GND). Needed when secure boot blocks reflashing, and fully reversible.
+- 🔴 **Custom HW** — replace the controller board / build custom hardware.
+
+**CADR** and **Noise** are manufacturer specs. **Disassembly** is a rough effort estimate (Easy / Medium / Hard) — check the linked **Guide** before you start.
+
+## [ESPHome external component for Philips / MUJI Air Purifiers](./components/philips/README.md)
+
+Supports the Philips-made (Versuni) **600 Series** sold under the MUJI brand — **AC0650/10** and **AC0651/10** — for now. It works much like the Levoit component, just speaking Philips' slightly different `FE FF` binary UART protocol. These units are secure-boot locked, so the approach is to add your own ESP32 and disable the original module.
+
+**Requires:** ESPHome 2026.05.3+
+
+### [Supported Models](./devices/philips-600-series)
+
+| Model | MCU Version | Status | Notes | Amazon Link |
+|-------|-------------|--------|-------|------|
+| [Philips / MUJI AC0650](./devices/philips-600-series) | 0.1.9 | ✅ Tested | Fan, filters | [Amazon](https://amzn.to/4vS5Ohs) |
+| [Philips / MUJI AC0651](./devices/philips-600-series) | ? | ✅ Tested | Adds PM2.5 (PM1003), allergen index, Auto mode, standby sensor | [Amazon](https://amzn.to/4elkSyg) |
+
 
 ## [Esphome external component for Levoit Air Purifiers](./components/levoit/README.md)
 
