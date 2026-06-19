@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <string>
 #include "esphome/core/component.h"
 #include "esphome/components/uart/uart.h"
 
@@ -31,9 +32,14 @@ enum class SwitchType : uint8_t {
   STANDBY_SENSOR = 0,   // keep the PM sensor monitoring on standby (group 0x03: DP 0x34)
 };
 
+enum class TextSensorType : uint8_t {
+  MCU_VERSION = 0,   // MCU firmware version string from the group 0x01 device-info report
+};
+
 class PhilipsFan;
 class PhilipsSensor;
 class PhilipsSwitch;
+class PhilipsTextSensor;
 
 class Philips : public Component, public uart::UARTDevice {
  public:
@@ -49,6 +55,7 @@ class Philips : public Component, public uart::UARTDevice {
   void set_fan(PhilipsFan *f) { fan_ = f; }
   void register_sensor(SensorType type, PhilipsSensor *s) { sensors_[(uint8_t) type] = s; }
   void register_switch(SwitchType type, PhilipsSwitch *sw) { switches_[(uint8_t) type] = sw; }
+  void register_text_sensor(TextSensorType type, PhilipsTextSensor *t) { text_sensors_[(uint8_t) type] = t; }
 
   // control entry points (called by fan / switch / button entities)
   void set_power(bool on);
@@ -73,12 +80,14 @@ class Philips : public Component, public uart::UARTDevice {
   void on_link_up_();  // first valid frame from MCU = handshake done
   void publish_sensor_(SensorType type, float value);
   void publish_switch_(SwitchType type, bool state);
+  void publish_text_sensor_(TextSensorType type, const std::string &value);
   static uint16_t crc16_(const uint8_t *data, size_t len);
 
   PhilipsModel model_{PhilipsModel::AC0650};
   PhilipsFan *fan_{nullptr};
   PhilipsSensor *sensors_[4]{nullptr, nullptr, nullptr, nullptr};
   PhilipsSwitch *switches_[1]{nullptr};
+  PhilipsTextSensor *text_sensors_[1]{nullptr};
 
   // RX frame parser
   std::vector<uint8_t> rx_;

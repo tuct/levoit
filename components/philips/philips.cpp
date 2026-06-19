@@ -2,6 +2,7 @@
 #include "fan/philips_fan.h"
 #include "sensor/philips_sensor.h"
 #include "switch/philips_switch.h"
+#include "text_sensor/philips_text_sensor.h"
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
 
@@ -9,6 +10,17 @@ namespace esphome {
 namespace philips {
 
 static const char *const TAG = "philips";
+
+// A dotted numeric version string like "0.1.9" (digits and dots only, ≥1 dot).
+static bool looks_like_version(const std::string &s) {
+  if (s.empty()) return false;
+  bool dot = false;
+  for (char c : s) {
+    if (c == '.') dot = true;
+    else if (c < '0' || c > '9') return false;
+  }
+  return dot;
+}
 
 // The MCU drops a command sent too soon after its reply — the stock module
 // leaves a gap. Without this, it only worked when verbose logging happened to
@@ -218,10 +230,28 @@ void Philips::handle_status_(const uint8_t *d, size_t n) {
   uint8_t mode = 0;
   uint32_t pf_total = 0, pf_rem = 0, hepa_total = 0, hepa_rem = 0;
   bool have_pf = false, have_hepa = false;
+  std::string fw;  // MCU firmware string from the group 0x01 device-info report
 
   size_t i = 6;  // skip the 6-byte header
   while (i + 1 < n && d[i] != 0x00) {
     uint8_t dpid = d[i];
+    // String TLV: <dpid> 0x73 <len> <ascii…>. The 0x73 type byte never collides
+    // with an integer length (always 1/2/4), so this disambiguates cleanly.
+    if (d[i + 1] == 0x73) {
+      uint8_t sl = d[i + 2];
+      if (i + 3 + sl > n) break;
+      std::string s(reinterpret_cast<const char *>(&d[i + 3]), sl);
+      while (!s.empty() && s.back() == '\0') s.pop_back();
+      if (group == 0x01) {
+        // Self-documenting: log each device-info field with its DP so the exact
+        // firmware DP is visible. Type/brand are words, model has a '/', the MCU
+        // firmware and "other version" are dotted numbers — keep the non-zero one.
+        ESP_LOGD(TAG, "device-info DP 0x%02X = '%s'", dpid, s.c_str());
+        if (looks_like_version(s) && (fw.empty() || fw == "0.0.0")) fw = s;
+      }
+      i += 3 + sl;
+      continue;
+    }
     uint8_t l = d[i + 1];
     if (i + 2 + l > n) break;
     uint32_t val = 0;
@@ -251,6 +281,8 @@ void Philips::handle_status_(const uint8_t *d, size_t n) {
     if (have_hepa && hepa_total > 0)
       this->publish_sensor_(SensorType::FILTER_LIFETIME, 100.0f * hepa_rem / hepa_total);
   }
+  if (group == 0x01 && !fw.empty())
+    this->publish_text_sensor_(TextSensorType::MCU_VERSION, fw);
 }
 
 void Philips::publish_sensor_(SensorType type, float value) {
@@ -261,6 +293,11 @@ void Philips::publish_sensor_(SensorType type, float value) {
 void Philips::publish_switch_(SwitchType type, bool state) {
   auto *s = this->switches_[(uint8_t) type];
   if (s != nullptr) s->publish_state(state);
+}
+
+void Philips::publish_text_sensor_(TextSensorType type, const std::string &value) {
+  auto *t = this->text_sensors_[(uint8_t) type];
+  if (t != nullptr) t->publish_state(value);
 }
 
 }  // namespace philips
