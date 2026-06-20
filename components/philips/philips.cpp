@@ -1,8 +1,21 @@
 #include "philips.h"
+#include "esphome/core/defines.h"
+// Platform sub-directories are only copied into the build when that platform is
+// actually configured, so each include (and any use of its concrete type) must
+// be guarded by the matching USE_* macro — else e.g. an AC0650 config without a
+// switch fails to find switch/philips_switch.h.
+#ifdef USE_FAN
 #include "fan/philips_fan.h"
+#endif
+#ifdef USE_SENSOR
 #include "sensor/philips_sensor.h"
+#endif
+#ifdef USE_SWITCH
 #include "switch/philips_switch.h"
+#endif
+#ifdef USE_TEXT_SENSOR
 #include "text_sensor/philips_text_sensor.h"
+#endif
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
 
@@ -272,9 +285,11 @@ void Philips::handle_status_(const uint8_t *d, size_t n) {
     i += 2 + l;
   }
 
+#ifdef USE_FAN
   if (group == 0x03 && this->fan_ != nullptr)
     this->fan_->apply_state(have_power ? power : this->fan_->state,
                             have_mode ? mode : 0xFF);
+#endif
   if (group == 0x05) {
     if (have_pf && pf_total > 0)
       this->publish_sensor_(SensorType::FILTER_CLEAN, 100.0f * pf_rem / pf_total);
@@ -286,18 +301,24 @@ void Philips::handle_status_(const uint8_t *d, size_t n) {
 }
 
 void Philips::publish_sensor_(SensorType type, float value) {
+#ifdef USE_SENSOR
   auto *s = this->sensors_[(uint8_t) type];
   if (s != nullptr) s->publish_state(value);
+#endif
 }
 
 void Philips::publish_switch_(SwitchType type, bool state) {
+#ifdef USE_SWITCH
   auto *s = this->switches_[(uint8_t) type];
   if (s != nullptr) s->publish_state(state);
+#endif
 }
 
 void Philips::publish_text_sensor_(TextSensorType type, const std::string &value) {
+#ifdef USE_TEXT_SENSOR
   auto *t = this->text_sensors_[(uint8_t) type];
   if (t != nullptr) t->publish_state(value);
+#endif
 }
 
 }  // namespace philips

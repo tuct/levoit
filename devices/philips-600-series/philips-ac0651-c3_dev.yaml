@@ -20,7 +20,7 @@ packages:
   common: !include common.yaml
 
 logger:
-  level: VERBOSE   # VERBOSE shows the raw UART frames (TX -> / RX <-)
+  level: DEBUG   # VERBOSE shows the raw UART frames (TX -> / RX <-)
 
 # AC0651-only entities (added on top of common.yaml).
 sensor:
