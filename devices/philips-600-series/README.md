@@ -10,6 +10,9 @@ Two variants are supported via the `model:` option — both speak the identical
 - **AC0651/10** — adds a **PM1003 PM2.5 sensor**, allergen/AQI index, an **Auto**
   fan preset, and "standby sensor monitoring".
 
+![Air purifier overview](./images/overview.jpg)
+
+
 > 🔒 The stock ESP32-C3 module has **secure boot enabled & enforced**, so it
 > cannot be reflashed. Wire your own ESP32-C3 to the MCU UART instead (see
 > [Install New ESP32](#install-new-esp32)). Full protocol notes are below.
@@ -20,13 +23,13 @@ Two variants are supported via the `model:` option — both speak the identical
 |------|-------|
 | Models | AC0650/10, AC0651/10 |
 | Brand | MUJI (Philips/Versuni OEM) |
-| Tested MCU FW | 0.1.9 |
+| Tested MCU FW | 0.1.9 / 0.2.1|
 | Stock ESP module | ESP32-C3-WROOM-02U (secure boot — locked) |
 | Replacement module | Seeed XIAO ESP32-C3 (or any ESP32-C3) |
 | MCU link | UART, 115200 8N1, `FE FF` protocol |
 | Fan speeds | 3 (Sleep / Medium / Turbo) + Auto on 651 |
 | PM sensor | PM1003 (AC0651 only) |
-| ESPHome | 2026.1.2+ |
+| ESPHome | 2026.5.3+ |
 
 ## Features
 
@@ -51,7 +54,6 @@ Entities exposed by the [`philips`](../../components/philips) component
 > and AC0651 share the same chassis and PCB (the 651 just has extra components
 > populated), so these steps apply to both.
 
-![Air purifier overview](./images/overview.jpg)
 
 **1. Open the bottom.** Remove the 3 screws on the base, then lift off the gray
 cover and the black cable protector.

@@ -13,7 +13,7 @@
 | CADR (spec) | 641 m³/h |
 | Noise | 26–54 dB |
 | Room Size | 9–147 m² (97–1,582 ft²) |
-| ESPHome | 2026.1.2+ |
+| ESPHome | 2026.5.3+ |
 | PM Sensor | Luftme LD15 |
 
 ## Features

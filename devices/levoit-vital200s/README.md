@@ -16,7 +16,7 @@ Same protocol as the Vital 100S. Tested with original ESP by @dnsefe.
 | CADR (spec) | 415 m³/h |
 | Noise | 23–58 dB |
 | Room Size | 9–87 m² (97–936 ft²) |
-| ESPHome | 2026.1.2+ |
+| ESPHome | 2026.5.3+ |
 | PM Sensor | PM1003 |
 
 ## Features

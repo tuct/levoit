@@ -21,7 +21,7 @@ Uses the Vital flat-TLV protocol (`CMD=02 00 55`) as a base, with Sprout-specifi
 | CADR (spec) | 144.5 m³/h |
 | Noise | 22–47 dB |
 | Room Size | 9-30 m² |
-| ESPHome | 2026.1.2+ |
+| ESPHome | 2026.5.3+ |
 
 ## Features
 

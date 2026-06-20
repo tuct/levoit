@@ -14,7 +14,7 @@
 | CADR (spec) | 221 m³/h |
 | Noise | 23–52 dB |
 | Room Size | 9–52 m² (97–560 ft²) |
-| ESPHome | 2026.1.2+ |
+| ESPHome | 2026.5.3+ |
 | PM Sensor | PM1003 |
 
 ## Features

@@ -51,6 +51,35 @@ Every purifier covered here at a glance — how it's converted to ESPHome, its s
 > Got another air purifier running ESPHome? Add it to the list — open a **[Pull Request](https://github.com/tuct/esphome-projects/pulls)** or share it in **[Discussions](https://github.com/tuct/esphome-projects/discussions)**.
 > Two requirements: it has to be an **air purifier**, and it has to run (or be made to run) **ESPHome**. In-repo components or external projects (like the IKEA ones above) are both welcome.
 
+
+## Change Log 
+
+### 2026.06.20 
+
+* Added Philips Series 600 Support
+* Rework started to esphome hacked air purifiers from free levoit project
+* added Links to Ikea hacks
+
+### 2026.06.14
+
+* Added Levoit Everest Air via Levoit component 
+
+
+# Components 
+
+These external ESPHome components expose each purifier natively to Home Assistant — no cloud, no custom Lovelace hacks. The exact entities depend on the model and its MCU firmware, but across the supported devices the components provide:
+
+- **Fan** — native Home Assistant fan with model-based speed levels (1–3 / 1–4) and preset modes (Manual, Auto, Sleep, Pet, Turbo, …).
+- **Auto Mode** — model-specific auto modes (Default / Quiet / Room Size / Eco / Efficient) with a configurable target room size where supported.
+- **Air Quality** — PM2.5, plus PM1.0 / PM10 and an AQI value on models with the sensors for it.
+- **Filter Lifetime** — computed filter life %, low-filter warning, current CADR, configurable lifespan, and a reset button (calculated by the component, works on every model).
+- **Display & Light** — display on/off, child lock, ambient light auto-dim, and night-light control where present.
+- **Timer** — run timer plus readable initial and remaining-time sensors.
+- **Info & Debug** — MCU firmware version, ESP component version, and device error status.
+- **Model extras** — e.g. the Everest Air's motorized vent louver and the Sprout / Everest Air cover-door sensor.
+
+See the per-feature tables further down for exactly which entity each model exposes.
+
 ## [ESPHome external component for Philips / MUJI Air Purifiers](./components/philips/README.md)
 
 Supports the Philips-made (Versuni) **600 Series** sold under the MUJI brand — **AC0650/10** and **AC0651/10** — for now. It works much like the Levoit component, just speaking Philips' slightly different `FE FF` binary UART protocol. These units are secure-boot locked, so the approach is to add your own ESP32 and disable the original module.
@@ -211,7 +240,7 @@ Auto mode options per model:
 | ESP Version | text_sensor | `esp_version` | ESPHome component version string |
 | Error | text_sensor | `error_message` | Device error status: "Ok" or "Sensor Error" **Not for Core200S** |
 
-### Change Log
+### Change Log - Levoit Component
 
 #### ESP Version: 1.4.0 - 2026.06.14
 

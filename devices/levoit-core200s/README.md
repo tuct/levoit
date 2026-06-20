@@ -14,7 +14,7 @@
 | CADR (spec) | 167 m³/h |
 | Noise | 24–48 dB |
 | Room Size | up to 40 m² (430 ft²) |
-| ESPHome | 2026.1.2+ |
+| ESPHome | 2026.5.3+ |
 | PM Sensor | None  |
 
 ## Features
