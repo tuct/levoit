@@ -150,6 +150,7 @@ namespace esphome
             LIGHT_MODE = 7,         // Sprout: Off / Nightlight / Breathing
             WHITE_NOISE_SOUND = 8,  // Sprout: white noise sound index (0-14, 15 sounds)
             SLEEP_PREFERENCE = 9,   // Vital: sleep mode preference type (TLV 0x18)
+            FAN_OPERATING_MODE_SELECT = 10, // Active fan mode: Manual/Sleep/Auto/Pet/Turbo where supported
         };
         static constexpr SelectType AUTO_MODE = SelectType::AUTO_MODE;
         static constexpr SelectType SLEEP_MODE = SelectType::SLEEP_MODE;
@@ -162,6 +163,7 @@ namespace esphome
         static constexpr SelectType LIGHT_MODE = SelectType::LIGHT_MODE;
         static constexpr SelectType WHITE_NOISE_SOUND = SelectType::WHITE_NOISE_SOUND;
         static constexpr SelectType SLEEP_PREFERENCE = SelectType::SLEEP_PREFERENCE;
+        static constexpr SelectType FAN_OPERATING_MODE_SELECT = SelectType::FAN_OPERATING_MODE_SELECT;
 
 
 

@@ -11,6 +11,16 @@ namespace esphome
 
     static const char *const TAG = "levoit.select";
 
+    static int fan_operating_mode_to_raw(const std::string &value)
+    {
+      if (value == "Manual") return 0;
+      if (value == "Sleep") return 1;
+      if (value == "Auto") return 2;
+      if (value == "Turbo") return 4;
+      if (value == "Pet") return 5;
+      return -1;
+    }
+
     void LevoitSelect::setup() {
       switch (this->type_) {
         case SelectType::AUTO_MODE:
@@ -67,6 +77,20 @@ namespace esphome
           // WN / DT bulk write") for the full protocol.
           this->traits.set_options({"Default", "Custom1", "Custom2"});
           break;
+        case SelectType::FAN_OPERATING_MODE_SELECT:
+          if (parent_ && parent_->get_model() == ModelType::CORE200S)
+            this->traits.set_options({"Manual", "Sleep"});
+          else if (parent_ && (parent_->get_model() == ModelType::CORE300S || parent_->get_model() == ModelType::CORE400S || parent_->get_model() == ModelType::CORE600S))
+            this->traits.set_options({"Manual", "Sleep", "Auto"});
+          else if (parent_ && (parent_->get_model() == ModelType::VITAL100S || parent_->get_model() == ModelType::VITAL200S))
+            this->traits.set_options({"Manual", "Sleep", "Auto", "Pet"});
+          else if (parent_ && parent_->get_model() == ModelType::SPROUT)
+            this->traits.set_options({"Manual", "Auto"});
+          else if (parent_ && parent_->get_model() == ModelType::EVERESTAIR)
+            this->traits.set_options({"Manual", "Sleep", "Auto", "Turbo"});
+          else
+            this->traits.set_options({"Manual"});
+          break;
         default:
           break;
       }
@@ -85,6 +109,14 @@ namespace esphome
       }
 
       uint32_t index = it - options.begin();
+      if (this->type_ == SelectType::FAN_OPERATING_MODE_SELECT) {
+        int mode = fan_operating_mode_to_raw(value);
+        if (mode < 0) {
+          ESP_LOGW(TAG, "Unknown fan operating mode option: %s", value.c_str());
+          return;
+        }
+        index = static_cast<uint32_t>(mode);
+      }
 
       // Optimistic update for HA UI (string!)
       this->publish_state(value);

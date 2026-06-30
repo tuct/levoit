@@ -12,6 +12,7 @@
 #include <time.h>
 #include <vector>
 #include <functional>
+#include <algorithm>
 #include "freertos/task.h"
 #include "decoder.h"
 #include "tlv.h"
@@ -47,6 +48,25 @@ namespace esphome
     {
 
         static const char *const TAG = "levoit";
+
+        static const char *fan_operating_mode_to_option_(uint32_t mode)
+        {
+            switch (mode)
+            {
+            case 0:
+                return "Manual";
+            case 1:
+                return "Sleep";
+            case 2:
+                return "Auto";
+            case 4:
+                return "Turbo";
+            case 5:
+                return "Pet";
+            default:
+                return nullptr;
+            }
+        }
 
         // ===== Component =====
 
@@ -145,6 +165,24 @@ namespace esphome
             if (!sl)
                 return;
             const auto &options = sl->traits.get_options();
+            if (type == SelectType::FAN_OPERATING_MODE_SELECT)
+            {
+                const char *opt = fan_operating_mode_to_option_(value);
+                if (opt == nullptr)
+                {
+                    ESP_LOGW(TAG, "publish_select: invalid fan mode %u", value);
+                    return;
+                }
+                if (std::find(options.begin(), options.end(), opt) == options.end())
+                {
+                    ESP_LOGW(TAG, "publish_select: unsupported fan mode '%s' for this model", opt);
+                    return;
+                }
+                if (sl->has_state() && sl->current_option() == opt)
+                    return;
+                sl->publish_state(opt);
+                return;
+            }
             if (value >= options.size())
             {
                 ESP_LOGW(TAG, "publish_select: invalid index %u for type %d (options=%u)",
@@ -388,6 +426,10 @@ namespace esphome
 
             switch (type)
             {
+            case SelectType::FAN_OPERATING_MODE_SELECT:
+                this->on_fan_command(-1, -1, value);
+                break;
+
             case SelectType::AUTO_MODE:
                 if (this->model_ == ModelType::EVERESTAIR)
                 {

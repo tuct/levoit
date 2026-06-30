@@ -161,6 +161,8 @@ Available speed levels and presets are based on model.
 | Sprout | 1–4 | Auto, Manual |
 | EverestAir | 1–3 | Auto, Turbo, Manual |
 
+The `fan_operating_mode` select exposes the active fan mode as a normal ESPHome select for dashboards that do not render fan presets directly. It stays synchronized with MCU fan-mode status and uses the same Manual / Sleep / Auto / Pet / Turbo model-specific modes as the fan preset path.
+
 
 #### Vent Angle & Cover (EverestAir)
 

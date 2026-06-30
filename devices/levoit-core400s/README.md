@@ -24,6 +24,7 @@ Started from community projects ([acvigue](https://github.com/acvigue/esphome-le
 | Feature | Type | Notes |
 |---------|------|-------|
 | Fan | fan | 4 speeds, presets: Manual / Auto / Sleep |
+| Fan Operating Mode | select | Manual / Sleep / Auto |
 | Auto Mode | select | Default / Quiet / Room Size |
 | Auto Mode Room Size | number | 9–38 m² |
 | Display | switch | Toggle LED display |
