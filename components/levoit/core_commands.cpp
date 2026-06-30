@@ -2,6 +2,7 @@
 #include "levoit_message.h"
 #include "levoit.h"
 #include "number/levoit_number.h"
+#include "decoder_helpers.h"
 #include "esphome/core/log.h"
 
 namespace esphome
@@ -122,9 +123,8 @@ namespace esphome
                 auto *num = self->get_number(NumberType::EFFICIENCY_ROOM_SIZE);
                 if (num != nullptr)
                 {
-                    // Convert m² → raw MCU value: 1 m² = 10.764 sq ft, MCU uses sq_ft × 3.15
                     float m2 = num->state;
-                    uint32_t raw = static_cast<uint32_t>(m2 * 10.764f * 3.15f + 0.5f);
+                    uint32_t raw = encode_core_room_size_raw(m2);
                     uint8_t size_low = raw & 0xFF;
                     uint8_t size_high = (raw >> 8) & 0xFF;
 

@@ -110,7 +110,7 @@ namespace esphome
         bool child_lock     = payload[14] != 0;
         uint8_t fan_auto_mode = payload[15];
         uint16_t efficency_area = (uint16_t)((payload[17] << 8) | payload[16]);
-        float efficency_area_m2 = static_cast<float>(efficency_area) / (10.764f * 3.15f);
+        float efficency_area_m2 = decode_core_room_size_m2(efficency_area);
         bool light_detect   = payload[21] != 0;
 
         self->publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Ok");
@@ -144,7 +144,7 @@ namespace esphome
       bool child_lock = payload[13] != 0;
       uint8_t fan_auto_mode = payload[14];
       uint16_t efficency_area = (payload[16] << 8) | payload[15];
-      float efficency_area_m2 = static_cast<float>(efficency_area) / (10.764f * 3.15f);
+      float efficency_area_m2 = decode_core_room_size_m2(efficency_area);
       bool display_on = false;
       uint8_t fan_speed = 0;
       if (model == ModelType::CORE300S)
