@@ -212,6 +212,8 @@ The vent angle is set as a number entity (45° = nearly closed/upward, 90° = fu
 | Efficiency Counter | sensor | `efficiency_counter` | Seconds remaining at high fan speed in efficient auto mode **Vital only** |
 | Auto Mode High Fan Time | text_sensor | `auto_mode_room_size_high_fan` | Time still running at high speed in efficient auto mode, human readable **Vital only** |
 
+Auto Mode configures the purifier's automatic behavior and is distinct from the active fan preset/mode. On models with fan Auto support, changing Auto Mode enters the fan's Auto preset; direct fan speed changes switch the fan preset to Manual.
+
 Auto mode options per model:
 
 | Model | Options | Room Size Range |

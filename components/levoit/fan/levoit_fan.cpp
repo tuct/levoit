@@ -98,6 +98,7 @@ namespace esphome
             const bool cur_state = this->state;
             const int cur_speed = this->speed;
             esphome::StringRef cur_preset = this->get_preset_mode();
+            const auto preset = call.get_preset_mode();
 
             // ---- power ----
             if (call.get_state().has_value())
@@ -116,14 +117,17 @@ namespace esphome
                 int new_speed = *call.get_speed();
                 if (new_speed != cur_speed)
                 {
-                    //this->current_preset_ = "Manual"; // changing speed implies Manual mode
                     this->speed = new_speed;
                     speed_cmd = new_speed;
+                    if (preset == nullptr && (cur_preset.empty() || cur_preset != "Manual"))
+                    {
+                        this->set_preset_mode_("Manual");
+                        mode_cmd = preset_to_device_mode("Manual");
+                    }
                 }
             }
 
             // ---- preset/mode ----
-            const auto preset = call.get_preset_mode();
             if (preset != nullptr && (cur_preset.empty() || cur_preset != preset))
             {
                 // Sync base fan preset state
