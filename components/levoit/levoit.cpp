@@ -48,6 +48,11 @@ namespace esphome
 
         static const char *const TAG = "levoit";
 
+        static bool supports_auto_fan_mode_(ModelType model)
+        {
+            return model != ModelType::CORE200S;
+        }
+
         // ===== Component =====
 
         void Levoit::register_switch(SwitchType type, LevoitSwitch *sw)
@@ -346,6 +351,8 @@ namespace esphome
 
             case NumberType::EFFICIENCY_ROOM_SIZE:
                 this->sendCommand(setAutoModeEfficient); // takes value from number: Room Size
+                if (supports_auto_fan_mode_(this->model_))
+                    this->sendCommand(setFanModeAuto);
                 break;
 
             case NumberType::SLEEP_MODE_MIN:
@@ -389,30 +396,42 @@ namespace esphome
             switch (type)
             {
             case SelectType::AUTO_MODE:
+            {
+                bool sent_auto_profile = false;
                 if (this->model_ == ModelType::EVERESTAIR)
                 {
                     // EverestAir options are {"Default"(idx0→mode0), "Eco"(idx1→mode3)}
                     this->sendCommand(value == 1 ? setAutoModeEco : setAutoModeDefault);
-                    break;
+                    sent_auto_profile = true;
                 }
-                switch (value)
+                else
                 {
-                case 0:
-                    this->sendCommand(setAutoModeDefault);
-                    break;
-                case 1:
-                    this->sendCommand(setAutoModeQuiet);
-                    break;
-                case 2:
-                    this->sendCommand(setAutoModeEfficient);
-                    break;
-                case 3:
-                    this->sendCommand(setAutoModeEco);
-                    break;
-                default:
-                    break;
+                    switch (value)
+                    {
+                    case 0:
+                        this->sendCommand(setAutoModeDefault);
+                        sent_auto_profile = true;
+                        break;
+                    case 1:
+                        this->sendCommand(setAutoModeQuiet);
+                        sent_auto_profile = true;
+                        break;
+                    case 2:
+                        this->sendCommand(setAutoModeEfficient);
+                        sent_auto_profile = true;
+                        break;
+                    case 3:
+                        this->sendCommand(setAutoModeEco);
+                        sent_auto_profile = true;
+                        break;
+                    default:
+                        break;
+                    }
                 }
+                if (sent_auto_profile && supports_auto_fan_mode_(this->model_))
+                    this->sendCommand(setFanModeAuto);
                 break;
+            }
 
             case SelectType::SLEEP_MODE:
                 switch (value)
