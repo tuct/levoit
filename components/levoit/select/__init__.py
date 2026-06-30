@@ -25,6 +25,7 @@ TYPE_MAP = {
     "light_mode": SelectType.LIGHT_MODE,
     "white_noise_sound": SelectType.WHITE_NOISE_SOUND,
     "sleep_preference": SelectType.SLEEP_PREFERENCE,
+    "fan_operating_mode": SelectType.FAN_OPERATING_MODE_SELECT,
 }
 
 CONFIG_SCHEMA = select.select_schema(LevoitSelect).extend(

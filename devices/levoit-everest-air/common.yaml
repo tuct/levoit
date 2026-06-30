@@ -99,6 +99,10 @@ sensor:
 select:
   - platform: levoit
     levoit: leveverestair
+    name: "Fan Operating Mode"
+    type: fan_operating_mode
+  - platform: levoit
+    levoit: leveverestair
     name: "Auto Mode"
     type: auto_mode
 

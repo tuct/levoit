@@ -128,5 +128,9 @@ binary_sensor:
 select:
   - platform: levoit
     levoit: levoitcore200
+    name: "Fan Operating Mode"
+    type: fan_operating_mode
+  - platform: levoit
+    levoit: levoitcore200
     name: "Night Light"
     type: nightlight

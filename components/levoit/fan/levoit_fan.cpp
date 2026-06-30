@@ -139,6 +139,10 @@ namespace esphome
             }
 
             // Only sends fields != -1 (as long as your parent respects sentinels)
+            if (mode_cmd != -1)
+            {
+                parent_->publish_select(SelectType::FAN_OPERATING_MODE_SELECT, mode_cmd);
+            }
             parent_->on_fan_command(power_cmd, speed_cmd, mode_cmd);
 
             this->publish_state();
@@ -175,6 +179,10 @@ namespace esphome
             }
 
             const char *preset = device_mode_to_preset(mode);
+            if (mode != -1 && this->parent_ != nullptr)
+            {
+                this->parent_->publish_select(SelectType::FAN_OPERATING_MODE_SELECT, mode);
+            }
             if (preset != nullptr)
             {
                 ESP_LOGD(TAG, "Device mode %d maps to preset '%s'", mode, preset);

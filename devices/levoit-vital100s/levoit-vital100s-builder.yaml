@@ -117,6 +117,10 @@ sensor:
 select:
   - platform: levoit
     levoit: levoitvital100
+    name: "Fan Operating Mode"
+    type: fan_operating_mode
+  - platform: levoit
+    levoit: levoitvital100
     name: "Auto Mode"
     type: auto_mode
 
