@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <cstdint>
+#include <cmath>
 
 namespace esphome
 {
@@ -34,6 +35,21 @@ namespace esphome
         return std::to_string(mins) + " min " + std::to_string(secs) + "s";
 
       return std::to_string(secs) + "s";
+    }
+
+    static inline float core_room_size_factor()
+    {
+      return 10.764f * 3.15f;
+    }
+
+    static inline uint32_t encode_core_room_size_raw(float m2)
+    {
+      return static_cast<uint32_t>(std::round(m2 * core_room_size_factor()));
+    }
+
+    static inline float decode_core_room_size_m2(uint16_t raw)
+    {
+      return std::round(static_cast<float>(raw) / core_room_size_factor());
     }
 
   } // namespace levoit

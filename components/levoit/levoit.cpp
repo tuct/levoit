@@ -126,14 +126,13 @@ namespace esphome
 #endif
         }
 
-        void Levoit::publish_number(NumberType type, uint32_t value)
+        void Levoit::publish_number(NumberType type, float value)
         {
 #ifdef USE_NUMBER
             auto *nm = numbers_[nt_idx_(type)];
             if (!nm)
                 return;
-            float fvalue = static_cast<float>(value);
-            if (nm->has_state() && nm->state == fvalue)
+            if (nm->has_state() && nm->state == value)
                 return;
             nm->publish_state(value);
 #endif

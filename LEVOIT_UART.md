@@ -361,7 +361,7 @@ Room sizes are transmitted as raw integer values derived from square feet.
 | Vital (tag `0x10`) | `raw = round(m² × 10.764 × 1.3)` | ESP→MCU |
 | Core / Core600S | `raw = round(m² × 10.764 × 3.15)` | ESP→MCU |
 
-Decode (MCU→ESP): `m² = raw / (10.764 × factor)` where factor = 1.3 (Vital) or 3.15 (Core).
+Decode (MCU→ESP): `m² = raw / (10.764 × factor)` where factor = 1.3 (Vital) or 3.15 (Core). Core status values are rounded to the nearest whole m² before publishing so values encoded with `round(m² × 10.764 × 3.15)` round-trip at range edges.
 
 ---
 

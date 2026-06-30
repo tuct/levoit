@@ -44,7 +44,7 @@ class Levoit : public Component, public uart::UARTDevice {
 
   // called by decoder when device reports status
   void publish_switch(SwitchType type, bool state);
-  void publish_number(NumberType type, uint32_t value);
+  void publish_number(NumberType type, float value);
   void publish_sensor(SensorType type, uint32_t value);
   void publish_select(SelectType type, uint32_t value);
   void publish_text_sensor(TextSensorType type, const std::string &value);
