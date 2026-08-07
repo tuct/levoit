@@ -115,7 +115,14 @@ namespace esphome
             if (call.get_speed().has_value() && (this->speed_count_ > 0))
             {
                 int new_speed = *call.get_speed();
-                if (new_speed != cur_speed)
+                // A speed call issued while a non-Manual preset is active must still
+                // be sent even if the level is unchanged: the operating mode changes.
+                // Sleep/Auto leave this->speed at its last manual value because the
+                // MCU reports no fan level for those modes (apply_device_status gets
+                // speed_level == -1), so "same level" is not "no change" here.
+                const bool leaving_preset =
+                    preset == nullptr && !cur_preset.empty() && cur_preset != "Manual";
+                if (new_speed != cur_speed || leaving_preset)
                 {
                     this->speed = new_speed;
                     speed_cmd = new_speed;
