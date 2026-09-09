@@ -1,0 +1,143 @@
+name	type	start_time	duration	data	error	text
+Async Serial	data	8.6392334	0.0000824	0x01	framing	
+Async Serial [1]	data	8.6392334	0.0000824	0x01	framing	
+Async Serial	data	8.6403528	0.0000824	0x00	framing	
+Async Serial [1]	data	8.6403532	0.0000824	0x00	framing	
+Async Serial [1]	data	8.6821436	0.0000824	0x20	framing	
+Async Serial	data	8.6821438	0.0000824	0x02	framing	
+Async Serial	data	8.6822372	0.0000824	0x00	framing	
+Async Serial [1]	data	8.6822372	0.0000824	0x00	framing	
+Async Serial [1]	data	9.728779	0.0000824	0xF8		
+Async Serial [1]	data	9.7786008	0.0000824	0xFE		
+philips_uart [1]	packet	9.7786008	0.0007748			[MCU->module] QUERY(0x0004)  GROUP=08  |  LEN=2  |  DATA=08 00  |  CRC=94 A6
+Async Serial [1]	data	9.7786874	0.0000824	0xFF		
+Async Serial [1]	data	9.7787738	0.0000824	0x04		
+Async Serial [1]	data	9.7788604	0.0000824	0x00		
+Async Serial [1]	data	9.778947	0.0000824	0x02		
+Async Serial [1]	data	9.7790336	0.0000824	0x08		
+Async Serial [1]	data	9.77912	0.0000824	0x00		
+Async Serial [1]	data	9.7792066	0.0000824	0x94		
+Async Serial [1]	data	9.7792932	0.0000824	0xA6		
+Async Serial	data	9.7968698	0.0000824	0xFE		
+philips_uart	packet	9.7968698	0.0032878			[module->MCU] STATUS(0x0007)  |  LEN=31  |  DATA=00 08 01 02 00 00 02 01 00 03 73 06 30 2E 33 2E 33 00 04 02 00 00 05 02 00 00 07 02 00 00 00  |  CRC=E1 1A
+Async Serial	data	9.7969564	0.0000824	0xFF		
+Async Serial	data	9.797043	0.0000824	0x07		
+Async Serial	data	9.7971296	0.0000824	0x00		
+Async Serial	data	9.7972162	0.0000824	0x1F		
+Async Serial	data	9.7973028	0.0000824	0x00		
+Async Serial	data	9.7973896	0.0000824	0x08		
+Async Serial	data	9.7974762	0.0000824	0x01		
+Async Serial	data	9.7975628	0.0000824	0x02		
+Async Serial	data	9.7976494	0.0000824	0x00		
+Async Serial	data	9.797736	0.0000824	0x00		
+Async Serial	data	9.7978226	0.0000824	0x02		
+Async Serial	data	9.7979092	0.0000824	0x01		
+Async Serial	data	9.7979958	0.0000824	0x00		
+Async Serial	data	9.7980826	0.0000824	0x03		
+Async Serial	data	9.7981692	0.0000824	0x73		
+Async Serial	data	9.7982558	0.0000824	0x06		
+Async Serial	data	9.7983424	0.0000824	0x30		
+Async Serial	data	9.798429	0.0000824	0x2E		
+Async Serial	data	9.7985158	0.0000824	0x33		
+Async Serial	data	9.7986024	0.0000824	0x2E		
+Async Serial	data	9.798689	0.0000824	0x33		
+Async Serial	data	9.7987756	0.0000824	0x00		
+Async Serial	data	9.7988622	0.0000824	0x04		
+Async Serial	data	9.798949	0.0000824	0x02		
+Async Serial	data	9.7990356	0.0000824	0x00		
+Async Serial	data	9.7991222	0.0000824	0x00		
+Async Serial	data	9.7992088	0.0000824	0x05		
+Async Serial	data	9.7992954	0.0000824	0x02		
+Async Serial	data	9.799382	0.0000824	0x00		
+Async Serial	data	9.7994688	0.0000824	0x00		
+Async Serial	data	9.7995554	0.0000824	0x07		
+Async Serial	data	9.799642	0.0000824	0x02		
+Async Serial	data	9.7997286	0.0000824	0x00		
+Async Serial	data	9.7998152	0.0000824	0x00		
+Async Serial	data	9.7999018	0.0000824	0x00		
+Async Serial	data	9.7999884	0.0000824	0xE1		
+Async Serial	data	9.8000752	0.0000824	0x1A		
+Async Serial [1]	data	9.8011354	0.0000824	0xFE		
+philips_uart [1]	packet	9.8011354	0.0010342			[MCU->module] SET(0x0003)  |  LEN=5  |  DATA=08 02 01 00 00  |  CRC=C9 79
+Async Serial [1]	data	9.8012218	0.0000824	0xFF		
+Async Serial [1]	data	9.8013084	0.0000824	0x03		
+Async Serial [1]	data	9.801395	0.0000824	0x00		
+Async Serial [1]	data	9.8014814	0.0000824	0x05		
+Async Serial [1]	data	9.801568	0.0000824	0x08		
+Async Serial [1]	data	9.8016546	0.0000824	0x02		
+Async Serial [1]	data	9.8017412	0.0000824	0x01		
+Async Serial [1]	data	9.8018276	0.0000824	0x00		
+Async Serial [1]	data	9.8019142	0.0000824	0x00		
+Async Serial [1]	data	9.8020008	0.0000824	0xC9		
+Async Serial [1]	data	9.8020872	0.0000824	0x79		
+Async Serial	data	9.816862	0.0000824	0xFE		
+philips_uart	packet	9.816862	0.0033132			[module->MCU] STATUS(0x0007)  |  LEN=31  |  DATA=00 08 01 02 00 00 02 01 00 03 73 06 30 2E 33 2E 33 00 04 02 00 00 05 02 00 00 07 02 00 00 00  |  CRC=E1 1A
+Async Serial	data	9.8169486	0.0000824	0xFF		
+Async Serial	data	9.8170352	0.0000824	0x07		
+Async Serial	data	9.8171218	0.0000824	0x00		
+Async Serial	data	9.8172084	0.0000824	0x1F		
+Async Serial	data	9.817295	0.0000824	0x00		
+Async Serial	data	9.8173816	0.0000824	0x08		
+Async Serial	data	9.8174682	0.0000824	0x01		
+Async Serial	data	9.8175548	0.0000824	0x02		
+Async Serial	data	9.8176414	0.0000824	0x00		
+Async Serial	data	9.817728	0.0000824	0x00		
+Async Serial	data	9.8178146	0.0000824	0x02		
+Async Serial	data	9.8179014	0.0000824	0x01		
+Async Serial	data	9.817988	0.0000824	0x00		
+Async Serial	data	9.8180746	0.0000824	0x03		
+Async Serial	data	9.8181612	0.0000824	0x73		
+Async Serial	data	9.8182478	0.0000824	0x06		
+Async Serial	data	9.8183344	0.0000824	0x30		
+Async Serial	data	9.8184296	0.0000824	0x2E		
+Async Serial	data	9.8185164	0.0000824	0x33		
+Async Serial	data	9.8186116	0.0000824	0x2E		
+Async Serial	data	9.8186982	0.0000824	0x33		
+Async Serial	data	9.8187936	0.0000824	0x00		
+Async Serial	data	9.8188802	0.0000824	0x04		
+Async Serial	data	9.8189668	0.0000824	0x02		
+Async Serial	data	9.8190534	0.0000824	0x00		
+Async Serial	data	9.81914	0.0000824	0x00		
+Async Serial	data	9.8192266	0.0000824	0x05		
+Async Serial	data	9.8193132	0.0000824	0x02		
+Async Serial	data	9.8193998	0.0000824	0x00		
+Async Serial	data	9.8194864	0.0000824	0x00		
+Async Serial	data	9.819573	0.0000824	0x07		
+Async Serial	data	9.8196596	0.0000824	0x02		
+Async Serial	data	9.8197462	0.0000824	0x00		
+Async Serial	data	9.819833	0.0000824	0x00		
+Async Serial	data	9.8199196	0.0000824	0x00		
+Async Serial	data	9.8200062	0.0000824	0xE1		
+Async Serial	data	9.8200928	0.0000824	0x1A		
+Async Serial [1]	data	10.8205626	0.0000824	0xFE		
+philips_uart [1]	packet	10.8205626	0.0007748			[MCU->module] HS1(0x0001)  |  LEN=2  |  DATA=03 00  |  CRC=48 5C
+Async Serial [1]	data	10.8206492	0.0000824	0xFF		
+Async Serial [1]	data	10.8207358	0.0000824	0x01		
+Async Serial [1]	data	10.8208224	0.0000824	0x00		
+Async Serial [1]	data	10.8209088	0.0000824	0x02		
+Async Serial [1]	data	10.8209954	0.0000824	0x03		
+Async Serial [1]	data	10.821082	0.0000824	0x00		
+Async Serial [1]	data	10.8211684	0.0000824	0x48		
+Async Serial [1]	data	10.821255	0.0000824	0x5C		
+Async Serial [1]	data	11.8205536	0.0000824	0xFE		
+philips_uart [1]	packet	11.8205536	0.0007746			[MCU->module] HS1(0x0001)  |  LEN=2  |  DATA=03 00  |  CRC=48 5C
+Async Serial [1]	data	11.8206402	0.0000824	0xFF		
+Async Serial [1]	data	11.8207266	0.0000824	0x01		
+Async Serial [1]	data	11.8208132	0.0000824	0x00		
+Async Serial [1]	data	11.8208998	0.0000824	0x02		
+Async Serial [1]	data	11.8209862	0.0000824	0x03		
+Async Serial [1]	data	11.8210728	0.0000824	0x00		
+Async Serial [1]	data	11.8211594	0.0000824	0x48		
+Async Serial [1]	data	11.8212458	0.0000824	0x5C		
+Async Serial [1]	data	11.8705726	0.0000824	0xFE		
+philips_uart [1]	packet	11.8705726	0.0007748			[MCU->module] HS1(0x0001)  |  LEN=2  |  DATA=03 00  |  CRC=48 5C
+Async Serial [1]	data	11.8706592	0.0000824	0xFF		
+Async Serial [1]	data	11.8707456	0.0000824	0x01		
+Async Serial [1]	data	11.8708322	0.0000824	0x00		
+Async Serial [1]	data	11.8709188	0.0000824	0x02		
+Async Serial [1]	data	11.8710052	0.0000824	0x03		
+Async Serial [1]	data	11.8710918	0.0000824	0x00		
+Async Serial [1]	data	11.8711784	0.0000824	0x48		
+Async Serial [1]	data	11.871265	0.0000824	0x5C		
+Async Serial	data	12.8096634	0.0000824	0x00	framing	
+Async Serial [1]	data	12.8162548	0.0000824	0x00	framing	
