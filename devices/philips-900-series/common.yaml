@@ -1,0 +1,75 @@
+# Shared config for the Philips Series 900 (AC0950/AC0951) — included by the
+# per-board yamls. Do not flash this directly.
+#
+# ⚠️ WIP — DOES NOT COMPILE YET. The `philips` component only knows AC0650 and
+# AC0651 (see components/philips/__init__.py -> VALID_MODELS). AC0950/AC0951
+# have to be added there once the MCU protocol is confirmed. Until then use
+# philips-900-uart-sniffer.yaml, which needs no component support.
+logger:
+  # On the ESP32-C3 the default logger UART (UART0) is GPIO20/21 — the same pins
+  # as the MCU link. Log over the native USB instead so those pins stay free.
+  hardware_uart: USB_SERIAL_JTAG
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "${wifi_ap_ssid}"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+external_components:
+  - source:
+      type: local
+      path: ../../components
+    components: [philips]
+
+uart:
+  - id: uart_mcu
+    tx_pin: ${tx_pin}
+    rx_pin: ${rx_pin}
+    baud_rate: 115200   # unconfirmed on the 900 series — verify with the sniffer
+
+philips:
+  id: purifier
+  model: ${philips_model}   # AC0950 / AC0951 — not implemented yet
+
+fan:
+  - platform: philips
+    philips: purifier
+    name: "Fan"
+
+sensor:
+  - platform: philips
+    philips: purifier
+    name: "Pre-filter"
+    type: filter_clean
+  - platform: philips
+    philips: purifier
+    name: "HEPA Filter"
+    type: filter_lifetime
+
+button:
+  - platform: philips
+    philips: purifier
+    name: "Reset Pre-filter"
+    type: reset_prefilter
+  - platform: philips
+    philips: purifier
+    name: "Reset HEPA Filter"
+    type: reset_hepa
+
+text_sensor:
+  - platform: philips
+    philips: purifier
+    name: "MCU Version"
+    type: mcu_version

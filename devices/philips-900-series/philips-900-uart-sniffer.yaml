@@ -1,0 +1,78 @@
+# Philips Series 900 (AC0950 / AC0951) — passive UART sniffer.
+#
+# STATUS: this is the ONLY config in this folder that works today. The protocol
+# between the main MCU and the stock MXCHIP EMC6069-P module has not been
+# decoded yet, so there is no `philips:` component support for these models.
+#
+# What it does: listens on BOTH directions of the MCU<->module link without
+# transmitting anything, and dumps raw frames to the log. Leave the stock MXCHIP
+# module in place and running for this — you want to capture its conversation.
+#
+# Wiring (3 wires, no TX from the ESP — read-only!):
+#   ESP GND   -> board GND
+#   GPIO20    -> MCU TX pad   (what the MCU sends to the module)
+#   GPIO21    -> module TX pad (what the module sends to the MCU)
+# Power the ESP from its own USB, or from the board's +5V if you prefer.
+#
+# Baud rate: 115200 is the starting guess (the 600-series MCU link runs 115200
+# 8N1). If the log is garbage, try 9600 / 38400 / 57600 on both buses.
+substitutions:
+  device_name: philips-900-sniffer
+  wifi_ap_ssid: "Philips-900-Sniffer"
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: seeed_xiao_esp32c3
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+  # UART0 on the C3 is GPIO20/21 — the pins we need. Log over native USB.
+  hardware_uart: USB_SERIAL_JTAG
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "${wifi_ap_ssid}"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+uart:
+  # MCU -> module
+  - id: uart_from_mcu
+    rx_pin: GPIO20
+    baud_rate: 115200
+    rx_buffer_size: 512
+    debug:
+      direction: RX
+      dummy_receiver: true
+      after:
+        timeout: 20ms
+      sequence:
+        - lambda: UARTDebug::log_hex(direction, bytes, ' ');
+
+  # module -> MCU
+  - id: uart_from_module
+    rx_pin: GPIO21
+    baud_rate: 115200
+    rx_buffer_size: 512
+    debug:
+      direction: RX
+      dummy_receiver: true
+      after:
+        timeout: 20ms
+      sequence:
+        - lambda: UARTDebug::log_hex(direction, bytes, ' ');

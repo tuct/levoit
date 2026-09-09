@@ -1,0 +1,36 @@
+# Philips Series 900 AC0951 C3 dev variant — AC0950 plus the PM sensor entities.
+# The board has a connector silkscreened PM2.5 next to the MXCHIP module, so the
+# 951 presumably populates a particulate sensor there the same way the AC0651 does.
+#
+# ⚠️ WIP — does not compile yet, see common.yaml.
+substitutions:
+  device_name: philips-ac0951-c3
+  wifi_ap_ssid: "Philips-AC0951"
+  philips_model: AC0951
+  rx_pin: GPIO20   # XIAO C3 D7 — MCU TX -> ESP RX
+  tx_pin: GPIO21   # XIAO C3 D6 — ESP TX -> MCU RX
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: seeed_xiao_esp32c3
+  framework:
+    type: esp-idf
+
+packages:
+  common: !include common.yaml
+
+logger:
+  level: DEBUG   # VERBOSE shows the raw UART frames (TX -> / RX <-)
+
+# AC0951-only entities (added on top of common.yaml).
+sensor:
+  - platform: philips
+    philips: purifier
+    name: "PM2.5"
+    type: pm2_5
+  - platform: philips
+    philips: purifier
+    name: "Allergen Index"
+    type: allergen_index

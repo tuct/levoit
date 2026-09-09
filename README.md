@@ -129,24 +129,47 @@ Extracted from the integration's `FanModel` enum and `device_models.py` — **63
 
 **AC0650** shows up on both sides: the CoAP integration talks to its stock MXCHIP module, while [our Philips / MUJI 600-series component](./components/philips/README.md) replaces that module with an ESP32 and speaks the internal `FE FF` UART protocol instead. If you want an air-quality sensor on an AC0650, the ESP route is the one that gets you there — the stock unit has no AQ sensor at all.
 
-### 🔬 Open question — can the MXCHIP models be ESP32-ified anyway?
+### 🔬 Open question — can the MXCHIP models run ESPHome after all?
 
-**Unverified — no teardown done yet.** The premise of every conversion in this repo is that the Wi-Fi module and the purifier's own MCU are separate chips talking over UART. If that also holds for the MXCHIP-based Philips models, the same 🔵 *Add ESP* trick should apply: hold the MXCHIP in reset, wire an ESP32 to the same UART pads, and reimplement the protocol.
+> 🔎 **Update — an AC0950 has now been opened.** The module in the Series 900 is an **MXCHIP `EMC6069-P`** (Wi-Fi + BLE, FCC ID [`P53-EMC6069`](https://fccid.io/P53-EMC6069)) — *not* an EMW3080, so the LibreTiny route below does not automatically apply. Teardown photos, board notes and a UART sniffer config: [**devices/philips-900-series**](./devices/philips-900-series). The protocol is still undecoded — help welcome.
 
-What would need checking on an actual board (an **AC3059** is the candidate to start with):
+**Unverified — nobody has opened one of these up.** No MXCHIP→ESP32 swap on a Philips purifier is documented anywhere: the community thread only ever establishes the vendor from MAC prefixes (`b0:f8:93`, `04:78:63`, one report of `e8:c1:d7`), and every Philips project out there is software-only over CoAP. There is no teardown, no UART capture, no replacement attempt to build on.
 
-1. Is the Wi-Fi module a separate daughterboard / castellated module with an identifiable UART pair to the main MCU, or is the MXCHIP itself running the whole purifier?
-2. Is there a usable reset / enable pin to hold the MXCHIP off cleanly (the ESPHome equivalent of `EN`→GND), so the mod stays reversible?
-3. Logic-analyzer capture of both UART directions during app interaction, to see whether it's a Levoit/Philips-style framed binary protocol.
+But the interesting lead isn't adding an ESP32 — it's that **the MXCHIP may be able to run ESPHome itself**:
 
-If you have one of these open on the bench, a UART dump in [Discussions](https://github.com/tuct/esphome-projects/discussions) would be very welcome — see [Capturing a UART Dump](#capturing-a-uart-dump) below.
+* The common MXCHIP part, the **EMW3080** (marketed as **MX1290**), is a **relabeled Realtek RTL8710BN** — Ameba-Z, Cortex-M4F.
+* `rtl8710b` is a **[LibreTiny](https://docs.libretiny.eu/) target**, and LibreTiny has been [part of ESPHome since 2023.9.0](https://esphome.io/components/libretiny/).
+* So on an EMW3080-family module the move is not 🔵 *Add ESP* but a straight **reflash of the existing module** — no extra hardware, no reset pin to hold down.
+
+There is a working precedent on exactly this silicon: **[hn/ginlong-solis](https://github.com/hn/ginlong-solis#replacing-the-main-application)** flashes ESPHome onto the EMW3080-E in a Solis S3 Wi-Fi stick. The stock AliOS-Things image is dumped with **[ltchiptool](https://github.com/libretiny-eu/ltchiptool)**, the module is put into UART boot mode by **pulling TX low during boot** (jumper wires, no soldering), and ESPHome is then written over the stock bootloader and app, with OTA updates from then on. That project also found 8 MB of flash where the datasheets claim 2 MB.
+
+**What has to be verified on an actual board first:**
+
+1. **Which MXCHIP part is in there.** This is the whole question, and it needs the marking read off the can. EMW3080 / MX1290 → RTL8710BN → LibreTiny works. **EMC3080** is a Cortex-M33 and **EMW3060 / EMW3162** are STM32 + Broadcom — neither is a LibreTiny target.
+2. **How the module attaches** — UART, SPI or SDIO to the purifier's MCU, and whether the MXCHIP runs the CoAP stack itself. ESPHome on the module still has to speak whatever the main MCU expects, so this protocol needs decoding either way.
+3. **A logic-analyzer capture of both UART directions** during app interaction, to see whether it's a Levoit/Philips-style framed binary protocol.
+4. **A full stock-firmware dump before anything is written** — as in the Solis project, this is the only way back.
+
+**Free reconnaissance:** the AC2889 FCC filing ([2AICSAC2889](https://fccid.io/2AICSAC2889)) keeps its schematics and block diagram under long-term confidentiality, but the **AC5659 filing ([2ANX9-AC5659](https://fccid.io/2ANX9-AC5659/Internal-Photos/internal-Rev1-3693431)) has public internal photos** — same protocol family, and the cheapest way to identify the module without opening anything.
+
+If you have one of these open on the bench, a photo of the Wi-Fi module and a UART dump in [Discussions](https://github.com/tuct/esphome-projects/discussions) would be very welcome — see [Capturing a UART Dump](#capturing-a-uart-dump) below.
 
 ## Change Log 
+
+### 2026.09.09
+
+* Added a [Philips Series 900](./devices/philips-900-series) research folder — AC0950 / AC0951: teardown notes, board observations, a reverse-engineering log and a passive both-direction UART sniffer config
+* **Module identified: the Series 900 uses an MXCHIP `EMC6069-P`** (Wi-Fi + BLE, FCC ID [`P53-EMC6069`](https://fccid.io/P53-EMC6069)) — *not* an EMW3080, so the LibreTiny reflash route does not carry over. The working plan there is 🔵 *Add ESP*; the MCU protocol is still undecoded
+
+### 2026.09.08
+
+* Levoit component **1.4.1** — compiler-warning cleanup for the ESP-IDF build, plus a `total_runtime` log-label fix (@EdenNelson, #59; details in the [component change log](#change-log---levoit-component))
 
 ### 2026.09.07
 
 * Levoit component **1.4.1** — `fan_operating_mode` select, coherent fan mode commands, Core room size round-trip fix, fan-speed fix when leaving a preset, and `auto_profile_room_size_input` (details in the [component change log](#change-log---levoit-component))
 * Added "Cloud-free without ESPHome" section — Philips / Versuni MXCHIP models controllable locally over CoAP
+* Research note: the MXCHIP EMW3080 is a relabelled Realtek RTL8710BN, a LibreTiny/ESPHome target — so those Philips models may be reflashable rather than needing an added ESP32 (unverified, needs a teardown)
 * Overview table reworked: new **Support** column separating in-repo components from external projects, rows grouped by manufacturer
 * Removed the `clock_clock` and `lvgl_clock` components — split out into their own repo
 
@@ -365,7 +388,7 @@ Auto mode options per model:
 
 ### Change Log - Levoit Component
 
-#### ESP Version: 1.4.1 - 2026.09.07
+#### ESP Version: 1.4.1 - 2026.09.08
 
 * Add `fan_operating_mode` select: the active fan mode as a normal ESPHome select, for dashboards that don't render fan presets (@EdenNelson, #50)
   * Stays in sync with MCU fan-mode status and with changes made through the fan entity
@@ -378,6 +401,12 @@ Auto mode options per model:
   * Restores saved target on reboot, clamped to model-specific min/max
   * Model ranges: C300S 9–50 m², C400S 9–38 m², C600S 9–147 m², V100S 9–52 m², V200S 9–87 m²
   * Sprout: Room Size/Efficient mode is protocol-inherited from Vital but unverified on hardware — `auto_profile_room_size_input` not included for Sprout
+* Clear the compiler warnings the component emits during an ESP-IDF build (@EdenNelson, #59)
+  * `types.h`: `command_type_to_string` is now `inline` instead of `static` — as a static function in a header it was reported unused by each of the nine translation units that include `types.h` without calling it, which accounted for most of the warning output
+  * Cast `uint32_t` log arguments to `unsigned` in the `ESP_LOGx` calls that mismatched `%u` (`uint32_t` is `unsigned long` on xtensa), including the VERBOSE-only sites in `core_commands.cpp`, `vital_commands.cpp` and `core_status.cpp`
+  * `decoder.cpp`: parenthesize the `&&` operands inside the `||` in the Core300S/400S status ptype test — grouping unchanged, only stated explicitly
+  * Fix the restore log labelling `total_runtime` as hours when the counter is incremented once per minute — 60× overstated, and disagreeing with the sibling line that already says "min". Log text only
+  * No behaviour change. The one warning left is the `-Wswitch` in `on_number_command`, which needs a decision on whether `white_noise_min` should reach the MCU
 
 #### ESP Version: 1.4.0 - 2026.06.14
 
