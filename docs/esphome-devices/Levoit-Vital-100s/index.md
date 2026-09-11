@@ -39,6 +39,9 @@ Manufacturer: [Levoit](https://www.levoit.com)
 
 ## Flashing
 
+> **Unplug the unit before opening it.** This is a mains appliance — disconnect it
+> from the wall before any disassembly or soldering.
+
 The top cover pries off to expose the PCB — no screws to start with. The device
 [guide](https://github.com/tuct/levoit/tree/main/devices/levoit-vital100s) walks through opening
 the case without breaking the hooks, the UART pad locations, and the alternative of

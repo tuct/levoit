@@ -43,6 +43,9 @@ Manufacturer: [Levoit](https://www.levoit.com)
 
 ## Flashing
 
+> **Unplug the unit before opening it.** This is a mains appliance — disconnect it
+> from the wall before any disassembly or soldering.
+
 Disassembly is the most involved of the Levoit range: the fan assembly has to come
 out through the handles to reach the control board. The device
 [guide](https://github.com/tuct/levoit/tree/main/devices/levoit-core600s) has
