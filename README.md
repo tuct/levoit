@@ -177,7 +177,41 @@ There is a working precedent on exactly this silicon: **[hn/ginlong-solis](https
 
 If you have one of these open on the bench, a photo of the Wi-Fi module and a UART dump in [Discussions](https://github.com/tuct/esphome-projects/discussions) would be very welcome — see [Capturing a UART Dump](#capturing-a-uart-dump) below.
 
-## Change Log 
+## Change Log
+
+### 2026.09.11
+
+* **Philips Series 900 — an AC0951 now runs ESPHome.** The MCU↔module protocol
+  is decoded and turns out to be the *same* one the
+  [`philips`](./components/philips/README.md) component already speaks for the
+  AC0650/AC0651 — 115200 8N1, `FE FF` framing, CRC-16/CCITT-FALSE, almost the
+  same datapoint map. `model: AC0950` / `AC0951` added; every write frame was
+  verified byte-for-byte against logic-analyzer captures before it was flashed
+  ([devices/philips-900-series](./devices/philips-900-series))
+  * New entities the 900 adds: **child lock**, **beep**, **display brightness**
+    (off / low / bright) and a **sleep timer** in hours with a minutes-remaining
+    sensor
+  * Two values differ from the 600 series: medium fan mode is `0x13` (not
+    `0x01`) and the HEPA filter total is 9600 (not 4800)
+  * Wiring guide with annotated pads, the 10k pull-up measured on the module's
+    reset pin, the XIAO ESP32-C3 pin mapping (`D7` RX / `D10` TX, avoiding the
+    C3's strapping pins) and an install walkthrough with photos
+  * ⚠️ The **AC0950** is still unverified — every capture and the working
+    install are from an AC0951
+* **Levoit Superior 6000S humidifier support** — the first non-purifier in the
+  repo. It speaks the same MCU protocol as the Levoit air purifiers, so it is a
+  new `model: SUPERIOR6000S` on the existing
+  [`levoit`](./components/levoit/README.md) component rather than a new one.
+  Ported from [Jyers/esphome-projects](https://github.com/Jyers/esphome-projects)
+  (thanks [@Jyers](https://github.com/Jyers) for the reverse-engineering)
+  ([devices/levoit-superior-6000s](./devices/levoit-superior-6000s))
+  * ⚠️ Compiles and its frames match the captures it came from, but **not run on
+    hardware here** — nobody in this repo owns a Superior 6000S
+* Added a **Humidifiers** section to the overview above, alongside the purifiers
+* Fixed a latent build bug in both the `philips` and `levoit` components:
+  platform includes were guarded on the generic `USE_SWITCH` / `USE_SENSOR` /
+  … macros, which *any* component defines, so a config with an unrelated
+  switch/select platform failed to compile
 
 ### 2026.09.09
 
@@ -410,6 +444,33 @@ Auto mode options per model:
 | Error | text_sensor | `error_message` | Device error status: "Ok" or "Sensor Error" **Not for Core200S** |
 
 ### Change Log - Levoit Component
+
+#### ESP Version: 1.5.0 - 2026.09.11
+
+* Add **Levoit Superior 6000S** (`model: SUPERIOR6000S`) — an evaporative
+  humidifier on the same MCU protocol as the purifiers. Ported from
+  [Jyers/esphome-projects](https://github.com/Jyers/esphome-projects)
+  * New entities: `auto_dry_power_off` / `auto_dry_water_empty` switches,
+    `humidity_target` and `timer` numbers, `humidity` / `temperature` /
+    `filter_life_mcu` / `timer_remaining` sensors, `auto_profile` /
+    `humidity_subtype` / `dry_level` selects, and `water_tank_empty` /
+    `humidifying` / `dry_active` binary sensors
+  * `select` and `number` gained Superior types; the fan now supports 9 speeds
+    and the Humidity / Dry modes
+  * **The timer runs on the ESP**, not the MCU: this MCU only stores a
+    "remaining" value pushed to it, so the component owns the countdown and
+    refreshes it once a minute. The `timer` number is in **hours** here, where
+    the purifiers use minutes
+  * **`dry_level` does not act on its own** — the select records Low/High and
+    the value is applied when Dry is picked on the fan entity
+* Fix a latent build bug: platform includes were guarded on the generic
+  `USE_SWITCH` / `USE_SENSOR` / … macros, which any component defines, so a
+  config with (say) a `template` switch but no `levoit` switch failed to
+  compile. Each platform now defines its own `USE_LEVOIT_*` guard
+* `publish_sensor` widened `uint32_t` → `float` so the humidifier can report
+  fractional temperature and humidity (it already converted internally)
+* ⚠️ Superior 6000S not verified on hardware — see
+  [the device README](./devices/levoit-superior-6000s)
 
 #### ESP Version: 1.4.1 - 2026.09.08
 

@@ -26,9 +26,9 @@ It works much like the [Levoit component](../levoit/README.md), just speaking Ph
 > [600 series](../../devices/philips-600-series/README.md) ·
 > [900 series](../../devices/philips-900-series/README.md).
 >
-> **The 900-series support is decoded from captures but not yet confirmed on
-> hardware**, and the `AC0950` in particular was never captured — everything is
-> from an `AC0951`.
+> ✅ **An AC0951 is confirmed running this on hardware.** The `AC0950` is not:
+> every capture and the working install are from an AC0951, so its support is an
+> assumption modelled on the AC0650/AC0651 split.
 
 Both speak the identical protocol; the component selects model-specific behaviour via the `model:` option.
 
