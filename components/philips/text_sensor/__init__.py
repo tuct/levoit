@@ -23,6 +23,9 @@ CONFIG_SCHEMA = text_sensor.text_sensor_schema(PhilipsTextSensor).extend(
 
 
 async def to_code(config):
+    # Tells philips.cpp this platform is in the build — see the note at
+    # the top of philips.cpp on why USE_TEXT_SENSOR is not sufficient.
+    cg.add_define("USE_PHILIPS_TEXT_SENSOR")
     parent = await cg.get_variable(config[CONF_PHILIPS_ID])
     var = cg.new_Pvariable(config[CONF_ID])
     await text_sensor.register_text_sensor(var, config)

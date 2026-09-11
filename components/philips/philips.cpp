@@ -1,20 +1,29 @@
 #include "philips.h"
 #include "esphome/core/defines.h"
-// Platform sub-directories are only copied into the build when that platform is
-// actually configured, so each include (and any use of its concrete type) must
-// be guarded by the matching USE_* macro — else e.g. an AC0650 config without a
-// switch fails to find switch/philips_switch.h.
-#ifdef USE_FAN
+// Platform sub-directories are only copied into the build when *this* component
+// uses that platform, so each include (and any use of its concrete type) must be
+// guarded. The generic USE_SWITCH / USE_SELECT / … macros are not good enough:
+// they are defined by *any* component using that platform, so a config with, say,
+// a template switch but no philips switch would still take the include and fail
+// to find switch/philips_switch.h. Each philips platform therefore defines its
+// own USE_PHILIPS_* macro from its to_code(), which is what we test here.
+#ifdef USE_PHILIPS_FAN
 #include "fan/philips_fan.h"
 #endif
-#ifdef USE_SENSOR
+#ifdef USE_PHILIPS_SENSOR
 #include "sensor/philips_sensor.h"
 #endif
-#ifdef USE_SWITCH
+#ifdef USE_PHILIPS_SWITCH
 #include "switch/philips_switch.h"
 #endif
-#ifdef USE_TEXT_SENSOR
+#ifdef USE_PHILIPS_TEXT_SENSOR
 #include "text_sensor/philips_text_sensor.h"
+#endif
+#ifdef USE_PHILIPS_SELECT
+#include "select/philips_select.h"
+#endif
+#ifdef USE_PHILIPS_NUMBER
+#include "number/philips_number.h"
 #endif
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
@@ -48,9 +57,17 @@ void Philips::setup() {
   this->hs_start_ = this->last_hs_;
 }
 
+static const char *model_name(PhilipsModel m) {
+  switch (m) {
+    case PhilipsModel::AC0651: return "AC0651";
+    case PhilipsModel::AC0950: return "AC0950";
+    case PhilipsModel::AC0951: return "AC0951";
+    default: return "AC0650";
+  }
+}
+
 void Philips::dump_config() {
-  ESP_LOGCONFIG(TAG, "Philips Air Purifier (model=%s)",
-                this->model_ == PhilipsModel::AC0651 ? "AC0651" : "AC0650");
+  ESP_LOGCONFIG(TAG, "Philips Air Purifier (model=%s)", model_name(this->model_));
   this->check_uart_settings(115200);
 }
 
@@ -194,19 +211,48 @@ void Philips::set_fan_mode(uint8_t mode_val) {
 }
 
 void Philips::set_switch(SwitchType type, bool state) {
-  if (type == SwitchType::STANDBY_SENSOR) {
-    ESP_LOGD(TAG, "set standby-sensor %s", state ? "ON" : "OFF");
-    this->set_group_(0x03, {0x34, 0x01, (uint8_t)(state ? 1 : 0)});
+  switch (type) {
+    case SwitchType::STANDBY_SENSOR:
+      ESP_LOGD(TAG, "set standby-sensor %s", state ? "ON" : "OFF");
+      this->set_group_(0x03, {0x34, 0x01, (uint8_t)(state ? 1 : 0)});
+      break;
+    case SwitchType::CHILD_LOCK:
+      ESP_LOGD(TAG, "set child-lock %s", state ? "ON" : "OFF");
+      this->set_group_(0x03, {0x03, 0x01, (uint8_t)(state ? 1 : 0)});
+      break;
+    case SwitchType::BEEP:
+      ESP_LOGD(TAG, "set beep %s", state ? "ON" : "OFF");
+      this->set_group_(0x03, {0x30, 0x01, (uint8_t)(state ? BEEP_ON : BEEP_OFF)});
+      break;
   }
+}
+
+// Writing DP 0x04 alone is enough — the MCU mirrors it to DP 0x05 itself. The
+// app sends both, but the second write produces no state change.
+void Philips::set_display_brightness(uint8_t raw) {
+  ESP_LOGD(TAG, "set display brightness 0x%02X", raw);
+  this->set_group_(0x03, {0x04, 0x01, raw});
+}
+
+// DP 0x10 is an index, not hours: 0 = off, otherwise hours + 1 (so 1 h = 2,
+// 12 h = 13). The MCU derives the minutes remaining and reports them on 0x11.
+void Philips::set_timer_hours(uint8_t hours) {
+  if (hours > 12) hours = 12;
+  uint8_t index = hours == 0 ? 0 : (uint8_t)(hours + 1);
+  ESP_LOGD(TAG, "set timer %u h (index %u)", hours, index);
+  this->set_group_(0x03, {0x10, 0x01, index});
 }
 
 void Philips::reset_filter(ButtonType which) {
   if (which == ButtonType::RESET_PREFILTER) {
     ESP_LOGD(TAG, "reset pre-filter");
-    this->set_group_(0x05, {0x0D, 0x02, 0x02, 0xD0});  // → 720
+    this->set_group_(0x05, {0x0D, 0x02, 0x02, 0xD0});  // → 720, both series
   } else {
-    ESP_LOGD(TAG, "reset HEPA filter");
-    this->set_group_(0x05, {0x0E, 0x04, 0x00, 0x00, 0x12, 0xC0});  // → 4800
+    // 4800 on the 600 series, 9600 on the 900 — a reset writes the total back.
+    uint32_t total = this->hepa_total();
+    ESP_LOGD(TAG, "reset HEPA filter (→ %u)", (unsigned) total);
+    this->set_group_(0x05, {0x0E, 0x04, (uint8_t)(total >> 24), (uint8_t)(total >> 16),
+                            (uint8_t)(total >> 8), (uint8_t)(total)});
   }
 }
 
@@ -248,8 +294,17 @@ void Philips::handle_status_(const uint8_t *d, size_t n) {
   size_t i = 6;  // skip the 6-byte header
   while (i + 1 < n && d[i] != 0x00) {
     uint8_t dpid = d[i];
-    // String TLV: <dpid> 0x73 <len> <ascii…>. The 0x73 type byte never collides
-    // with an integer length (always 1/2/4), so this disambiguates cleanly.
+    // Typed TLV: <dpid> <type> <len> <payload…>, where type 0x73 is an ASCII
+    // string and 0x74 an opaque blob (the 900's group 0x08 DP 0x06 is 128
+    // zero bytes). Neither collides with an integer length (always 1/2/4).
+    // The blob is skipped rather than parsed — without this the walk would
+    // read 0x74 as a 116-byte length and silently abandon the rest of the frame.
+    if (d[i + 1] == 0x74) {
+      uint8_t bl = d[i + 2];
+      if (i + 3 + bl > n) break;
+      i += 3 + bl;
+      continue;
+    }
     if (d[i + 1] == 0x73) {
       uint8_t sl = d[i + 2];
       if (i + 3 + sl > n) break;
@@ -272,9 +327,26 @@ void Philips::handle_status_(const uint8_t *d, size_t n) {
     if (group == 0x03) {
       if (dpid == 0x02) { have_power = true; power = val != 0; }
       else if (dpid == 0x0C) { have_mode = true; mode = (uint8_t) val; }
-      else if (dpid == 0x21) this->publish_sensor_(SensorType::PM2_5, (float) val);          // AC0651 PM2.5 µg/m³
-      else if (dpid == 0x20) this->publish_sensor_(SensorType::ALLERGEN_INDEX, (float) val);  // AC0651 allergen index 1–12
-      else if (dpid == 0x34) this->publish_switch_(SwitchType::STANDBY_SENSOR, val != 0);     // AC0651 standby sensor monitoring
+      else if (dpid == 0x21) this->publish_sensor_(SensorType::PM2_5, (float) val);          // PM2.5 µg/m³
+      else if (dpid == 0x20) this->publish_sensor_(SensorType::ALLERGEN_INDEX, (float) val);  // allergen index 1–12
+      else if (dpid == 0x34) this->publish_switch_(SwitchType::STANDBY_SENSOR, val != 0);     // standby sensor monitoring
+      // --- 900-series datapoints. Publishing is a no-op unless the matching
+      //     entity was configured, so these are safe to parse unconditionally. ---
+      else if (dpid == 0x03) this->publish_switch_(SwitchType::CHILD_LOCK, val != 0);
+      else if (dpid == 0x30) this->publish_switch_(SwitchType::BEEP, val != 0);
+      else if (dpid == 0x04) {
+        // A powered-off unit also reports 0 here, so "off" is only meaningful
+        // while the unit is on — see devices/philips-900-series/README.md.
+        const char *b = val == BRIGHTNESS_BRIGHT ? "bright"
+                        : val == BRIGHTNESS_LOW  ? "low"
+                                                 : "off";
+        this->publish_select_(SelectType::DISPLAY_BRIGHTNESS, b);
+      } else if (dpid == 0x10) {
+        // index → hours (0 = off, else index - 1)
+        this->publish_number_(NumberType::TIMER, val == 0 ? 0.0f : (float) (val - 1));
+      } else if (dpid == 0x11) {
+        this->publish_sensor_(SensorType::TIMER_REMAINING, (float) val);
+      }
       // dpid 0x0D = current fan level (derived; not exposed yet)
     } else if (group == 0x05) {
       if (dpid == 0x07) pf_total = val;
@@ -285,7 +357,7 @@ void Philips::handle_status_(const uint8_t *d, size_t n) {
     i += 2 + l;
   }
 
-#ifdef USE_FAN
+#ifdef USE_PHILIPS_FAN
   if (group == 0x03 && this->fan_ != nullptr)
     this->fan_->apply_state(have_power ? power : this->fan_->state,
                             have_mode ? mode : 0xFF);
@@ -301,23 +373,45 @@ void Philips::handle_status_(const uint8_t *d, size_t n) {
 }
 
 void Philips::publish_sensor_(SensorType type, float value) {
-#ifdef USE_SENSOR
+#ifdef USE_PHILIPS_SENSOR
   auto *s = this->sensors_[(uint8_t) type];
   if (s != nullptr) s->publish_state(value);
 #endif
 }
 
 void Philips::publish_switch_(SwitchType type, bool state) {
-#ifdef USE_SWITCH
+#ifdef USE_PHILIPS_SWITCH
   auto *s = this->switches_[(uint8_t) type];
   if (s != nullptr) s->publish_state(state);
 #endif
 }
 
 void Philips::publish_text_sensor_(TextSensorType type, const std::string &value) {
-#ifdef USE_TEXT_SENSOR
+#ifdef USE_PHILIPS_TEXT_SENSOR
   auto *t = this->text_sensors_[(uint8_t) type];
   if (t != nullptr) t->publish_state(value);
+#endif
+}
+
+void Philips::publish_select_(SelectType type, const std::string &value) {
+#ifdef USE_PHILIPS_SELECT
+  auto *sel = this->selects_[(uint8_t) type];
+  // current_option() replaces the deprecated .state (removed in ESPHome 2026.7.0).
+  // Skipping an unchanged value keeps the 1 Hz poll from republishing constantly.
+  if (sel != nullptr && sel->current_option() != value) sel->publish_state(value);
+#else
+  (void) type;
+  (void) value;
+#endif
+}
+
+void Philips::publish_number_(NumberType type, float value) {
+#ifdef USE_PHILIPS_NUMBER
+  auto *num = this->numbers_[(uint8_t) type];
+  if (num != nullptr && num->state != value) num->publish_state(value);
+#else
+  (void) type;
+  (void) value;
 #endif
 }
 
