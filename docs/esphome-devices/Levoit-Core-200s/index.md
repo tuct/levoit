@@ -39,9 +39,6 @@ Manufacturer: [Levoit](https://www.levoit.com)
 
 ## Flashing
 
-> **Unplug the unit before opening it.** This is a mains appliance — disconnect it
-> from the wall before any disassembly or soldering.
-
 The stock ESP32 can be flashed directly over its UART pads. The device
 [guide](https://github.com/tuct/levoit/tree/main/devices/levoit-core200s) covers the
 teardown, the pad locations and the alternative of wiring in a replacement ESP32,

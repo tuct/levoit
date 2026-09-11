@@ -37,9 +37,6 @@ Manufacturer: [Levoit](https://www.levoit.com)
 
 ## Flashing
 
-> **Unplug the unit before opening it.** This is a mains appliance — disconnect it
-> from the wall before any disassembly or soldering.
-
 Three screws in the top get you to the control board. The device
 [guide](https://github.com/tuct/levoit/tree/main/devices/levoit-everest-air) covers
 the teardown, the UART test points, and the alternative of wiring in a replacement

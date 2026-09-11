@@ -42,9 +42,6 @@ Manufacturer: [Levoit](https://www.levoit.com)
 
 ## Flashing
 
-> **Unplug the unit before opening it.** This is a mains appliance — disconnect it
-> from the wall before any disassembly or soldering.
-
 The stock ESP32 is flashed over its UART pads. The device
 [guide](https://github.com/tuct/levoit/tree/main/devices/levoit-vital200s) covers that
 path end to end — prerequisites, backing up the stock firmware, flashing, using the
