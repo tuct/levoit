@@ -1,19 +1,17 @@
 [← Back](../../README.md)
 # Philips Series 900 Air Purifier — AC0950 / AC0951
 
-> 🔬 **Protocol decoded, component support written, not yet run on hardware.**
-> The board has been opened, the Wi-Fi module identified, and the MCU↔module
-> link **captured and decoded**: it is the *same* protocol the
-> [`philips`](../../components/philips) component already speaks for the
-> AC0650/AC0651, at 115200 8N1, with an almost identical datapoint map. See
+> ✅ **Working on hardware.** An **AC0951** is running an ESP32-C3 on the MCU
+> link with the [`philips`](../../components/philips) component, fully local.
+>
+> The MCU↔module link is the *same* protocol the component already speaks for
+> the AC0650/AC0651 — 115200 8N1, almost identical datapoint map — decoded from
+> the logic-analyzer captures in [`captures/`](./captures), with every write
+> frame checked byte-for-byte against them. See
 > [Protocol](#protocol--decoded-from-the-captures).
 >
-> `AC0950` / `AC0951` are now supported by the component, and every write frame
-> it emits was checked byte-for-byte against the captures in
-> [`captures/`](./captures). **But nothing here has been run against a real
-> MCU yet** — the board YAMLs compile and the pads are identified, but the
-> wiring in [Adding your own ESP32](#adding-your-own-esp32) is untested, and
-> every capture is from an **AC0951** (the AC0950 has never been observed).
+> ⚠️ The **AC0950** is still unverified: every capture and the working install
+> are from an AC0951, and the AC0950 has never been observed.
 
 The goal for these units is the same move as the
 [600-series](../philips-600-series): **disable the stock Wi-Fi module and drive
@@ -37,7 +35,7 @@ in the root README.
 | MCU link | ✅ UART, **115200 8N1**, **3.3 V** — verified; same `FE FF` framing as the 600 series |
 | MCU firmware | `0.3.3` (module firmware `0.8.6`) |
 | Internal model string | `AC0951/13`, codename **`Unicorn`** |
-| ESPHome support | ⚠️ implemented in [`philips`](../../components/philips) (`model: AC0950` / `AC0951`), not yet hardware-tested |
+| ESPHome support | ✅ [`philips`](../../components/philips) (`model: AC0951` — confirmed on hardware; `AC0950` untested) |
 | Stock local control | ✅ CoAP (`AWS_Philips_AIR`) without opening the case |
 
 ## Opening the unit
@@ -53,9 +51,8 @@ control PCB.
 
 > ⚠️ **Unplug the unit first.** Part of the control board is on mains.
 >
-> ⚠️ **The component has not been run against this MCU yet.** The pads are
-> identified from real probing and the protocol is decoded and implemented, but
-> no ESPHome build has yet driven the purifier. Expect to debug.
+> ✅ **This has been done and works** on an AC0951 — the photos below are that
+> install. The pads, pin assignment and parking method are all as used there.
 
 The move is the same as the [600 series](../philips-600-series): park the stock
 Wi-Fi module and let your own ESP32 talk to the purifier's MCU over the internal
@@ -71,7 +68,7 @@ All the connection points are on the **top edge of the MXCHIP module**:
 | `GND` | ground, same header | ESP32 `GND` |
 | **A** | UART, **MCU → module** (carries `STATUS`) | ESP32 `RX` |
 | **B** | UART, **module → MCU** (carries `HS1` / `QUERY` / `SET`) | ESP32 `TX` |
-| **C** | module **reset / enable** | pull low to park the stock module |
+| **C** | module **reset / enable**, 10k pull-up on the PCB | tie to GND to park the stock module |
 
 ### Which of A and B is which
 
@@ -96,16 +93,20 @@ The ESP32 and the MXCHIP module cannot both drive the MCU's RX line. Pad **C** i
 the module's reset/enable: **hold it low** so the module stays fitted but silent,
 the same trick the 600 series uses on the original ESP32's `EN` pin.
 
-**A plain wire to GND is what has been used here, and it works.** That is the
-simplest option and needs nothing but a link to a ground point.
+**C is pulled up by a 10k resistor on the PCB** (measured). That settles how to
+hold it low:
 
-A resistor is the more cautious choice if you would rather not rely on that: a
-hard tie is only safe as long as nothing on the board ever drives that net high,
-and a resistor limits the current if something does. The 600 series documents
-[~10k to GND](../philips-600-series#esphome-component) for the same job. If you go
-that way, **1 kΩ is the better value** — against a typical 10k pull-up it holds
-the pin near 0.3 V, whereas 10k against 10k would sit at ~1.65 V, squarely in the
-indeterminate band where the module might not stay in reset.
+**Use a plain wire to GND.** It is what has been used here and it works, and with
+a 10k pull-up and nothing else driving the net it sinks only
+`3.3 V / 10k ≈ 0.33 mA` — there is nothing to protect against, so a series
+resistor buys you nothing.
+
+**Do not copy the 600 series' ~10k here.** That value works on the 600's ESP32
+`EN` pin, but against this board's 10k pull-up it would form an even divider and
+leave C sitting at ~1.65 V — squarely in the indeterminate band, where the module
+may not stay in reset at all. If you want a resistor rather than a hard tie it has
+to be **≤ 3.3 kΩ** to get under the ~0.8 V a 3.3 V input needs to read low; 1 kΩ
+gives ~0.3 V with plenty of margin.
 
 Driving C from a spare ESP32 GPIO (output-low) works too, and lets you release
 the module without unsoldering.
@@ -122,9 +123,11 @@ can damage something.
   5V / VIN  <--------------------  +5V  (4-pin header)
        GND  <-------------------->  GND  (4-pin header)
   RX GPIO20 <--------------------  A    (MCU TX — STATUS frames)
-  TX GPIO21 -------------------->  B    (MCU RX)
+  TX GPIO10 -------------------->  B    (MCU RX)
                                     C  ---> GND  (parks the stock module)
 ```
+
+![Seeed XIAO ESP32-C3 with its external antenna](./images/xiao_esp32c3.jpg)
 
 On a **Seeed XIAO ESP32-C3** — the board the configs here assume:
 
@@ -133,19 +136,24 @@ On a **Seeed XIAO ESP32-C3** — the board the configs here assume:
 | `5V` | — | supply in (through the onboard regulator) | `+5V` header |
 | `GND` | — | ground | `GND` header |
 | `D7` | `GPIO20` | UART **RX** | **A** (MCU TX) |
-| `D6` | `GPIO21` | UART **TX** | **B** (MCU RX) |
+| `D10` | `GPIO10` | UART **TX** | **B** (MCU RX) |
 | any free pad, e.g. `D0` | `GPIO2` | *optional* — hold **C** low from software | **C** |
 
-Watch out that `D6` and `D7` are **not** adjacent: `D0`–`D6` run down one edge of
-the board, while `5V`, `GND`, `3V3`, `D10`, `D9`, `D8` and `D7` run down the
-other — so `D7` (RX) sits at the far corner from `D6` (TX).
+Conveniently, **all four connections are on the same edge** of the XIAO: that
+side runs `5V`, `GND`, `3V3`, `D10`, `D9`, `D8`, `D7` from top to bottom, so
+power, ground and both UART lines come off one row.
 
 These are the defaults in
 [`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml)
-(`rx_pin: GPIO20` / `tx_pin: GPIO21`). Note that `GPIO20`/`GPIO21` are also the
-C3's **default UART0 pins**, which is why [`common.yaml`](./common.yaml) moves the
-logger to `USB_SERIAL_JTAG` — otherwise the log output would fight the MCU on the
-same wires.
+(`rx_pin: GPIO20` / `tx_pin: GPIO10`).
+
+`GPIO20` is the C3's **default UART0 RX**, which is why
+[`common.yaml`](./common.yaml) moves the logger to `USB_SERIAL_JTAG` — otherwise
+the log output would fight the MCU on the same wire. TX deliberately uses
+`GPIO10` rather than `GPIO21` (UART0 TX): it keeps `D6` free and, more
+importantly, avoids `D8`/`D9`, which are **strapping pins** on the C3 — `D9` is
+also the BOOT button, so a line held low there at reset drops the board into
+serial-download mode instead of running your firmware.
 
 The optional GPIO for **C** is only needed if you want to release the stock module
 without unsoldering; a wire straight to GND is what has been used so far.
@@ -153,6 +161,41 @@ without unsoldering; a wire straight to GND is what has been used so far.
 **A and B are 3.3 V logic — measured, not assumed.** So they connect straight to
 an ESP32-C3 GPIO with no level shifting. (Only the `+5V` header pad is 5 V, and
 that goes to the XIAO's `5V` pin, never to a GPIO.)
+
+### The install
+
+The AC0951 this was done on, start to finish. The MXCHIP module stays soldered in
+place — only pad **C** is tied to GND to keep it quiet.
+
+![ESP32-C3 wired to the control board](./images/install_01.jpg)
+
+![Wiring, wider view](./images/install_02.jpg)
+
+The ESP32-C3 tucks into the cavity above the fan with the antenna clear of the
+board. Route the wires so nothing is pinched when the cap goes back on.
+
+![ESP32-C3 positioned in the housing](./images/install_03.jpg)
+
+![Board and ESP seated](./images/install_04.jpg)
+
+![Wire routing before closing up](./images/install_05.jpg)
+
+![Ready to close](./images/install_06.jpg)
+
+#### Refitting the top cap — watch the orientation
+
+The cap only goes back on one way. The slats around the inner ring are evenly
+spaced **except for one, which is noticeably wider** — line that up with the
+matching gap on the housing before twisting the cap clockwise to lock it.
+
+![The wider slat that keys the top cap](./images/top_cap_orientation.jpg)
+
+Get it wrong and the cap will not seat; there is no force needed either way, so
+if it resists, back off and re-check the wide slat rather than pushing.
+
+#### Running
+
+![The AC0951 reassembled and running](./images/installed_running.jpg)
 
 ### Then flash
 
@@ -574,8 +617,8 @@ A factory-fresh unit announces itself: the first group `0x02` read returns
 `AC0950` / `AC0951` are implemented in
 [`components/philips`](../../components/philips) — set `model:` and the rest is
 shared with the 600 series. Every write frame the component emits has been
-checked byte-for-byte against the captures in [`captures/`](./captures); **none
-of it has been run against a real MCU yet.**
+checked byte-for-byte against the captures in [`captures/`](./captures), and an
+**AC0951 is confirmed running it on hardware**.
 
 ### What differs from the 600 series
 
@@ -598,6 +641,13 @@ PM2.5, allergen index, standby sensor — is identical.
 | `select` | `display_brightness` | `0x04` — `off` / `low` / `bright` |
 | `number` | `timer` | `0x10` — hours, `0` (off) to `12` |
 | `sensor` | `timer_remaining` | `0x11` — minutes left, MCU-counted, read-only |
+
+The 900 also inherits the 600-series **`standby_sensor`** switch (DP `0x34`),
+which keeps the particulate sensor measuring while the unit is on standby so
+PM2.5 and the allergen index stay live with the fan off. It is an AC0951-only
+feature, so it lives in
+[`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml) rather than
+[`common.yaml`](./common.yaml) — the AC0950 has no PM sensor to keep running.
 
 Two behaviours are worth knowing when reading those entities back:
 
@@ -648,9 +698,9 @@ timing detail.
 | File | Status | Purpose |
 |------|--------|---------|
 | [`philips-900-uart-sniffer.yaml`](./philips-900-uart-sniffer.yaml) | ✅ usable | Passive both-direction UART capture — the only flashable config here |
-| [`common.yaml`](./common.yaml) | ⚠️ WIP | Shared entity config for the eventual component support |
-| [`philips-ac0950.yaml`](./philips-ac0950.yaml) | ⚠️ WIP | AC0950 board config |
-| [`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml) | ⚠️ WIP | AC0951 board config, adds PM2.5 entities |
+| [`common.yaml`](./common.yaml) | ✅ | Shared entity config |
+| [`philips-ac0950.yaml`](./philips-ac0950.yaml) | ⚠️ untested | AC0950 board config — same protocol assumed, never verified |
+| [`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml) | ✅ working | AC0951 board config; adds PM2.5, allergen index and the standby-sensor switch |
 | [`secrets-example.yaml`](./secrets-example.yaml) | ✅ | Template — copy to `secrets.yaml` |
 | [`captures/`](./captures) | — | UART captures — see below |
 | [`images/`](./images) | — | Teardown / PCB photos |

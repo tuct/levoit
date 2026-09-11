@@ -7,8 +7,8 @@ substitutions:
   device_name: philips-ac0951-c3
   wifi_ap_ssid: "Philips-AC0951"
   philips_model: AC0951
-  rx_pin: GPIO20   # XIAO C3 D7 — MCU TX -> ESP RX
-  tx_pin: GPIO21   # XIAO C3 D6 — ESP TX -> MCU RX
+  rx_pin: GPIO20   # XIAO C3 D7  — MCU TX (pad A) -> ESP RX
+  tx_pin: GPIO10   # XIAO C3 D10 — ESP TX -> MCU RX (pad B)
 
 esphome:
   name: ${device_name}
@@ -34,3 +34,12 @@ sensor:
     philips: purifier
     name: "Allergen Index"
     type: allergen_index
+
+# Keeps the particulate sensor measuring while the unit is on standby, so PM2.5
+# and the allergen index stay live with the fan off. Confirmed on the wire in
+# captures/sensor_monitoring_on_off_on.txt (group 0x03 DP 0x34).
+switch:
+  - platform: philips
+    philips: purifier
+    name: "Standby Sensor Monitoring"
+    type: standby_sensor
