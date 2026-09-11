@@ -14,6 +14,10 @@ TYPE_MAP = {
     "filter_low": BinarySensorType.FILTER_LOW,
     "cover_open": BinarySensorType.COVER_OPEN,
     "dark_detected": BinarySensorType.DARK_DETECTED,
+    # Superior 6000S (humidifier) only below
+    "water_tank_empty": BinarySensorType.WATER_TANK_EMPTY,
+    "dry_active": BinarySensorType.DRY_ACTIVE,
+    "humidifying": BinarySensorType.HUMIDIFYING,
 }
 
 TYPE_PROPS = {

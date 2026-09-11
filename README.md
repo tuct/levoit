@@ -1,8 +1,8 @@
 
 
-# Project - ESPHome hacked Air Purifiers for Home Assistant
+# Project - ESPHome hacked Air Purifiers and Humidifiers for Home Assistant
 
-- Collection of air purifiers that can be more or less easily hacked to run ESPHome instead of cloud-based firmware.
+- Collection of air purifiers and humidifiers that can be more or less easily hacked to run ESPHome instead of cloud-based firmware.
 - Eliminating cloud dependency and enabling native Home Assistant integration for air purifiers.
 
 
@@ -61,6 +61,25 @@ Devices that *can't* run ESPHome but are still controllable locally on stock fir
 > ### ➕ Add your own!
 > Got another air purifier running ESPHome? Add it to the list — open a **[Pull Request](https://github.com/tuct/esphome-projects/pulls)** or share it in **[Discussions](https://github.com/tuct/esphome-projects/discussions)**.
 > Two requirements: it has to be an **air purifier**, and it has to run (or be made to run) **ESPHome**. In-repo components or external projects (like the IKEA ones above) are both welcome.
+
+
+## Overview of existing / tested esphome-ified Humidifiers
+
+Humidifiers use the same MCU-over-UART approach as the purifiers above, and the
+same in-repo components — a Levoit humidifier is just another `model:` for the
+[`levoit`](./components/levoit/README.md) component.
+
+| Model | Manufacturer | Support | Methods | Tank | Output (spec) | Disassembly | Guide | Links | Comments |
+|-------|--------------|---------|---------|------|---------------|-------------|-------|-------|----------|
+| [Superior 6000S](./devices/levoit-superior-6000s) | Levoit | 🏠 [`levoit`](./components/levoit/README.md) | 🟢 Flash / 🔵 Add ESP | 6 L | 500 mL/h | Easy | [Guide](./devices/levoit-superior-6000s) | — | 🚧 **Untested on hardware** · evaporative; 9 fan speeds, target humidity, auto-dry, temperature + humidity sensors |
+
+The legend is the same as for the purifiers above — **Tank** and **Output** are
+manufacturer specs and replace the CADR/Noise columns.
+
+> ### ➕ Add your own!
+> Got a humidifier running ESPHome? Same deal as the purifiers — open a
+> **[Pull Request](https://github.com/tuct/esphome-projects/pulls)** or start a
+> **[Discussion](https://github.com/tuct/esphome-projects/discussions)**.
 
 
 ## Cloud-free *without* ESPHome — Philips / Versuni over local CoAP

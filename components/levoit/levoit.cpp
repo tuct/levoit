@@ -21,6 +21,8 @@
 #include "core_commands.h"
 #include "vital_commands.h"
 #include "sprout_commands.h"
+#include "superior_commands.h"
+#include "decoder_helpers.h"   // format_duration_minutes
 #include "sprout_status.h"
 #ifdef USE_LIGHT
 #include "light/levoit_light.h"
@@ -138,14 +140,13 @@ namespace esphome
 #endif
         }
 
-        void Levoit::publish_sensor(SensorType type, uint32_t value)
+        void Levoit::publish_sensor(SensorType type, float value)
         {
 #ifdef USE_SENSOR
             auto *se = sensors_[st_idx_(type)];
             if (!se)
                 return;
-            float fvalue = static_cast<float>(value);
-            if (se->has_state() && se->state == fvalue)
+            if (se->has_state() && se->state == value)
                 return;
             se->publish_state(value);
 #endif
@@ -353,12 +354,20 @@ namespace esphome
                 this->sendCommand(state ? setSproutLightNightlight : setSproutLedOff);
                 break;
 
+            case SwitchType::AUTO_DRY_POWER_OFF:
+                this->sendCommand(state ? setAutoDryPowerOffOn : setAutoDryPowerOffOff);
+                break;
+
+            case SwitchType::AUTO_DRY_WATER_EMPTY:
+                this->sendCommand(state ? setAutoDryWaterEmptyOn : setAutoDryWaterEmptyOff);
+                break;
+
             default:
                 break;
             }
         }
 
-        void Levoit::on_number_command(NumberType type, uint32_t value)
+        void Levoit::on_number_command(NumberType type, float value)
         {
             // Optional: restrict by model
             // if (model_ != ModelType::VITAL200S && type == NumberType::EFFICIENCY_ROOM_SIZE) return;
@@ -366,7 +375,26 @@ namespace esphome
             switch (type)
             {
             case NumberType::TIMER:
-                if (this->model_ == ModelType::CORE200S) {
+                if (this->model_ == ModelType::SUPERIOR6000S) {
+                    // Superior 6000S: the number is in HOURS and the ESP runs the
+                    // countdown - the MCU only stores the remaining value we push.
+                    uint32_t secs = static_cast<uint32_t>(value * 3600);
+                    this->sendCommand(setTimerMinutes);
+                    if (secs > 0) {
+                        this->start_esp_timer(secs);
+                        uint16_t mins = secs / 60;
+                        this->publish_text_sensor(TextSensorType::TIMER_DURATION_INITIAL,
+                                                  format_duration_minutes(mins));
+                        this->publish_sensor(SensorType::TIMER_CURRENT, value);
+                        this->publish_text_sensor(TextSensorType::TIMER_DURATION_CURRENT,
+                                                  format_duration_minutes(mins));
+                    } else {
+                        this->stop_esp_timer();
+                        this->publish_sensor(SensorType::TIMER_CURRENT, 0.0f);
+                        this->publish_text_sensor(TextSensorType::TIMER_DURATION_CURRENT,
+                                                  format_duration_minutes(0));
+                    }
+                } else if (this->model_ == ModelType::CORE200S) {
                     // Core200S: MCU requires stop before accepting new timer value;
                     // after stop, poll requestTimerStatus until MCU confirms remaining=0
                     if (value == 0) {
@@ -428,6 +456,10 @@ namespace esphome
             case NumberType::VENT_ANGLE:
                 this->sendCommand(setVentAngle);
                 break;
+
+            case NumberType::HUMIDITY_TARGET:
+                this->sendCommand(setHumidityTarget);
+                break;
             }
         }
         void Levoit::on_select_command(SelectType type, uint32_t value)
@@ -437,6 +469,20 @@ namespace esphome
 
             switch (type)
             {
+            case SelectType::AUTO_PROFILE:
+                this->sendCommand(value == 1 ? setAutoProfileAway : setAutoProfileHome);
+                break;
+
+            case SelectType::HUMIDITY_SUBTYPE:
+                this->sendCommand(value == 1 ? setHumiditySubtypeFan : setHumiditySubtypeSmart);
+                break;
+
+            case SelectType::DRY_LEVEL:
+                // Remembered only. Drying is started from the fan entity's Dry mode,
+                // which then applies this level - the MCU has no standalone dry-level command.
+                this->dry_level_preference_ = (value <= 1) ? (uint8_t) value : 0;
+                break;
+
             case SelectType::FAN_OPERATING_MODE_SELECT:
                 this->on_fan_command(-1, -1, value);
                 break;
@@ -585,6 +631,21 @@ namespace esphome
                 case 4:
                     this->sendCommand(setDeviceFanLvl4);
                     break;
+                case 5:
+                    this->sendCommand(setDeviceFanLvl5);
+                    break;
+                case 6:
+                    this->sendCommand(setDeviceFanLvl6);
+                    break;
+                case 7:
+                    this->sendCommand(setDeviceFanLvl7);
+                    break;
+                case 8:
+                    this->sendCommand(setDeviceFanLvl8);
+                    break;
+                case 9:
+                    this->sendCommand(setDeviceFanLvl9);
+                    break;
                 default:
                     break;
                 }
@@ -605,8 +666,15 @@ namespace esphome
                 case 4:
                     this->sendCommand(setFanModeTurbo);
                     break;
+                case 3:
+                    this->sendCommand(setFanModeHumidity);
+                    break;
                 case 5:
                     this->sendCommand(setFanModePet);
+                    break;
+                case 6:
+                    // Superior 6000S Dry mode - level comes from the DRY_LEVEL select
+                    this->sendCommand(this->dry_level_preference_ == 1 ? setDryLevelHigh : setDryLevelLow);
                     break;
                 default:
                     break;
@@ -634,6 +702,8 @@ namespace esphome
                 model_ = ModelType::SPROUT;
             else if (model == "EVERESTAIR")
                 model_ = ModelType::EVERESTAIR;
+            else if (model == "SUPERIOR6000S")
+                model_ = ModelType::SUPERIOR6000S;
 
             ESP_LOGI(TAG, "Model set to: %s (ModelType=%d)", model.c_str(), (int)model_);
         }
@@ -657,6 +727,8 @@ namespace esphome
                 cadr = 145; // spec smoke CADR 144.5 m³/h (rounded)
             if (model_ == ModelType::EVERESTAIR)
                 cadr = 612;
+            if (model_ == ModelType::SUPERIOR6000S)
+                cadr = 500;   // humidifier: nominal, only feeds the CADR counters
             
             // Initialize preferences for tracking used_cadr and total_runtime
             pref_used_cadr_ = global_preferences->make_preference<uint32_t>(fnv1_hash("levoit_used_cadr"));
@@ -753,7 +825,9 @@ namespace esphome
             }
 
             // Determine max speed based on model (Core300S has 3 speeds)
-            uint32_t max_speed = (this->model_ == ModelType::CORE300S) ? 3u : 4u;
+            uint32_t max_speed = (this->model_ == ModelType::CORE300S)     ? 3u
+                                 : (this->model_ == ModelType::SUPERIOR6000S) ? 9u
+                                                                              : 4u;
             if (speed <= 0 || (uint32_t)speed > max_speed)
                 return 0;
             uint32_t result = (cadr * (uint32_t)speed) / max_speed;
@@ -906,7 +980,51 @@ namespace esphome
                 this->push_filter_pct_if_changed(filter_left);
             }
 
-            if (this->timer_active_ && now - last_check >= 10000)
+            if (this->model_ == ModelType::SUPERIOR6000S)
+            {
+                // Superior 6000S: the MCU does not count down on its own - it only
+                // accepts a 'remaining' value pushed to it - so the ESP owns the
+                // timer and refreshes the MCU once a minute.
+                if (this->esp_timer_active_ && now - esp_timer_last_update_ >= 60000)
+                {
+                    esp_timer_last_update_ = now;
+                    uint32_t elapsed_secs = (now - esp_timer_start_millis_) / 1000;
+                    uint32_t remaining = (elapsed_secs >= esp_timer_duration_secs_)
+                                             ? 0
+                                             : (esp_timer_duration_secs_ - elapsed_secs);
+                    uint16_t remaining_min = remaining / 60;
+                    float remaining_hours = remaining / 3600.0f;
+
+                    if (remaining > 0)
+                    {
+                        ESP_LOGD(TAG, "ESP timer update: %u sec remaining", remaining);
+                        this->send_timer_update(remaining);
+                        this->publish_sensor(SensorType::TIMER_CURRENT, remaining_hours);
+                        this->publish_text_sensor(TextSensorType::TIMER_DURATION_CURRENT,
+                                                  format_duration_minutes(remaining_min));
+                    }
+                    else if (esp_timer_zero_count_ < 5)
+                    {
+                        // Repeat the zero a few times: a single one is sometimes missed
+                        // and the panel would keep showing a running timer.
+                        ESP_LOGD(TAG, "ESP timer expired, sending zero command %u/5",
+                                 esp_timer_zero_count_ + 1);
+                        this->send_timer_update(0);
+                        esp_timer_zero_count_++;
+                    }
+                    else
+                    {
+                        ESP_LOGI(TAG, "ESP timer finished, turning off device");
+                        this->stop_esp_timer();
+                        this->publish_number(NumberType::TIMER, 0.0f);
+                        this->publish_sensor(SensorType::TIMER_CURRENT, 0.0f);
+                        this->publish_text_sensor(TextSensorType::TIMER_DURATION_CURRENT,
+                                                  format_duration_minutes(0));
+                        this->sendCommand(setDeviceOFF);
+                    }
+                }
+            }
+            else if (this->timer_active_ && now - last_check >= 10000)
             { // 10 seconds
                 // timer active?
                 last_check = now;
@@ -1137,6 +1255,68 @@ namespace esphome
         /**
          * @brief Sends an acknowledgement message for the received ptype0/1, based on model type
          */
+
+        // Superior 6000S: the panel's own filter-reset button expects a different
+        // ack frame from the generic one.
+        void Levoit::ackFilterReset(uint8_t ptype0, uint8_t ptype1)
+        {
+            uint8_t pv = 0x02; // Vital/Superior protocol version
+            std::vector<uint8_t> message = {0xA5, 0x52, 0xFF, 0x04, 0x00, 0x00, pv, ptype0, ptype1, 0x16};
+            levoit_finalize_message(message, messageUpCounter);
+
+            if (message.size() > 0)
+            {
+                ESP_LOGI(TAG, ">>> Sending filter reset ack for: 0x%02X 0x%02X", ptype0, ptype1);
+                this->write_array(message.data(), message.size());
+                this->flush();
+                if (messageUpCounter == 255)
+                    messageUpCounter = 16;
+                else
+                    messageUpCounter++;
+            }
+        }
+
+        // --- Superior 6000S ESP-managed timer ---
+        void Levoit::start_esp_timer(uint32_t duration_secs)
+        {
+            esp_timer_active_ = true;
+            esp_timer_start_millis_ = millis();
+            esp_timer_duration_secs_ = duration_secs;
+            esp_timer_last_update_ = esp_timer_start_millis_;
+            esp_timer_zero_count_ = 0;
+            ESP_LOGI(TAG, "ESP timer started: %u seconds", duration_secs);
+        }
+
+        void Levoit::stop_esp_timer()
+        {
+            esp_timer_active_ = false;
+            esp_timer_zero_count_ = 0;
+            ESP_LOGI(TAG, "ESP timer stopped");
+        }
+
+        // feature_id 0x19, payload 01 04 <LE32 seconds remaining>
+        void Levoit::send_timer_update(uint32_t remaining_secs)
+        {
+            std::vector<uint8_t> msg_type = {0x02, 0x19, 0x50};
+            std::vector<uint8_t> payload = {0x01, 0x04,
+                                            (uint8_t)(remaining_secs & 0xFF),
+                                            (uint8_t)((remaining_secs >> 8) & 0xFF),
+                                            (uint8_t)((remaining_secs >> 16) & 0xFF),
+                                            (uint8_t)((remaining_secs >> 24) & 0xFF)};
+
+            auto message = build_levoit_message(msg_type, payload, messageUpCounter);
+            if (message.size() > 0)
+            {
+                ESP_LOGD(TAG, ">>> TX timer update: %u sec remaining", remaining_secs);
+                this->write_array(message.data(), message.size());
+                this->flush();
+                if (messageUpCounter == 255)
+                    messageUpCounter = 16;
+                else
+                    messageUpCounter++;
+            }
+        }
+
         void Levoit::ackMessage(uint8_t ptype0, uint8_t ptype1)
         {
 
