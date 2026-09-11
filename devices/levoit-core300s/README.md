@@ -132,3 +132,15 @@ Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into th
 esptool erase_flash
 esptool write_flash 0x00 levoit-core300s-backup.bin
 ```
+
+## Related — the non-smart Core 300 variants
+
+This guide covers the **Core 300S**, the Wi-Fi model with an ESP32 and a control MCU
+on a UART link. The plain **Core 300** and **Core 300-P** have no Wi-Fi and no MCU
+link, so the `levoit` component does not apply to them — they need the controller
+replaced instead:
+
+| Variant | Route | Link |
+|---------|-------|------|
+| Core 300-P | Ready-made ESP32-C6 replacement controller running ESPHome. Reuses the stock fan controller and power supply; adds 4-speed fan control, 14 WS2815B RGB LEDs and 3 spare GPIOs for air-quality or VOC add-ons. **Check the Intertek model number on the back (5014566 vs 5030453) before ordering** — the wrong variant may need the cable connections re-soldered. | [Silo City Labs ↗](https://shop.silocitylabs.com/products/core300-p) |
+| Core 300 | DIY: an ESP32 wired straight to the fan-speed lines, exposed as 3 interlocked GPIO switches. No MCU, no UART, no sensors. | [Reddit write-up ↗](https://www.reddit.com/r/homeassistant/comments/1rqz9gq/turned_a_broken_dumb_air_purifier_into_a_smart/) |
