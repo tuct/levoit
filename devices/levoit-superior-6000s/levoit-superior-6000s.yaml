@@ -1,0 +1,23 @@
+# Levoit Superior 6000S — flashing the device's own ESP32.
+#
+# ⚠️ The GPIO pins below are inherited from the Levoit air purifiers and have
+#    NOT been confirmed on Superior 6000S hardware. Verify before flashing.
+substitutions:
+  device_name: levoit-superior-6000s
+  wifi_ap_ssid: "Levoit-Superior6000S"
+  rx_pin: GPIO16
+  tx_pin: GPIO17
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_git.yaml

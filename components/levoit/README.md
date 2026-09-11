@@ -2,7 +2,14 @@
 
 # Levoit ESPHome Component
 
-Custom ESPHome component for Levoit air purifiers (Core and Vital series) enabling local control without cloud dependency.
+Custom ESPHome component for Levoit air purifiers (Core and Vital series) and
+humidifiers (Superior 6000S), enabling local control without cloud dependency.
+
+> The **Superior 6000S** is a humidifier rather than a purifier, but it speaks
+> the same MCU protocol, so it is just another `model:` here. It is ported from
+> [Jyers/esphome-projects](https://github.com/Jyers/esphome-projects) and
+> **has not been verified on hardware** — see
+> [devices/levoit-superior-6000s](../../devices/levoit-superior-6000s).
 
 [See Supported Models and Feature Matrix and Changelog](../../README.md)
 
@@ -104,7 +111,8 @@ Specify your model (must match device):
 ```yaml
 levoit:
   id: air_purifier
-  model: CORE300S  # Options: VITAL100S, VITAL200S, CORE200S, CORE300S, CORE400S
+  model: CORE300S  # Options: VITAL100S, VITAL200S, CORE200S, CORE300S, CORE400S,
+                   #          CORE600S, SPROUT, EVERESTAIR, SUPERIOR6000S
 ```
 
 #### Step 5: Compile and Flash
@@ -194,7 +202,8 @@ uart:
 
 levoit:
   id: air_purifier
-  model: CORE300S  # or VITAL100S, VITAL200S, CORE200S, CORE400S
+  model: CORE300S  # or VITAL100S, VITAL200S, CORE200S, CORE400S, CORE600S,
+                   #    SPROUT, EVERESTAIR, SUPERIOR6000S (humidifier)
 
 fan:
   - platform: levoit
@@ -364,6 +373,7 @@ Special thanks to the original developers who reverse-engineered the Levoit prot
 - [targor](https://github.com/targor/) - [Levoit Vital integration](https://github.com/targor/levoit_vital/)
 - [mulcmu](https://github.com/mulcmu/) - [Levoit Core 300S](https://github.com/mulcmu/esphome-levoit-core300s)
 - [acvigue](https://github.com/acvigue/) - [Levoit Core integration](https://github.com/acvigue/esphome-levoit-air-purifier)
+- [Jyers](https://github.com/Jyers/) - [Superior 6000S humidifier support](https://github.com/Jyers/esphome-projects)
 
 ## License
 

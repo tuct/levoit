@@ -29,6 +29,10 @@ TYPE_MAP = {
     "pm1_0": SensorType.PM1_0,
     "pm10": SensorType.PM10,
     "fan_rpm": SensorType.FAN_RPM,
+    # Superior 6000S (humidifier) only below
+    "humidity": SensorType.HUMIDITY,
+    "temperature": SensorType.TEMPERATURE,
+    "filter_life_mcu": SensorType.FILTER_LIFE_MCU,
 }
 
 TYPE_PROPS = {

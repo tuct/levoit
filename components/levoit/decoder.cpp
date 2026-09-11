@@ -2,6 +2,7 @@
 #include "vital_status.h"
 #include "core_status.h"
 #include "sprout_status.h"
+#include "superior_status.h"
 #include "esphome/core/log.h"
 #include "types.h"
 
@@ -98,8 +99,13 @@ namespace esphome
                (int)model, ptype0, ptype1, (unsigned)payload_len);
       // ack all messages!
       //only if (0x22)
-      if(msg_type==0x22)
-      self->ackMessage(ptype0, ptype1);
+      if (msg_type == 0x22)
+      {
+        if (model == ModelType::SUPERIOR6000S && ptype0 == 0x44 && ptype1 == 0x55)
+          self->ackFilterReset(ptype0, ptype1);
+        else
+          self->ackMessage(ptype0, ptype1);
+      }
 
       uint8_t h = compute_payload_hash_(payload, payload_len);
       ESP_LOGD("levoit.dedup", "model=%d ptype=%02X%02X payload_len=%u hash=0x%02X last=0x%02X",
@@ -192,6 +198,27 @@ namespace esphome
           if (model == ModelType::SPROUT && msg_type == 0x22 && ptype0 == 0x08 && ptype1 == 0x55)
           {
             decode_sprout_event(self, payload, payload_len);
+          }
+        }
+        if (model == ModelType::SUPERIOR6000S)
+        {
+          // Superior 6000S: status report is a TLV payload under CMD=02 30 55
+          if (msg_type == 0x22 && ptype0 == 0x30 && ptype1 == 0x55)
+          {
+            decode_superior_status(self, model, payload, payload_len);
+          }
+          // Timer set from the device's own button (same shape as the Vital timer)
+          if (msg_type == 0x22 && ptype0 == 0x1B && ptype1 == 0x50)
+          {
+            decode_superior_timer(self, model, payload, payload_len);
+          }
+          // Filter reset pressed on the display
+          if (msg_type == 0x22 && ptype0 == 0x44 && ptype1 == 0x55)
+          {
+            ESP_LOGI(TAG_DEC, "Filter reset from display (Superior 6000S)");
+            self->set_used_cadr(0);
+            self->set_total_runtime(0);
+            self->publish_filter_stats_now();
           }
         }
       }

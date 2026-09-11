@@ -39,13 +39,13 @@ class Levoit : public Component, public uart::UARTDevice {
   
   // called by switch, number,... when HA toggles it
   void on_switch_command(SwitchType type, bool state);
-  void on_number_command(NumberType type, uint32_t value);  
+  void on_number_command(NumberType type, float value);  
   void on_select_command(SelectType type, uint32_t value);
 
   // called by decoder when device reports status
   void publish_switch(SwitchType type, bool state);
   void publish_number(NumberType type, float value);
-  void publish_sensor(SensorType type, uint32_t value);
+  void publish_sensor(SensorType type, float value);
   void publish_select(SelectType type, uint32_t value);
   void publish_text_sensor(TextSensorType type, const std::string &value);
   // binary sensor + button
@@ -91,9 +91,11 @@ class Levoit : public Component, public uart::UARTDevice {
   float calculate_filter_life_left_percent() const;  // Remaining filter life percentage (0-100 with decimals)
   void sendCommand(CommandType commandType);   // if CommandType exists in your project
   void ackMessage(uint8_t ptype0, uint8_t ptype1);
+  void ackFilterReset(uint8_t ptype0, uint8_t ptype1);   // Superior 6000S: filter reset pressed on the panel
   void set_fan(LevoitFan *fan) { this->fan_ = fan; }
   LevoitFan *get_fan() const { return this->fan_; }
   LevoitNumber *get_number(NumberType type) const { return numbers_[nt_idx_(type)]; }
+  LevoitSensor *get_sensor(SensorType type) const { return sensors_[st_idx_(type)]; }
   LevoitSelect *get_select(SelectType type) const { return selects_[sl_idx_(type)]; }
   LevoitSwitch *get_switch(SwitchType type) const { return switches_[st_idx_(type)]; }
   class LevoitBinarySensor *get_binary_sensor(BinarySensorType type) const { return binary_sensors_[bs_idx_(type)]; }
@@ -101,6 +103,17 @@ class Levoit : public Component, public uart::UARTDevice {
   void start_timer(){this->timer_active_ = true; this->timer_stop_pending_ = false;};
   void stop_timer(){this->timer_active_ = false;};
   bool is_timer_active() const { return this->timer_active_; };
+
+  // Superior 6000S runs its timer on the ESP: the MCU only accepts a remaining
+  // value pushed to it, so the countdown itself lives here.
+  void start_esp_timer(uint32_t duration_secs);
+  void stop_esp_timer();
+  void send_timer_update(uint32_t remaining_secs);
+
+  // Superior 6000S: Dry level is chosen up-front via a select, then applied when
+  // Dry mode is picked on the fan entity. 0 = Low, 1 = High.
+  uint8_t get_dry_level_preference() const { return dry_level_preference_; }
+  void set_dry_level_preference(uint8_t level) { dry_level_preference_ = level; }
   void set_timer_stop_pending(bool v) { this->timer_stop_pending_ = v; if (v) this->timer_stop_sent_at_ = millis(); }
   bool is_timer_stop_pending() const { return this->timer_stop_pending_; };
   
@@ -188,6 +201,14 @@ class Levoit : public Component, public uart::UARTDevice {
   bool wifi_led_blink_sent_{false};  // true after first blinking command sent during boot
   bool filter_led_on_{false};
   bool filter_blinking_{false};
+
+  // Superior 6000S ESP-managed timer state
+  bool esp_timer_active_{false};
+  uint32_t esp_timer_start_millis_{0};
+  uint32_t esp_timer_duration_secs_{0};
+  uint32_t esp_timer_last_update_{0};
+  uint8_t esp_timer_zero_count_{0};
+  uint8_t dry_level_preference_{0};
   
   // Internal tracked values (persisted in preferences)
   uint32_t used_cadr_{0};

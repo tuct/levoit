@@ -43,6 +43,8 @@ TYPE_MAP = {
     "vent_angle": NumberType.VENT_ANGLE,
     # Remembered Room Size target for Room Size/Efficient auto profile
     "auto_profile_room_size_input": NumberType.AUTO_PROFILE_ROOM_SIZE_INPUT,
+    # Superior 6000S (humidifier) only below
+    "humidity_target": NumberType.HUMIDITY_TARGET,
 }
 
 # (min_value, max_value, step, extra_props)

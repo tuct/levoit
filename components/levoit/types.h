@@ -15,7 +15,8 @@ namespace esphome
             CORE200S = 4,
             CORE600S = 5,
             SPROUT = 6,
-            EVERESTAIR = 7
+            EVERESTAIR = 7,
+            SUPERIOR6000S = 8   // humidifier (not an air purifier)
         };
 
         enum class SwitchType : uint8_t
@@ -26,7 +27,9 @@ namespace esphome
             QUICK_CLEAN = 3,
             WHITE_NOISE = 4,
             DAYTIME_ENABLED = 5,
-            LED_RING = 6        // Sprout: decorative LED ring on/off
+            LED_RING = 6,       // Sprout: decorative LED ring on/off
+            AUTO_DRY_POWER_OFF = 7,   // Superior 6000S: auto-dry after power off
+            AUTO_DRY_WATER_EMPTY = 8  // Superior 6000S: auto-dry when tank runs dry
         };
         // SwitchType aliases (flat namespace)
         static constexpr SwitchType DISPLAY = SwitchType::DISPLAY;
@@ -36,6 +39,8 @@ namespace esphome
         static constexpr SwitchType WHITE_NOISE = SwitchType::WHITE_NOISE;
         static constexpr SwitchType DAYTIME_ENABLED = SwitchType::DAYTIME_ENABLED;
         static constexpr SwitchType LED_RING = SwitchType::LED_RING;
+        static constexpr SwitchType AUTO_DRY_POWER_OFF = SwitchType::AUTO_DRY_POWER_OFF;
+        static constexpr SwitchType AUTO_DRY_WATER_EMPTY = SwitchType::AUTO_DRY_WATER_EMPTY;
 
         enum class NumberType : uint8_t
         {
@@ -58,6 +63,7 @@ namespace esphome
             DAYTIME_FAN_LEVEL = 16,     // Vital: daytime fan level (TLV 0x23)
             VENT_ANGLE = 17,            // EverestAir: vent louver angle 45–90° (CMD 02 12 55, status TLV 0x14)
             AUTO_PROFILE_ROOM_SIZE_INPUT = 18, // Persisted user Room Size target for Room Size/Efficient auto profile
+            HUMIDITY_TARGET = 19,       // Superior 6000S: target relative humidity (%)
         };
         // Note: indices 0-11 must stay stable (serialized to preferences)
         // NumberType aliases (flat namespace)
@@ -78,6 +84,7 @@ namespace esphome
         static constexpr NumberType DAYTIME_FAN_LEVEL = NumberType::DAYTIME_FAN_LEVEL;
         static constexpr NumberType VENT_ANGLE = NumberType::VENT_ANGLE;
         static constexpr NumberType AUTO_PROFILE_ROOM_SIZE_INPUT = NumberType::AUTO_PROFILE_ROOM_SIZE_INPUT;
+        static constexpr NumberType HUMIDITY_TARGET = NumberType::HUMIDITY_TARGET;
 
         enum class SensorType : uint8_t
         {
@@ -90,6 +97,9 @@ namespace esphome
             PM1_0 = 6,          // Sprout: PM1.0 raw count (tag 0x0C)
             PM10 = 7,           // Sprout: PM10 raw count (tag 0x0D)
             FAN_RPM = 8,        // Sprout: fan tachometer (tag 0x27)
+            HUMIDITY = 9,       // Superior 6000S: measured relative humidity (%)
+            TEMPERATURE = 10,   // Superior 6000S: measured temperature (degC)
+            FILTER_LIFE_MCU = 11, // Superior 6000S: filter life as reported by the MCU (%)
         };
         // SensorType aliases (flat namespace)
         static constexpr SensorType AQI = SensorType::AQI;
@@ -101,15 +111,24 @@ namespace esphome
         static constexpr SensorType PM1_0 = SensorType::PM1_0;
         static constexpr SensorType PM10 = SensorType::PM10;
         static constexpr SensorType FAN_RPM = SensorType::FAN_RPM;
+        static constexpr SensorType HUMIDITY = SensorType::HUMIDITY;
+        static constexpr SensorType TEMPERATURE = SensorType::TEMPERATURE;
+        static constexpr SensorType FILTER_LIFE_MCU = SensorType::FILTER_LIFE_MCU;
 
         enum class BinarySensorType : uint8_t {
             FILTER_LOW = 0,
             COVER_OPEN = 1,     // Sprout: cover/filter door open (CMD=02 08 55 tag 0x04)
             DARK_DETECTED = 2,  // Vital: ambient light sensor reads dark (TLV 0x17)
+            WATER_TANK_EMPTY = 3, // Superior 6000S: water tank empty
+            DRY_ACTIVE = 4,       // Superior 6000S: drying cycle running
+            HUMIDIFYING = 5,      // Superior 6000S: actively misting
         };
         static constexpr BinarySensorType FILTER_LOW = BinarySensorType::FILTER_LOW;
         static constexpr BinarySensorType COVER_OPEN = BinarySensorType::COVER_OPEN;
         static constexpr BinarySensorType DARK_DETECTED = BinarySensorType::DARK_DETECTED;
+        static constexpr BinarySensorType WATER_TANK_EMPTY = BinarySensorType::WATER_TANK_EMPTY;
+        static constexpr BinarySensorType DRY_ACTIVE = BinarySensorType::DRY_ACTIVE;
+        static constexpr BinarySensorType HUMIDIFYING = BinarySensorType::HUMIDIFYING;
 
         enum class ButtonType : uint8_t {
             RESET_FILTER_STATS = 0,
@@ -153,6 +172,9 @@ namespace esphome
             WHITE_NOISE_SOUND = 8,  // Sprout: white noise sound index (0-14, 15 sounds)
             SLEEP_PREFERENCE = 9,   // Vital: sleep mode preference type (TLV 0x18)
             FAN_OPERATING_MODE_SELECT = 10, // Active fan mode: Manual/Sleep/Auto/Pet/Turbo where supported
+            AUTO_PROFILE = 11,      // Superior 6000S: Home / Away auto profile
+            HUMIDITY_SUBTYPE = 12,  // Superior 6000S: Smart / Fan humidity sub-mode
+            DRY_LEVEL = 13,         // Superior 6000S: dry cycle level (Low / High)
         };
         static constexpr SelectType AUTO_MODE = SelectType::AUTO_MODE;
         static constexpr SelectType SLEEP_MODE = SelectType::SLEEP_MODE;
@@ -166,6 +188,9 @@ namespace esphome
         static constexpr SelectType WHITE_NOISE_SOUND = SelectType::WHITE_NOISE_SOUND;
         static constexpr SelectType SLEEP_PREFERENCE = SelectType::SLEEP_PREFERENCE;
         static constexpr SelectType FAN_OPERATING_MODE_SELECT = SelectType::FAN_OPERATING_MODE_SELECT;
+        static constexpr SelectType AUTO_PROFILE = SelectType::AUTO_PROFILE;
+        static constexpr SelectType HUMIDITY_SUBTYPE = SelectType::HUMIDITY_SUBTYPE;
+        static constexpr SelectType DRY_LEVEL = SelectType::DRY_LEVEL;
 
 
 
@@ -223,6 +248,24 @@ namespace esphome
             setBulkPrefs,               // CMD=02 02 55 tags 0x04..0x0F: bulk sleep/QC/WN/DT prefs (12 TLVs, Vital)
             setVentAngle,               // CMD=02 12 55: EverestAir vent louver angle (45–90°)
             setFilterPercent,           // CMD=02 05 55: EverestAir filter % pushed to MCU panel (0–100)
+            // Superior 6000S (humidifier)
+            setDeviceFanLvl5,
+            setDeviceFanLvl6,
+            setDeviceFanLvl7,
+            setDeviceFanLvl8,
+            setDeviceFanLvl9,
+            setFanModeHumidity,
+            setAutoProfileHome,
+            setAutoProfileAway,
+            setHumiditySubtypeSmart,
+            setHumiditySubtypeFan,
+            setHumidityTarget,
+            setDryLevelLow,
+            setDryLevelHigh,
+            setAutoDryPowerOffOn,
+            setAutoDryPowerOffOff,
+            setAutoDryWaterEmptyOn,
+            setAutoDryWaterEmptyOff,
             COMMAND_TYPE_MAX
 
             // dedicated command for setSleepModeCustom
@@ -278,6 +321,23 @@ namespace esphome
                 "setBulkPrefs",
                 "setVentAngle",
                 "setFilterPercent",
+                "setDeviceFanLvl5",
+                "setDeviceFanLvl6",
+                "setDeviceFanLvl7",
+                "setDeviceFanLvl8",
+                "setDeviceFanLvl9",
+                "setFanModeHumidity",
+                "setAutoProfileHome",
+                "setAutoProfileAway",
+                "setHumiditySubtypeSmart",
+                "setHumiditySubtypeFan",
+                "setHumidityTarget",
+                "setDryLevelLow",
+                "setDryLevelHigh",
+                "setAutoDryPowerOffOn",
+                "setAutoDryPowerOffOff",
+                "setAutoDryWaterEmptyOn",
+                "setAutoDryWaterEmptyOff",
             };
             static_assert(
                 sizeof(names) / sizeof(names[0]) == COMMAND_TYPE_MAX,

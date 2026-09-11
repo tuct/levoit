@@ -1,0 +1,170 @@
+# Do not use this file directly, it is included in the device yaml files.
+# Put common configuration here.
+#
+# Levoit Superior 6000S — evaporative humidifier. Same MCU protocol as the
+# Levoit air purifiers, so it uses the same `levoit` component with
+# `model: SUPERIOR6000S`.
+
+logger:
+  level: DEBUG
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+  ap:
+    ssid: "${wifi_ap_ssid}"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+uart:
+  - id: uart_mcu2esp
+    tx_pin:
+      number: ${tx_pin}
+      inverted: false
+    rx_pin:
+      number: ${rx_pin}
+      inverted: false
+    baud_rate: 115200
+
+levoit:
+  id: levoitsuperior6000
+  model: SUPERIOR6000S
+
+# Fan speeds 1–9. Modes: Manual / Sleep / Auto / Humidity / Dry.
+# Picking Dry applies whichever level the "Dry Level" select holds.
+fan:
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Fan"
+    id: levoit_fan1
+
+switch:
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Display"
+    type: display
+    icon: mdi:brightness-7
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Child Lock"
+    type: child_lock
+    icon: mdi:lock-outline
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Auto Dry (Power Off)"
+    type: auto_dry_power_off
+    icon: mdi:fan-auto
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Auto Dry (Water Empty)"
+    type: auto_dry_water_empty
+    icon: mdi:fan-auto
+
+number:
+  # Hours, 0 = off. The ESP runs this countdown itself — see the README.
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Timer"
+    type: timer
+    icon: mdi:timer-outline
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Humidity Target"
+    type: humidity_target
+    icon: mdi:water-percent
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Filter Months"
+    type: filter_lifetime_months
+
+sensor:
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Humidity"
+    type: humidity
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Temperature"
+    type: temperature
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Filter Life (MCU)"
+    type: filter_life_mcu
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Filter Life %"
+    type: filter_life_left
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Timer Remaining"
+    type: timer_current
+
+select:
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Auto Profile"
+    type: auto_profile
+    icon: mdi:home-account
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Humidity Mode"
+    type: humidity_subtype
+    icon: mdi:water-percent
+  # Remembered only — applied when Dry mode is selected on the fan entity.
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Dry Level"
+    type: dry_level
+    icon: mdi:air-filter
+
+text_sensor:
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "MCU Version"
+    type: mcu_version
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "ESP Version"
+    type: esp_version
+
+binary_sensor:
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Filter State"
+    type: filter_low
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Cover State"
+    type: cover_open
+    icon: mdi:window-open
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Water Level"
+    type: water_tank_empty
+    icon: mdi:waves-arrow-up
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Drying"
+    type: dry_active
+    icon: mdi:air-filter
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Humidifying"
+    type: humidifying
+    icon: mdi:water
+
+button:
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Filter Reset"
+    type: reset_filter_stats
