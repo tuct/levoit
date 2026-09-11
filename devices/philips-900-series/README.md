@@ -126,7 +126,7 @@ can damage something.
   5V / VIN  <--------------------  +5V  (4-pin header)
        GND  <-------------------->  GND  (4-pin header)
   RX GPIO20 <--------------------  A    (MCU TX — STATUS frames)
-  TX GPIO21 -------------------->  B    (MCU RX)
+  TX GPIO10 -------------------->  B    (MCU RX)
                                     C  ---> GND  (parks the stock module)
 ```
 
@@ -137,19 +137,24 @@ On a **Seeed XIAO ESP32-C3** — the board the configs here assume:
 | `5V` | — | supply in (through the onboard regulator) | `+5V` header |
 | `GND` | — | ground | `GND` header |
 | `D7` | `GPIO20` | UART **RX** | **A** (MCU TX) |
-| `D6` | `GPIO21` | UART **TX** | **B** (MCU RX) |
+| `D10` | `GPIO10` | UART **TX** | **B** (MCU RX) |
 | any free pad, e.g. `D0` | `GPIO2` | *optional* — hold **C** low from software | **C** |
 
-Watch out that `D6` and `D7` are **not** adjacent: `D0`–`D6` run down one edge of
-the board, while `5V`, `GND`, `3V3`, `D10`, `D9`, `D8` and `D7` run down the
-other — so `D7` (RX) sits at the far corner from `D6` (TX).
+Conveniently, **all four connections are on the same edge** of the XIAO: that
+side runs `5V`, `GND`, `3V3`, `D10`, `D9`, `D8`, `D7` from top to bottom, so
+power, ground and both UART lines come off one row.
 
 These are the defaults in
 [`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml)
-(`rx_pin: GPIO20` / `tx_pin: GPIO21`). Note that `GPIO20`/`GPIO21` are also the
-C3's **default UART0 pins**, which is why [`common.yaml`](./common.yaml) moves the
-logger to `USB_SERIAL_JTAG` — otherwise the log output would fight the MCU on the
-same wires.
+(`rx_pin: GPIO20` / `tx_pin: GPIO10`).
+
+`GPIO20` is the C3's **default UART0 RX**, which is why
+[`common.yaml`](./common.yaml) moves the logger to `USB_SERIAL_JTAG` — otherwise
+the log output would fight the MCU on the same wire. TX deliberately uses
+`GPIO10` rather than `GPIO21` (UART0 TX): it keeps `D6` free and, more
+importantly, avoids `D8`/`D9`, which are **strapping pins** on the C3 — `D9` is
+also the BOOT button, so a line held low there at reset drops the board into
+serial-download mode instead of running your firmware.
 
 The optional GPIO for **C** is only needed if you want to release the stock module
 without unsoldering; a wire straight to GND is what has been used so far.
@@ -602,6 +607,13 @@ PM2.5, allergen index, standby sensor — is identical.
 | `select` | `display_brightness` | `0x04` — `off` / `low` / `bright` |
 | `number` | `timer` | `0x10` — hours, `0` (off) to `12` |
 | `sensor` | `timer_remaining` | `0x11` — minutes left, MCU-counted, read-only |
+
+The 900 also inherits the 600-series **`standby_sensor`** switch (DP `0x34`),
+which keeps the particulate sensor measuring while the unit is on standby so
+PM2.5 and the allergen index stay live with the fan off. It is an AC0951-only
+feature, so it lives in
+[`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml) rather than
+[`common.yaml`](./common.yaml) — the AC0950 has no PM sensor to keep running.
 
 Two behaviours are worth knowing when reading those entities back:
 

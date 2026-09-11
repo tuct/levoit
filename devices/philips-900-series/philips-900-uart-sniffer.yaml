@@ -10,12 +10,11 @@
 #
 # Wiring (3 wires, no TX from the ESP — read-only!):
 #   ESP GND   -> board GND
-#   GPIO20    -> MCU TX pad   (what the MCU sends to the module)
-#   GPIO21    -> module TX pad (what the module sends to the MCU)
+#   GPIO20 (D7)  -> pad A — MCU TX    (what the MCU sends to the module)
+#   GPIO10 (D10) -> pad B — module TX (what the module sends to the MCU)
 # Power the ESP from its own USB, or from the board's +5V if you prefer.
 #
-# Baud rate: 115200 is the starting guess (the 600-series MCU link runs 115200
-# 8N1). If the log is garbage, try 9600 / 38400 / 57600 on both buses.
+# Baud rate: 115200 8N1, confirmed on the 900 series by logic analyzer.
 substitutions:
   device_name: philips-900-sniffer
   wifi_ap_ssid: "Philips-900-Sniffer"
@@ -66,7 +65,7 @@ uart:
 
   # module -> MCU
   - id: uart_from_module
-    rx_pin: GPIO21
+    rx_pin: GPIO10
     baud_rate: 115200
     rx_buffer_size: 512
     debug:
