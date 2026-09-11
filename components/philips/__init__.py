@@ -7,9 +7,12 @@ DEPENDENCIES = ["uart"]
 CODEOWNERS = ["@tuct"]
 
 CONF_PHILIPS_MODEL = "model"
-# AC0650/10 = base (no PM sensor, no Auto). AC0651/10 = same + PM sensor + Auto
-# (PM/Auto support coming later).
-VALID_MODELS = ["AC0650", "AC0651"]
+# 600 series: AC0650 = base (no PM sensor, no Auto), AC0651 = same + PM sensor.
+# 900 series: AC0950 / AC0951, same protocol and datapoint numbering, but
+# medium fan mode is 0x13 (not 0x01), the HEPA total is 9600 (not 4800), and
+# it adds child lock, beep, display brightness and a sleep timer.
+# See devices/philips-900-series/README.md.
+VALID_MODELS = ["AC0650", "AC0651", "AC0950", "AC0951"]
 
 CONF_PHILIPS_ID = "philips"
 
@@ -20,6 +23,8 @@ PhilipsModel = philips_ns.enum("PhilipsModel", is_class=True)
 MODEL_MAP = {
     "AC0650": PhilipsModel.AC0650,
     "AC0651": PhilipsModel.AC0651,
+    "AC0950": PhilipsModel.AC0950,
+    "AC0951": PhilipsModel.AC0951,
 }
 
 CONFIG_SCHEMA = cv.All(

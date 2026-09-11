@@ -12,6 +12,9 @@ SwitchType = philips_ns.enum("SwitchType", is_class=True)
 
 TYPE_MAP = {
     "standby_sensor": SwitchType.STANDBY_SENSOR,
+    # AC0950/AC0951 only
+    "child_lock": SwitchType.CHILD_LOCK,
+    "beep": SwitchType.BEEP,
 }
 
 CONFIG_SCHEMA = switch.switch_schema(PhilipsSwitch).extend(
@@ -23,6 +26,9 @@ CONFIG_SCHEMA = switch.switch_schema(PhilipsSwitch).extend(
 
 
 async def to_code(config):
+    # Tells philips.cpp this platform is in the build — see the note at
+    # the top of philips.cpp on why USE_SWITCH is not sufficient.
+    cg.add_define("USE_PHILIPS_SWITCH")
     parent = await cg.get_variable(config[CONF_PHILIPS_ID])
     var = cg.new_Pvariable(config[CONF_ID])
     await switch.register_switch(var, config)

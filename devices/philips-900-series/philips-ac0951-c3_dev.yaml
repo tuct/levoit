@@ -1,8 +1,8 @@
 # Philips Series 900 AC0951 C3 dev variant — AC0950 plus the PM sensor entities.
-# The board has a connector silkscreened PM2.5 next to the MXCHIP module, so the
-# 951 presumably populates a particulate sensor there the same way the AC0651 does.
+# The AC0951 reports PM2.5 and the allergen index on the MCU link exactly as the
+# AC0651 does, and gains the Auto fan preset with them.
 #
-# ⚠️ WIP — does not compile yet, see common.yaml.
+# ⚠️ The GPIO pins below are not yet verified on hardware.
 substitutions:
   device_name: philips-ac0951-c3
   wifi_ap_ssid: "Philips-AC0951"

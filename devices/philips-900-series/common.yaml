@@ -1,10 +1,9 @@
 # Shared config for the Philips Series 900 (AC0950/AC0951) — included by the
 # per-board yamls. Do not flash this directly.
 #
-# ⚠️ WIP — DOES NOT COMPILE YET. The `philips` component only knows AC0650 and
-# AC0651 (see components/philips/__init__.py -> VALID_MODELS). AC0950/AC0951
-# have to be added there once the MCU protocol is confirmed. Until then use
-# philips-900-uart-sniffer.yaml, which needs no component support.
+# The protocol is decoded and the `philips` component supports AC0950/AC0951
+# (see devices/philips-900-series/README.md). Still unverified on hardware:
+# the GPIO pins below, and how the stock MXCHIP module gets parked.
 logger:
   # On the ESP32-C3 the default logger UART (UART0) is GPIO20/21 — the same pins
   # as the MCU link. Log over the native USB instead so those pins stay free.
@@ -37,11 +36,11 @@ uart:
   - id: uart_mcu
     tx_pin: ${tx_pin}
     rx_pin: ${rx_pin}
-    baud_rate: 115200   # unconfirmed on the 900 series — verify with the sniffer
+    baud_rate: 115200   # confirmed by logic analyzer (86.4-86.6 us/byte)
 
 philips:
   id: purifier
-  model: ${philips_model}   # AC0950 / AC0951 — not implemented yet
+  model: ${philips_model}   # AC0950 / AC0951
 
 fan:
   - platform: philips
@@ -57,6 +56,34 @@ sensor:
     philips: purifier
     name: "HEPA Filter"
     type: filter_lifetime
+  - platform: philips
+    philips: purifier
+    name: "Timer Remaining"
+    type: timer_remaining
+
+# 900-series controls. The MCU mirrors brightness to DP 0x05 itself, and
+# derives the timer countdown from the hours written here.
+switch:
+  - platform: philips
+    philips: purifier
+    name: "Child Lock"
+    type: child_lock
+  - platform: philips
+    philips: purifier
+    name: "Beep"
+    type: beep
+
+select:
+  - platform: philips
+    philips: purifier
+    name: "Display Brightness"
+    type: display_brightness
+
+number:
+  - platform: philips
+    philips: purifier
+    name: "Sleep Timer"
+    type: timer
 
 button:
   - platform: philips

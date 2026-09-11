@@ -1,18 +1,19 @@
 [← Back](../../README.md)
 # Philips Series 900 Air Purifier — AC0950 / AC0951
 
-> 🔬 **Research folder — protocol decoded, component support not written yet.**
+> 🔬 **Protocol decoded, component support written, not yet run on hardware.**
 > The board has been opened, the Wi-Fi module identified, and the MCU↔module
-> link has now been **captured and decoded**: it is the *same* protocol the
+> link **captured and decoded**: it is the *same* protocol the
 > [`philips`](../../components/philips) component already speaks for the
 > AC0650/AC0651, at 115200 8N1, with an almost identical datapoint map. See
-> [Protocol](#protocol--decoded-from-the-captures) below.
+> [Protocol](#protocol--decoded-from-the-captures).
 >
-> What that means: adding AC0950/AC0951 is now a matter of a handful of model
-> constants rather than a fresh reverse-engineering effort. That work is
-> **not done yet** — the only thing here you can flash today is still
-> [`philips-900-uart-sniffer.yaml`](./philips-900-uart-sniffer.yaml), and the
-> board YAMLs remain WIP skeletons.
+> `AC0950` / `AC0951` are now supported by the component, and every write frame
+> it emits was checked byte-for-byte against the captures in
+> [`captures/`](./captures). **But nothing here has been run against a real
+> MCU yet** — the board YAMLs compile and the pads are identified, but the
+> wiring in [Adding your own ESP32](#adding-your-own-esp32) is untested, and
+> every capture is from an **AC0951** (the AC0950 has never been observed).
 
 The goal for these units is the same move as the
 [600-series](../philips-600-series): **disable the stock Wi-Fi module and drive
@@ -33,10 +34,10 @@ in the root README.
 | Stock Wi-Fi module | **MXCHIP EMC6069-P** — 2.4 GHz Wi-Fi + BLE, FCC ID [`P53-EMC6069`](https://fccid.io/P53-EMC6069) |
 | Module form | Blue castellated daughterboard (`EMC6069-HF`), soldered to the main PCB |
 | Main MCU | Unmarked QFP, centre of the board — part number still unidentified |
-| MCU link | ✅ UART, **115200 8N1**, verified — same `FE FF` framing as the 600 series |
+| MCU link | ✅ UART, **115200 8N1**, **3.3 V** — verified; same `FE FF` framing as the 600 series |
 | MCU firmware | `0.3.3` (module firmware `0.8.6`) |
 | Internal model string | `AC0951/13`, codename **`Unicorn`** |
-| ESPHome support | ❌ none yet — `philips` component knows only AC0650/AC0651 |
+| ESPHome support | ⚠️ implemented in [`philips`](../../components/philips) (`model: AC0950` / `AC0951`), not yet hardware-tested |
 | Stock local control | ✅ CoAP (`AWS_Philips_AIR`) without opening the case |
 
 ## Opening the unit
@@ -47,6 +48,123 @@ No screws to start with: **twist the top cap counter-clockwise** (to the left)
 and lift it off — the same arrangement as the
 [600 series](../philips-600-series#teardown--disassembly). That exposes the
 control PCB.
+
+## Adding your own ESP32
+
+> ⚠️ **Unplug the unit first.** Part of the control board is on mains.
+>
+> ⚠️ **The component has not been run against this MCU yet.** The pads are
+> identified from real probing and the protocol is decoded and implemented, but
+> no ESPHome build has yet driven the purifier. Expect to debug.
+
+The move is the same as the [600 series](../philips-600-series): park the stock
+Wi-Fi module and let your own ESP32 talk to the purifier's MCU over the internal
+UART.
+
+All the connection points are on the **top edge of the MXCHIP module**:
+
+![Annotated MXCHIP pads: +5V and GND on the header, A/B UART pair and C reset](./images/mxchip_emc6069_pins.jpg)
+
+| Marked | What it is | Goes to |
+|--------|-----------|---------|
+| `+5V` | 5 V rail, on the 4-pin through-hole header up and left of the module | ESP32 `5V` / `VIN` |
+| `GND` | ground, same header | ESP32 `GND` |
+| **A** | UART, **MCU → module** (carries `STATUS`) | ESP32 `RX` |
+| **B** | UART, **module → MCU** (carries `HS1` / `QUERY` / `SET`) | ESP32 `TX` |
+| **C** | module **reset / enable** | pull low to park the stock module |
+
+### Which of A and B is which
+
+Determined from the captures:
+
+- **A carries MCU → module** — the `STATUS` (`cmd 0x0007`) frames. It is the
+  **MCU's TX**, so it goes to the **ESP32's RX**.
+- **B carries module → MCU** — `HS1` / `QUERY` / `SET` (`0x0001` / `0x0004` /
+  `0x0003`). It is the **MCU's RX**, so it goes to the **ESP32's TX**.
+
+If you want to re-confirm this on your own board — worth doing, since a
+different revision could route them differently — probe both lines read-only
+with the stock module still fitted and running (see
+[Capturing the UART](#capturing-the-uart)) and look at the payloads rather than
+the probe order: the line sending `STATUS` is always the MCU's TX. The order
+genuinely cannot be trusted — `cap1` and `cap2` came out with the analyzer
+channels swapped, which is why the decoder labels in `cap1.txt` are inverted.
+
+### Parking the stock module
+
+The ESP32 and the MXCHIP module cannot both drive the MCU's RX line. Pad **C** is
+the module's reset/enable: **hold it low** so the module stays fitted but silent,
+the same trick the 600 series uses on the original ESP32's `EN` pin.
+
+**A plain wire to GND is what has been used here, and it works.** That is the
+simplest option and needs nothing but a link to a ground point.
+
+A resistor is the more cautious choice if you would rather not rely on that: a
+hard tie is only safe as long as nothing on the board ever drives that net high,
+and a resistor limits the current if something does. The 600 series documents
+[~10k to GND](../philips-600-series#esphome-component) for the same job. If you go
+that way, **1 kΩ is the better value** — against a typical 10k pull-up it holds
+the pin near 0.3 V, whereas 10k against 10k would sit at ~1.65 V, squarely in the
+indeterminate band where the module might not stay in reset.
+
+Driving C from a spare ESP32 GPIO (output-low) works too, and lets you release
+the module without unsoldering.
+
+Until C is held low, keep your ESP32's TX disconnected and treat the setup as
+receive-only — two drivers on the MCU's RX line is the one wiring mistake that
+can damage something.
+
+### Wiring
+
+```
+        ESP32-C3                 AC0951 control board
+        --------                 --------------------
+  5V / VIN  <--------------------  +5V  (4-pin header)
+       GND  <-------------------->  GND  (4-pin header)
+  RX GPIO20 <--------------------  A    (MCU TX — STATUS frames)
+  TX GPIO21 -------------------->  B    (MCU RX)
+                                    C  ---> GND  (parks the stock module)
+```
+
+On a **Seeed XIAO ESP32-C3** — the board the configs here assume:
+
+| XIAO pad | GPIO | Purpose | Board pad |
+|----------|------|---------|-----------|
+| `5V` | — | supply in (through the onboard regulator) | `+5V` header |
+| `GND` | — | ground | `GND` header |
+| `D7` | `GPIO20` | UART **RX** | **A** (MCU TX) |
+| `D6` | `GPIO21` | UART **TX** | **B** (MCU RX) |
+| any free pad, e.g. `D0` | `GPIO2` | *optional* — hold **C** low from software | **C** |
+
+Watch out that `D6` and `D7` are **not** adjacent: `D0`–`D6` run down one edge of
+the board, while `5V`, `GND`, `3V3`, `D10`, `D9`, `D8` and `D7` run down the
+other — so `D7` (RX) sits at the far corner from `D6` (TX).
+
+These are the defaults in
+[`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml)
+(`rx_pin: GPIO20` / `tx_pin: GPIO21`). Note that `GPIO20`/`GPIO21` are also the
+C3's **default UART0 pins**, which is why [`common.yaml`](./common.yaml) moves the
+logger to `USB_SERIAL_JTAG` — otherwise the log output would fight the MCU on the
+same wires.
+
+The optional GPIO for **C** is only needed if you want to release the stock module
+without unsoldering; a wire straight to GND is what has been used so far.
+
+**A and B are 3.3 V logic — measured, not assumed.** So they connect straight to
+an ESP32-C3 GPIO with no level shifting. (Only the `+5V` header pad is 5 V, and
+that goes to the XIAO's `5V` pin, never to a GPIO.)
+
+### Then flash
+
+1. Copy [`secrets-example.yaml`](./secrets-example.yaml) to `secrets.yaml` and
+   fill in your Wi-Fi credentials.
+2. Flash [`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml) (or
+   [`philips-ac0950.yaml`](./philips-ac0950.yaml) for the non-sensor model).
+3. Watch the log. `MCU link up` means the handshake completed. If it does not
+   appear, see [Boot sequence](#boot-sequence) — the stock module's *first*
+   handshake attempt reliably fails and only the second, about two minutes later,
+   succeeds, so the component retries rather than assuming the first `HS1` is
+   answered.
 
 ## Reverse-engineering log
 
@@ -92,10 +210,10 @@ path is settled, which is what matters for the port.)
 - Read the chip marking under the module can (or from the
   [FCC internal photos](https://fccid.io/P53-EMC6069)) to settle the
   reflash-vs-replace question for good.
-- Add `AC0950` / `AC0951` to `VALID_MODELS` in
-  [`components/philips/__init__.py`](../../components/philips/__init__.py) —
-  the protocol is now confirmed, so this is unblocked. The known deltas are
-  listed under [Porting the component](#porting-the-component--known-deltas).
+- ~~Add `AC0950` / `AC0951` to the `philips` component~~ ✅ done — see
+  [Component support](#component-support).
+- **Run it against real hardware.** Nothing below the protocol work has been
+  tested on a device yet.
 - Find where the **ambient-light sensor** is reported, if it is reported at all
   — take a capture while changing only the light falling on the unit.
 - Confirm whether the **AC0950** (no PM sensor) uses the same datapoint map as
@@ -124,16 +242,40 @@ What that means for the reflash idea:
 
 ## Board observations
 
-From the control-PCB photos (see [`images/`](./images)):
+From the control-PCB photos (see [`images/`](./images)). All are of an AC0951.
+
+### Component side
+
+![AC0951 control PCB, component side](./images/ac0951_pcb.jpg)
+
+![MXCHIP EMC6069-P module close-up](./images/mxchip_emc6069.jpg)
+
+![Power section and the resistor cluster at the module pads](./images/ac0951_pcb_detail.jpg)
 
 - The MXCHIP module sits on the right-hand side of the board, castellated pads
   along its top and bottom edges, with series resistors (`R168`–`R171`, `R20`,
   `R21`, `R24`, `R81`) clustered right at those pads — the usual place to find
   the UART lines and a convenient place to probe them.
-- A large unmarked QFP in the centre of the board is the main MCU.
+- A large QFP in the centre of the board is the main MCU. **Its top marking is
+  not legible in any photo taken so far** — it reads as blank under flat light,
+  so step 3 of the log still needs an angled or macro shot.
 - Piezo buzzer top-centre, several JST fan/motor connectors down the left edge.
-- A small connector near the bottom-right is silkscreened **PM2.5** — presumably
-  where the AC0951's particulate sensor plugs in (see step 5 above).
+- A small connector near the bottom-right is silkscreened **PM2.5** — where the
+  AC0951's particulate sensor plugs in. The captures confirm the MCU owns those
+  readings (see step 5 above).
+
+### Display side
+
+![User-facing side: LED matrix and the three button springs](./images/ac0951_pcb_display_side.jpg)
+
+- The user-facing side of the same board carries the LED matrix — this is what
+  DP `0x04` dims — plus separate status LEDs and an RGB strip.
+- **Three button springs**, matching the three physical controls the captures
+  exercise: power, speed and display. See
+  [Physical buttons vs. the app](#physical-buttons-vs-the-app).
+- Board markings `TL-2780-C-V1.0` (main) and `TLC2700-C-V1.0` (LED module).
+- No ambient-light sensor has been identified here by eye, which is consistent
+  with nothing light-related appearing on the wire.
 
 ## Protocol — decoded from the captures
 
@@ -427,42 +569,52 @@ A factory-fresh unit announces itself: the first group `0x02` read returns
 `(DP02=1, DP03=2)`, which is the same "reset Wi-Fi / enter pairing" signal
 [documented for the 600 series](../philips-600-series#datapoint-groups).
 
-## Porting the component — known deltas
+## Component support
 
-Everything needed to add `AC0950`/`AC0951` to
-[`components/philips`](../../components/philips), as far as the captures show:
+`AC0950` / `AC0951` are implemented in
+[`components/philips`](../../components/philips) — set `model:` and the rest is
+shared with the 600 series. Every write frame the component emits has been
+checked byte-for-byte against the captures in [`captures/`](./captures); **none
+of it has been run against a real MCU yet.**
 
-1. Add the models to `VALID_MODELS` in
-   [`__init__.py`](../../components/philips/__init__.py) and to `PhilipsModel`
-   in [`philips.h`](../../components/philips/philips.h).
-2. **`MODE_MEDIUM` must become per-model** — `0x13` on the 900, `0x01` on the
-   600. The other three mode constants are unchanged.
-3. **HEPA reset total must become per-model** — `reset_filter()` writes `4800`
-   (`00 00 12 C0`); the 900 needs `9600` (`00 00 25 80`). Confirmed against a
-   captured app reset. The pre-filter value `720` is unchanged, so its frame
-   works as-is.
-4. Handle the **`0x74` TLV type** in `handle_status_()` so the group `0x08` walk
-   does not abandon early.
-5. `DP 0x0D` (speed) needs `0x12` treated as turbo rather than as a 1–4 level,
-   if it is ever exposed.
-6. PM2.5 (`0x21`), allergen index (`0x20`) and standby sensor (`0x34`) work
-   exactly as on the AC0651 — the AC0951 is the sensor-equipped variant.
-7. **Display brightness** (`DP 0x04`) is new and has no 600-series equivalent —
-   a three-position `select` (off / low / bright) writing `0x00` / `0x73` /
-   `0x7B`. Writing `0x04` alone is enough; `0x05` follows automatically.
-8. **Child lock** (`DP 0x03`) is new — a plain `switch`, `0` / `1`.
-9. **Timer** (`DP 0x10` write, `DP 0x11` read-back) is new — write the index
-   only (`hours + 1`, or `0` for off); the minutes remaining come back on
-   `0x11` as a live countdown and should be exposed as a separate read-only
-   sensor rather than round-tripped.
-10. The brightness entity must not read `DP 0x04` in isolation — the MCU
-    zeroes it whenever the unit is powered off. Gate it on `DP 0x02`.
-11. **Beep** (`DP 0x30`) is new — a `switch` writing `0` / `100`, not `0` / `1`.
+### What differs from the 600 series
 
-Not yet known: whether the AC0950 (no PM sensor) differs beyond simply not
-reporting `0x20`/`0x21`. Every app-exposed control in group `0x03` is now
-identified; what remains unknown there is only the set of datapoints that
-never move (`0x0A`, `0x2A`–`0x2C`, `0x36`, `0x40`).
+| | 600 series | 900 series |
+|---|---|---|
+| Medium fan mode (DP `0x0C`) | `0x01` | **`0x13`** |
+| HEPA total (filter reset) | `4800` (`00 00 12 C0`) | **`9600`** (`00 00 25 80`) |
+| Extra datapoints | — | child lock, beep, display brightness, sleep timer |
+| Status TLV types | `0x73` string | `0x73` string **+ `0x74` blob** |
+
+Everything else — framing, CRC, command IDs, power, sleep/turbo/auto, filters,
+PM2.5, allergen index, standby sensor — is identical.
+
+### Entities the 900 adds
+
+| Platform | `type` | Datapoint |
+|----------|--------|-----------|
+| `switch` | `child_lock` | `0x03` |
+| `switch` | `beep` | `0x30` (written as `0` / `100`, not `0` / `1`) |
+| `select` | `display_brightness` | `0x04` — `off` / `low` / `bright` |
+| `number` | `timer` | `0x10` — hours, `0` (off) to `12` |
+| `sensor` | `timer_remaining` | `0x11` — minutes left, MCU-counted, read-only |
+
+Two behaviours are worth knowing when reading those entities back:
+
+- **Display brightness reads `off` whenever the unit is powered off**, because
+  the MCU zeroes DP `0x04` along with the power. It only means "the user turned
+  the display off" while DP `0x02` is `1`.
+- **Physical button presses never produce a SET**, so the component has to poll
+  group `0x03` to notice them — there is nothing to subscribe to.
+
+### Still unknown
+
+- Whether the **AC0950** differs beyond simply not reporting `0x20`/`0x21`.
+  Every capture is from an AC0951; the AC0950 support is an assumption modelled
+  on the AC0650/AC0651 split.
+- What `DP 0x0A`, `0x2A`–`0x2C`, `0x36` and `0x40` are. They never move, so they
+  may be config constants and may not be identifiable by observation at all.
+- Where the **ambient-light sensor** is reported, if it is reported at all.
 
 ## Capturing the UART
 
@@ -470,6 +622,10 @@ The captures so far were taken with a **logic analyzer** on both lines, exported
 from Saleae Logic as an analyzer table. That is the recommended route — it gives
 exact timing (which is how the baud rate and the boot behaviour were pinned
 down) and it cannot drop bytes.
+
+![Logic analyzer wired to the MCU-module UART](./images/uart_capture_setup.jpg)
+
+![The same rig mid-capture, unit reassembled](./images/uart_capture_running.jpg)
 
 1. Probe both UART lines plus GND, with the stock MXCHIP module left powered and
    running — the point is to record its conversation with the MCU.

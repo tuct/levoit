@@ -21,9 +21,11 @@ SensorType = philips_ns.enum("SensorType", is_class=True)
 TYPE_MAP = {
     "filter_clean": SensorType.FILTER_CLEAN,
     "filter_lifetime": SensorType.FILTER_LIFETIME,
-    # AC0651 only
+    # AC0651 / AC0951 only
     "pm2_5": SensorType.PM2_5,
     "allergen_index": SensorType.ALLERGEN_INDEX,
+    # AC0950/AC0951 only
+    "timer_remaining": SensorType.TIMER_REMAINING,
 }
 
 TYPE_PROPS = {
@@ -48,6 +50,11 @@ TYPE_PROPS = {
         CONF_STATE_CLASS: validate_state_class("measurement"),
         CONF_ACCURACY_DECIMALS: 0,
     },
+    "timer_remaining": {
+        CONF_UNIT_OF_MEASUREMENT: "min",
+        CONF_ICON: "mdi:timer-sand",
+        CONF_ACCURACY_DECIMALS: 0,
+    },
 }
 
 CONFIG_SCHEMA = sensor.sensor_schema(PhilipsSensor).extend(
@@ -59,6 +66,9 @@ CONFIG_SCHEMA = sensor.sensor_schema(PhilipsSensor).extend(
 
 
 async def to_code(config):
+    # Tells philips.cpp this platform is in the build — see the note at
+    # the top of philips.cpp on why USE_SENSOR is not sufficient.
+    cg.add_define("USE_PHILIPS_SENSOR")
     parent = await cg.get_variable(config[CONF_PHILIPS_ID])
     stype = config[CONF_TYPE]
     config = dict(config)
