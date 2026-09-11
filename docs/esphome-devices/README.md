@@ -20,7 +20,7 @@ plus sibling YAML and images — so a folder can be copied across unchanged.
 | `Levoit-Vital-200s` | Levoit Vital 200S (Pro) | ready — needs a device or UI image |
 | `Levoit-Everest-Air` | Levoit Everest Air | ready — needs a device or UI image |
 | `Philips-Series-600` | Philips / MUJI Series 600 | ready |
-| `Philips-Series-900` | Philips Series 900 | **hold** — see below |
+| `Philips-Series-900` | Philips Series 900 | ready — verified on an AC0951 |
 
 ## Updates to existing pages
 
@@ -34,13 +34,11 @@ the repo's previous name. The drafts here repoint them at `devices/`, add
 | `Levoit-Core-400s` | full content refresh — real feature list, `config.yaml`, teardown/flashing notes |
 | `Levoit-Mini` | links → `tuct/levoit`; typo and wording fixes |
 
-## Why Series 900 is on hold
+## A note on the Series 900
 
-ESPHome does not control that purifier yet — the MCU protocol is undecoded and the
-`philips` component has no `AC0950`/`AC0951` model. Its `config.yaml` is a passive
-UART sniffer, not a control config. The page is written and accurate, but it should
-only go in once the device actually runs ESPHome, or be offered to the maintainers
-as a research page if they want it earlier.
+The page is written against the **AC0951**, which is verified on hardware. The
+**AC0950** shares the configuration but has never been observed — the page says so
+rather than implying both are tested.
 
 ## Conventions worth remembering
 

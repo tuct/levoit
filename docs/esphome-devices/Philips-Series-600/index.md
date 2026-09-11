@@ -43,7 +43,8 @@ Manufacturer: [Philips](https://www.philips.com) / [Versuni](https://www.versuni
 * Reset buttons for the pre-filter and HEPA counters
 * MCU firmware version text sensor
 * PM2.5 sensor and allergen index, 1–12, on the sensor model
-* Standby sensor monitoring switch on the sensor model — keeps the particulate sensor running while the unit is in standby
+* Standby sensor monitoring switch on the sensor model — keeps the particulate
+  sensor running while the unit is in standby
 
 ## Wiring
 

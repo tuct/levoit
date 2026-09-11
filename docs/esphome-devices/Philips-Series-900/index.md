@@ -4,6 +4,7 @@ date-published: 2026-09-11
 type: misc
 standard: eu, uk
 board: esp32
+made-for-esphome: False
 difficulty: 4
 project-url: https://github.com/tuct/levoit/tree/main/devices/philips-900-series
 alias:
@@ -13,67 +14,88 @@ alias:
 
 ## Description
 
-> **ESPHome does not control this purifier yet.** The case has been opened, the
-> Wi-Fi module identified, the power and UART pads located and an ESP32-C3 fitted
-> inside — but the protocol between the module and the purifier's control MCU has
-> not been decoded, so there is no working control configuration to publish. This
-> page documents the teardown and the capture rig being used to decode it.
+A Philips / Versuni air purifier with a particulate sensor, an auto mode and a
+7-segment status display. It runs fully local on ESPHome through the
+[`philips`](https://github.com/tuct/levoit/tree/main/components/philips) external
+component, which speaks the MCU's `FE FF` framed binary protocol.
 
-Unlike the [Series 600](/devices/philips-series-600/), which carries a locked
-ESP32-C3, the Series 900 uses an **MXCHIP EMC6069-P** — a 2.4 GHz Wi-Fi + BLE module
-on a small castellated daughterboard, FCC ID
-[`P53-EMC6069`](https://fccid.io/P53-EMC6069). It is not an EMW3080 / MX1290, so the
-known Realtek RTL8710BN → LibreTiny → ESPHome reflash route does not apply, and
-MXCHIP does not publish the module's silicon. The working plan is therefore the same
-as on the 600 series: **park the stock module and wire in an ESP32** on the MCU UART.
+The stock Wi-Fi module is an **MXCHIP EMC6069-P** (FCC ID
+[`P53-EMC6069`](https://fccid.io/P53-EMC6069)) — not an ESP32 at all, and not a
+LibreTiny target, so it cannot be reflashed. The conversion is instead to **wire your
+own ESP32-C3 onto the MCU's UART and park the stock module** by holding its reset pad
+low. The module stays fitted and nothing is cut, so the change is reversible.
 
-On stock firmware these units can already be driven locally — without opening the
-case — over encrypted CoAP, using the
+The MCU link turned out to be the same protocol the component already spoke for the
+[Series 600](/devices/philips-series-600/) — 115200 8N1, near-identical datapoint map
+— decoded from logic-analyzer captures with every write frame checked against them.
+
+Verified on an **AC0951** running MCU firmware `0.3.3` (internal model string
+`AC0951/13`). The **AC0950** uses the same configuration with `model: AC0950` and
+without the particulate entities, but has never been observed on hardware — treat it
+as untested.
+
+On stock firmware these units can also be driven locally over encrypted CoAP without
+opening the case, using the
 [ha-philips-airpurifier](https://github.com/ruaan-deysel/ha-philips-airpurifier)
-custom component. That remains the working option until the UART protocol is known.
+custom component.
 
 Manufacturer: [Philips](https://www.philips.com) / [Versuni](https://www.versuni.com)
 
 ![Philips Series 900 running](./device-running.jpg "Philips Series 900 running")
 
-## Teardown
+## Features
 
-Twist the top cap counter-clockwise and lift it off — no screws, the same arrangement
-as the Series 600. That exposes the control PCB.
+* Fan — on/off plus speeds, with an Auto preset on the AC0951
+* Pre-filter and HEPA filter life sensors, in % remaining
+* Reset buttons for the pre-filter and HEPA counters
+* Child Lock and Beep switches
+* Display Brightness select — off / low / bright
+* Sleep Timer number, 0–12 hours, with a Timer Remaining sensor
+* MCU firmware version text sensor
+* PM2.5 sensor and allergen index on the AC0951
+* Standby sensor monitoring switch on the AC0951 — keeps the particulate sensor
+  measuring with the fan off
 
-`+5V` and `GND` are broken out next to the module, and three further pads at its
-top-left edge — labelled A, B and C on the annotated photo in the device guide — are
-the candidates for the MCU link. Which of them is TX and which is RX is still being
-confirmed.
-
-On the board: the MXCHIP module sits on the right-hand side with series resistors
-clustered at its castellated pads, a large unmarked QFP in the centre is the main
-MCU, and a connector at the bottom-right is silkscreened `PM2.5`.
+## Wiring
 
 > **Unplug the unit first.** Part of the control board is on mains.
 
-## Capturing the MCU UART
+Twist the top cap counter-clockwise and lift it off — no screws — to reach the
+control PCB. Every connection is on the top edge of the MXCHIP module.
 
-The configuration below does not control anything — it listens passively on both
-directions of the MCU-to-module link and dumps the frames to the ESPHome log, with
-the stock module left in place and running so its conversation can be recorded. A
-Seeed XIAO ESP32-C3 fits inside the base alongside the stock module; a logic
-analyzer clipped to the same pads works just as well and is what the current
-captures were taken with.
+![Annotated MXCHIP module pads](./module-pads.jpg "Annotated MXCHIP module pads")
 
-Wire an ESP32-C3 read-only: `GND`, one GPIO for the MCU's transmit line and one for
-the module's. No transmit line from the ESP.
+| Pad | What it is | Goes to |
+|-----|-----------|---------|
+| `+5V` | 5 V rail, on the 4-pin through-hole header beside the module | ESP32 `5V` / `VIN` |
+| `GND` | ground, same header | ESP32 `GND` |
+| **A** | UART, MCU → module (carries `STATUS`) | ESP32 `RX` — `GPIO20` |
+| **B** | UART, module → MCU | ESP32 `TX` — `GPIO10` |
+| **C** | module reset / enable, 10 k pull-up on the PCB | tie to `GND` to park the module |
 
-115200 8N1 is the starting guess, carried over from the Series 600; if the log is
-garbage, try 9600 / 38400 / 57600.
+On a Seeed XIAO ESP32-C3 all four land on one edge: `5V`, `GND`, `D7` (`GPIO20`, RX)
+and `D10` (`GPIO10`, TX).
+
+Two things worth getting right:
+
+* **Park the module before connecting TX.** The ESP32 and the MXCHIP cannot both
+  drive the MCU's RX line. Until pad **C** is held low, leave your TX disconnected
+  and treat the setup as receive-only.
+* **Tie C straight to GND, or use ≤ 3.3 kΩ.** The pad already has a 10 k pull-up, so
+  a hard tie sinks only ~0.33 mA. A 10 k series resistor — the value the Series 600
+  uses on its ESP32's `EN` pin — would form an even divider and leave C at ~1.65 V,
+  in the indeterminate band where the module may not stay in reset.
+
+Driving C from a spare GPIO held low works too, and lets you release the module
+again without unsoldering.
+
+## Basic Configuration
 
 ```yaml file=config.yaml
 ```
 
 ## Details and instructions
 
-Teardown photos, board notes, the reverse-engineering log and captures:
+Teardown photos, the annotated pads, the decoded protocol and the logic-analyzer
+captures:
 [tuct/levoit — Philips 900 series](https://github.com/tuct/levoit/tree/main/devices/philips-900-series).
-
-Help decoding the protocol is welcome — captures and findings go in
-[Discussions](https://github.com/tuct/levoit/discussions).

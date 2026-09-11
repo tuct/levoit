@@ -23,7 +23,9 @@ project-url: https://github.com/tuct/levoit/tree/main/devices/levoit-mini
 
 An air purifier with 3-stage filtration.
 
-This project requires a custom PCB and 3D printed parts to convert the Levoit Mini into a Levoit Mini-S (smartified version). The original PCB is bypassed rather than modified, so the change is reversible.
+This project requires a custom PCB and 3D printed parts to convert the Levoit Mini
+into a Levoit Mini-S (smartified version). The original PCB is bypassed rather than
+modified, so the change is reversible.
 
 Manufacturer: [Levoit](http://www.levoit.com)
 
