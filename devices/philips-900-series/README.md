@@ -1,19 +1,17 @@
 [← Back](../../README.md)
 # Philips Series 900 Air Purifier — AC0950 / AC0951
 
-> 🔬 **Protocol decoded, component support written, not yet run on hardware.**
-> The board has been opened, the Wi-Fi module identified, and the MCU↔module
-> link **captured and decoded**: it is the *same* protocol the
-> [`philips`](../../components/philips) component already speaks for the
-> AC0650/AC0651, at 115200 8N1, with an almost identical datapoint map. See
+> ✅ **Working on hardware.** An **AC0951** is running an ESP32-C3 on the MCU
+> link with the [`philips`](../../components/philips) component, fully local.
+>
+> The MCU↔module link is the *same* protocol the component already speaks for
+> the AC0650/AC0651 — 115200 8N1, almost identical datapoint map — decoded from
+> the logic-analyzer captures in [`captures/`](./captures), with every write
+> frame checked byte-for-byte against them. See
 > [Protocol](#protocol--decoded-from-the-captures).
 >
-> `AC0950` / `AC0951` are now supported by the component, and every write frame
-> it emits was checked byte-for-byte against the captures in
-> [`captures/`](./captures). **But nothing here has been run against a real
-> MCU yet** — the board YAMLs compile and the pads are identified, but the
-> wiring in [Adding your own ESP32](#adding-your-own-esp32) is untested, and
-> every capture is from an **AC0951** (the AC0950 has never been observed).
+> ⚠️ The **AC0950** is still unverified: every capture and the working install
+> are from an AC0951, and the AC0950 has never been observed.
 
 The goal for these units is the same move as the
 [600-series](../philips-600-series): **disable the stock Wi-Fi module and drive
@@ -37,7 +35,7 @@ in the root README.
 | MCU link | ✅ UART, **115200 8N1**, **3.3 V** — verified; same `FE FF` framing as the 600 series |
 | MCU firmware | `0.3.3` (module firmware `0.8.6`) |
 | Internal model string | `AC0951/13`, codename **`Unicorn`** |
-| ESPHome support | ⚠️ implemented in [`philips`](../../components/philips) (`model: AC0950` / `AC0951`), not yet hardware-tested |
+| ESPHome support | ✅ [`philips`](../../components/philips) (`model: AC0951` — confirmed on hardware; `AC0950` untested) |
 | Stock local control | ✅ CoAP (`AWS_Philips_AIR`) without opening the case |
 
 ## Opening the unit
@@ -53,9 +51,8 @@ control PCB.
 
 > ⚠️ **Unplug the unit first.** Part of the control board is on mains.
 >
-> ⚠️ **The component has not been run against this MCU yet.** The pads are
-> identified from real probing and the protocol is decoded and implemented, but
-> no ESPHome build has yet driven the purifier. Expect to debug.
+> ✅ **This has been done and works** on an AC0951 — the photos below are that
+> install. The pads, pin assignment and parking method are all as used there.
 
 The move is the same as the [600 series](../philips-600-series): park the stock
 Wi-Fi module and let your own ESP32 talk to the purifier's MCU over the internal
@@ -130,6 +127,8 @@ can damage something.
                                     C  ---> GND  (parks the stock module)
 ```
 
+![Seeed XIAO ESP32-C3 with its external antenna](./images/xiao_esp32c3.jpg)
+
 On a **Seeed XIAO ESP32-C3** — the board the configs here assume:
 
 | XIAO pad | GPIO | Purpose | Board pad |
@@ -162,6 +161,41 @@ without unsoldering; a wire straight to GND is what has been used so far.
 **A and B are 3.3 V logic — measured, not assumed.** So they connect straight to
 an ESP32-C3 GPIO with no level shifting. (Only the `+5V` header pad is 5 V, and
 that goes to the XIAO's `5V` pin, never to a GPIO.)
+
+### The install
+
+The AC0951 this was done on, start to finish. The MXCHIP module stays soldered in
+place — only pad **C** is tied to GND to keep it quiet.
+
+![ESP32-C3 wired to the control board](./images/install_01.jpg)
+
+![Wiring, wider view](./images/install_02.jpg)
+
+The ESP32-C3 tucks into the cavity above the fan with the antenna clear of the
+board. Route the wires so nothing is pinched when the cap goes back on.
+
+![ESP32-C3 positioned in the housing](./images/install_03.jpg)
+
+![Board and ESP seated](./images/install_04.jpg)
+
+![Wire routing before closing up](./images/install_05.jpg)
+
+![Ready to close](./images/install_06.jpg)
+
+#### Refitting the top cap — watch the orientation
+
+The cap only goes back on one way. The slats around the inner ring are evenly
+spaced **except for one, which is noticeably wider** — line that up with the
+matching gap on the housing before twisting the cap clockwise to lock it.
+
+![The wider slat that keys the top cap](./images/top_cap_orientation.jpg)
+
+Get it wrong and the cap will not seat; there is no force needed either way, so
+if it resists, back off and re-check the wide slat rather than pushing.
+
+#### Running
+
+![The AC0951 reassembled and running](./images/installed_running.jpg)
 
 ### Then flash
 
@@ -583,8 +617,8 @@ A factory-fresh unit announces itself: the first group `0x02` read returns
 `AC0950` / `AC0951` are implemented in
 [`components/philips`](../../components/philips) — set `model:` and the rest is
 shared with the 600 series. Every write frame the component emits has been
-checked byte-for-byte against the captures in [`captures/`](./captures); **none
-of it has been run against a real MCU yet.**
+checked byte-for-byte against the captures in [`captures/`](./captures), and an
+**AC0951 is confirmed running it on hardware**.
 
 ### What differs from the 600 series
 
@@ -664,9 +698,9 @@ timing detail.
 | File | Status | Purpose |
 |------|--------|---------|
 | [`philips-900-uart-sniffer.yaml`](./philips-900-uart-sniffer.yaml) | ✅ usable | Passive both-direction UART capture — the only flashable config here |
-| [`common.yaml`](./common.yaml) | ⚠️ WIP | Shared entity config for the eventual component support |
-| [`philips-ac0950.yaml`](./philips-ac0950.yaml) | ⚠️ WIP | AC0950 board config |
-| [`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml) | ⚠️ WIP | AC0951 board config, adds PM2.5 entities |
+| [`common.yaml`](./common.yaml) | ✅ | Shared entity config |
+| [`philips-ac0950.yaml`](./philips-ac0950.yaml) | ⚠️ untested | AC0950 board config — same protocol assumed, never verified |
+| [`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml) | ✅ working | AC0951 board config; adds PM2.5, allergen index and the standby-sensor switch |
 | [`secrets-example.yaml`](./secrets-example.yaml) | ✅ | Template — copy to `secrets.yaml` |
 | [`captures/`](./captures) | — | UART captures — see below |
 | [`images/`](./images) | — | Teardown / PCB photos |
