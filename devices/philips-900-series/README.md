@@ -71,7 +71,7 @@ All the connection points are on the **top edge of the MXCHIP module**:
 | `GND` | ground, same header | ESP32 `GND` |
 | **A** | UART, **MCU → module** (carries `STATUS`) | ESP32 `RX` |
 | **B** | UART, **module → MCU** (carries `HS1` / `QUERY` / `SET`) | ESP32 `TX` |
-| **C** | module **reset / enable** | pull low to park the stock module |
+| **C** | module **reset / enable**, 10k pull-up on the PCB | tie to GND to park the stock module |
 
 ### Which of A and B is which
 
@@ -96,16 +96,20 @@ The ESP32 and the MXCHIP module cannot both drive the MCU's RX line. Pad **C** i
 the module's reset/enable: **hold it low** so the module stays fitted but silent,
 the same trick the 600 series uses on the original ESP32's `EN` pin.
 
-**A plain wire to GND is what has been used here, and it works.** That is the
-simplest option and needs nothing but a link to a ground point.
+**C is pulled up by a 10k resistor on the PCB** (measured). That settles how to
+hold it low:
 
-A resistor is the more cautious choice if you would rather not rely on that: a
-hard tie is only safe as long as nothing on the board ever drives that net high,
-and a resistor limits the current if something does. The 600 series documents
-[~10k to GND](../philips-600-series#esphome-component) for the same job. If you go
-that way, **1 kΩ is the better value** — against a typical 10k pull-up it holds
-the pin near 0.3 V, whereas 10k against 10k would sit at ~1.65 V, squarely in the
-indeterminate band where the module might not stay in reset.
+**Use a plain wire to GND.** It is what has been used here and it works, and with
+a 10k pull-up and nothing else driving the net it sinks only
+`3.3 V / 10k ≈ 0.33 mA` — there is nothing to protect against, so a series
+resistor buys you nothing.
+
+**Do not copy the 600 series' ~10k here.** That value works on the 600's ESP32
+`EN` pin, but against this board's 10k pull-up it would form an even divider and
+leave C sitting at ~1.65 V — squarely in the indeterminate band, where the module
+may not stay in reset at all. If you want a resistor rather than a hard tie it has
+to be **≤ 3.3 kΩ** to get under the ~0.8 V a 3.3 V input needs to read low; 1 kΩ
+gives ~0.3 V with plenty of margin.
 
 Driving C from a spare ESP32 GPIO (output-low) works too, and lets you release
 the module without unsoldering.
