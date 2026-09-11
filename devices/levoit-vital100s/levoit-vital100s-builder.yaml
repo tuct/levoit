@@ -9,7 +9,9 @@ esphome:
   name: ${device_name}
   platformio_options:
     board_build.flash_mode: dio
-    board_build.flash_freq: 40m
+    # board_build.f_flash is the key PlatformIO reads for flash frequency;
+    # board_build.flash_freq is not recognised and was silently ignored.
+    board_build.f_flash: 40000000L
 
 esp32:
   board: esp32-c3-devkitm-1
