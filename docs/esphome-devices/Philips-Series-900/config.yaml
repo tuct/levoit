@@ -1,0 +1,49 @@
+# Passive UART sniffer — this configuration does not control the purifier.
+# It listens on both directions of the MCU-to-module link and dumps the frames
+# to the ESPHome log, with the stock MXCHIP module left in place and running.
+esphome:
+  name: philips-900-sniffer
+  friendly_name: Philips Series 900 Sniffer
+  name_add_mac_suffix: true
+
+esp32:
+  board: seeed_xiao_esp32c3
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+  # UART0 on the ESP32-C3 is GPIO20/21 — the pins we are listening on.
+  # Log over the native USB so those pins stay free.
+  hardware_uart: USB_SERIAL_JTAG
+
+wifi:
+  # Set up a wifi access point using the device name above
+  ap:
+
+uart:
+  # MCU -> module
+  - id: uart_from_mcu
+    rx_pin: GPIO20
+    baud_rate: 115200
+    rx_buffer_size: 512
+    debug:
+      direction: RX
+      dummy_receiver: true
+      after:
+        timeout: 20ms
+      sequence:
+        - lambda: UARTDebug::log_hex(direction, bytes, ' ');
+
+  # module -> MCU
+  - id: uart_from_module
+    rx_pin: GPIO21
+    baud_rate: 115200
+    rx_buffer_size: 512
+    debug:
+      direction: RX
+      dummy_receiver: true
+      after:
+        timeout: 20ms
+      sequence:
+        - lambda: UARTDebug::log_hex(direction, bytes, ' ');
