@@ -158,7 +158,30 @@ There is a working precedent on exactly this silicon: **[hn/ginlong-solis](https
 
 If you have one of these open on the bench, a photo of the Wi-Fi module and a UART dump in [Discussions](https://github.com/tuct/esphome-projects/discussions) would be very welcome — see [Capturing a UART Dump](#capturing-a-uart-dump) below.
 
-## Change Log 
+## Change Log
+
+### 2026.09.11
+
+* **Philips Series 900 — an AC0951 now runs ESPHome.** The MCU↔module protocol
+  is decoded and turns out to be the *same* one the
+  [`philips`](./components/philips/README.md) component already speaks for the
+  AC0650/AC0651 — 115200 8N1, `FE FF` framing, CRC-16/CCITT-FALSE, almost the
+  same datapoint map. `model: AC0950` / `AC0951` added; every write frame was
+  verified byte-for-byte against logic-analyzer captures before it was flashed
+  ([devices/philips-900-series](./devices/philips-900-series))
+  * New entities the 900 adds: **child lock**, **beep**, **display brightness**
+    (off / low / bright) and a **sleep timer** in hours with a minutes-remaining
+    sensor
+  * Two values differ from the 600 series: medium fan mode is `0x13` (not
+    `0x01`) and the HEPA filter total is 9600 (not 4800)
+  * Wiring guide with annotated pads, the 10k pull-up measured on the module's
+    reset pin, the XIAO ESP32-C3 pin mapping (`D7` RX / `D10` TX, avoiding the
+    C3's strapping pins) and an install walkthrough with photos
+  * ⚠️ The **AC0950** is still unverified — every capture and the working
+    install are from an AC0951
+  * Fixes a latent build bug in the `philips` component: platform includes were
+    guarded on the generic `USE_SWITCH` / `USE_SENSOR` macros, so a config with
+    an unrelated switch/select platform failed to compile
 
 ### 2026.09.09
 
