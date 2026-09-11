@@ -1,8 +1,9 @@
 # Philips Series 900 (AC0950 / AC0951) — passive UART sniffer.
 #
-# STATUS: this is the ONLY config in this folder that works today. The protocol
-# between the main MCU and the stock MXCHIP EMC6069-P module has not been
-# decoded yet, so there is no `philips:` component support for these models.
+# The protocol is decoded and the `philips` component now drives these units —
+# see philips-ac0951-c3_dev.yaml for the working config. This sniffer stays for
+# re-verifying the pads on a board revision that might route them differently,
+# and for capturing datapoints that are still unmapped.
 #
 # What it does: listens on BOTH directions of the MCU<->module link without
 # transmitting anything, and dumps raw frames to the log. Leave the stock MXCHIP

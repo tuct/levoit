@@ -2,7 +2,7 @@
 # The AC0951 reports PM2.5 and the allergen index on the MCU link exactly as the
 # AC0651 does, and gains the Auto fan preset with them.
 #
-# ⚠️ The GPIO pins below are not yet verified on hardware.
+# ✅ Confirmed working on hardware — these are the pins from that install.
 substitutions:
   device_name: philips-ac0951-c3
   wifi_ap_ssid: "Philips-AC0951"

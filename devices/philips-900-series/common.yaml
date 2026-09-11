@@ -1,9 +1,10 @@
 # Shared config for the Philips Series 900 (AC0950/AC0951) — included by the
 # per-board yamls. Do not flash this directly.
 #
-# The protocol is decoded and the `philips` component supports AC0950/AC0951
-# (see devices/philips-900-series/README.md). Still unverified on hardware:
-# the GPIO pins below, and how the stock MXCHIP module gets parked.
+# The protocol is decoded and the `philips` component supports AC0950/AC0951.
+# Confirmed working on an AC0951 — the GPIO pins below and the module-parking
+# method are the ones from that install. See the README for the pad map and the
+# warning about holding pad C low before connecting TX.
 logger:
   # On the ESP32-C3 the default logger UART (UART0) is GPIO20/21 — the same pins
   # as the MCU link. Log over the native USB instead so those pins stay free.

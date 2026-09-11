@@ -1,7 +1,7 @@
 # Philips Series 900 AC0950 — replacement ESP32-C3 on the MCU<->module UART.
 #
-# ⚠️ The protocol is confirmed, but on an AC0951; the AC0950 (no PM sensor) has
-# not been captured. The GPIO pins below are also not yet verified on hardware.
+# ⚠️ The protocol and these pins are confirmed on an AC0951; the AC0950 (no PM
+# sensor) has never been captured, so this variant is untested.
 substitutions:
   device_name: philips-ac0950
   wifi_ap_ssid: "Philips-AC0950"
