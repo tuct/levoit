@@ -22,7 +22,10 @@ TYPE_MAP = {
 
 TYPE_PROPS = {
     "filter_low": {
-        CONF_DEVICE_CLASS: "battery",
+        # "problem" (on = problem), not "battery" — Home Assistant renders a
+        # battery binary_sensor as a low-battery warning, which is the wrong
+        # semantics and icon for a filter that needs replacing.
+        CONF_DEVICE_CLASS: "problem",
         CONF_ICON: "mdi:air-filter",
     },
     "cover_open": {
