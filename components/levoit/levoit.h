@@ -103,6 +103,16 @@ class Levoit : public Component, public uart::UARTDevice {
   LevoitSwitch *get_switch(SwitchType type) const { return switches_[st_idx_(type)]; }
   class LevoitBinarySensor *get_binary_sensor(BinarySensorType type) const { return binary_sensors_[bs_idx_(type)]; }
   bool get_binary_sensor_state(BinarySensorType type) const { return binary_sensor_states_[bs_idx_(type)]; }
+  // Value accessors that keep the platform entity classes confined to
+  // levoit.cpp. The *_commands.cpp / *_status.cpp sources must not include
+  // number/levoit_number.h and friends: those directories only exist in the
+  // build when the matching levoit platform is configured. Each returns false
+  // when the entity is absent or has no state yet, leaving `out` untouched.
+  bool try_get_number_state(NumberType type, float &out) const;
+  bool try_get_select_index(SelectType type, size_t &out) const;
+  bool try_get_switch_state(SwitchType type, bool &out) const;
+  void apply_fan_status(bool power, uint8_t speed, uint32_t mode);
+
   void start_timer(){this->timer_active_ = true; this->timer_stop_pending_ = false;};
   void stop_timer(){this->timer_active_ = false;};
   bool is_timer_active() const { return this->timer_active_; };

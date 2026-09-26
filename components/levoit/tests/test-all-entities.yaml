@@ -1,0 +1,320 @@
+# GENERATED-ish: hand-editable. See README.md in this folder.
+esphome:
+  name: test-levoit-all
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+
+# Dummy credentials on purpose - these tests must build without a secrets.yaml.
+# levoit.cpp includes esphome/components/network/util.h, so some network
+# component has to be present or the build fails to find that header.
+wifi:
+  ssid: "compile-test"
+  password: "compile-test"
+
+api:
+  encryption:
+    key: "mfEv/h5ZAzrr46UQ/Mt35PpgcbVPFlPNhlLMZzAol4w="
+
+external_components:
+  - source: ../..
+    components: [levoit]
+
+uart:
+  - id: uart_mcu
+    tx_pin: GPIO17
+    rx_pin: GPIO16
+    baud_rate: 115200
+
+levoit:
+  id: dev
+  model: CORE400S
+  uart_id: uart_mcu
+
+fan:
+  - platform: levoit
+    levoit: dev
+    name: "Fan"
+
+switch:
+  - platform: levoit
+    levoit: dev
+    name: "display"
+    type: display
+  - platform: levoit
+    levoit: dev
+    name: "child_lock"
+    type: child_lock
+  - platform: levoit
+    levoit: dev
+    name: "light_detect"
+    type: light_detect
+  - platform: levoit
+    levoit: dev
+    name: "quick_clean"
+    type: quick_clean
+  - platform: levoit
+    levoit: dev
+    name: "white_noise"
+    type: white_noise
+  - platform: levoit
+    levoit: dev
+    name: "daytime_enabled"
+    type: daytime_enabled
+  - platform: levoit
+    levoit: dev
+    name: "led_ring"
+    type: led_ring
+  - platform: levoit
+    levoit: dev
+    name: "auto_dry_power_off"
+    type: auto_dry_power_off
+  - platform: levoit
+    levoit: dev
+    name: "auto_dry_water_empty"
+    type: auto_dry_water_empty
+
+sensor:
+  - platform: levoit
+    levoit: dev
+    name: "aqi"
+    type: aqi
+  - platform: levoit
+    levoit: dev
+    name: "pm25"
+    type: pm25
+  - platform: levoit
+    levoit: dev
+    name: "timer_current"
+    type: timer_current
+  - platform: levoit
+    levoit: dev
+    name: "efficiency_counter"
+    type: efficiency_counter
+  - platform: levoit
+    levoit: dev
+    name: "current_cadr"
+    type: current_cadr
+  - platform: levoit
+    levoit: dev
+    name: "filter_life_left"
+    type: filter_life_left
+  - platform: levoit
+    levoit: dev
+    name: "pm1_0"
+    type: pm1_0
+  - platform: levoit
+    levoit: dev
+    name: "pm10"
+    type: pm10
+  - platform: levoit
+    levoit: dev
+    name: "fan_rpm"
+    type: fan_rpm
+  - platform: levoit
+    levoit: dev
+    name: "humidity"
+    type: humidity
+  - platform: levoit
+    levoit: dev
+    name: "temperature"
+    type: temperature
+  - platform: levoit
+    levoit: dev
+    name: "filter_life_mcu"
+    type: filter_life_mcu
+
+binary_sensor:
+  - platform: levoit
+    levoit: dev
+    name: "filter_low"
+    type: filter_low
+  - platform: levoit
+    levoit: dev
+    name: "cover_open"
+    type: cover_open
+  - platform: levoit
+    levoit: dev
+    name: "dark_detected"
+    type: dark_detected
+  - platform: levoit
+    levoit: dev
+    name: "water_tank_empty"
+    type: water_tank_empty
+  - platform: levoit
+    levoit: dev
+    name: "dry_active"
+    type: dry_active
+  - platform: levoit
+    levoit: dev
+    name: "humidifying"
+    type: humidifying
+
+select:
+  - platform: levoit
+    levoit: dev
+    name: "auto_mode"
+    type: auto_mode
+  - platform: levoit
+    levoit: dev
+    name: "sleep_mode"
+    type: sleep_mode
+  - platform: levoit
+    levoit: dev
+    name: "white_noise_fan_level"
+    type: white_noise_fan_level
+  - platform: levoit
+    levoit: dev
+    name: "sleep_mode_fan_mode_level"
+    type: sleep_mode_fan_mode_level
+  - platform: levoit
+    levoit: dev
+    name: "daytime_fan_mode"
+    type: daytime_fan_mode
+  - platform: levoit
+    levoit: dev
+    name: "nightlight"
+    type: nightlight
+  - platform: levoit
+    levoit: dev
+    name: "light_mode"
+    type: light_mode
+  - platform: levoit
+    levoit: dev
+    name: "white_noise_sound"
+    type: white_noise_sound
+  - platform: levoit
+    levoit: dev
+    name: "sleep_preference"
+    type: sleep_preference
+  - platform: levoit
+    levoit: dev
+    name: "fan_operating_mode"
+    type: fan_operating_mode
+  - platform: levoit
+    levoit: dev
+    name: "auto_profile"
+    type: auto_profile
+  - platform: levoit
+    levoit: dev
+    name: "humidity_subtype"
+    type: humidity_subtype
+  - platform: levoit
+    levoit: dev
+    name: "dry_level"
+    type: dry_level
+
+number:
+  - platform: levoit
+    levoit: dev
+    name: "timer"
+    type: timer
+  - platform: levoit
+    levoit: dev
+    name: "efficiency_room_size"
+    type: efficiency_room_size
+  - platform: levoit
+    levoit: dev
+    name: "quick_clean_min"
+    type: quick_clean_min
+  - platform: levoit
+    levoit: dev
+    name: "quick_clean_minutes"
+    type: quick_clean_minutes
+  - platform: levoit
+    levoit: dev
+    name: "quick_clean_fan_level"
+    type: quick_clean_fan_level
+  - platform: levoit
+    levoit: dev
+    name: "daytime_fan_level"
+    type: daytime_fan_level
+  - platform: levoit
+    levoit: dev
+    name: "white_noise_min"
+    type: white_noise_min
+  - platform: levoit
+    levoit: dev
+    name: "sleep_mode_min"
+    type: sleep_mode_min
+  - platform: levoit
+    levoit: dev
+    name: "sleep_minutes"
+    type: sleep_minutes
+  - platform: levoit
+    levoit: dev
+    name: "sleep_fan_level"
+    type: sleep_fan_level
+  - platform: levoit
+    levoit: dev
+    name: "filter_lifetime_months"
+    type: filter_lifetime_months
+  - platform: levoit
+    levoit: dev
+    name: "led_brightness_min"
+    type: led_brightness_min
+  - platform: levoit
+    levoit: dev
+    name: "led_speed"
+    type: led_speed
+  - platform: levoit
+    levoit: dev
+    name: "white_noise_volume"
+    type: white_noise_volume
+  - platform: levoit
+    levoit: dev
+    name: "aqi_scale"
+    type: aqi_scale
+  - platform: levoit
+    levoit: dev
+    name: "vent_angle"
+    type: vent_angle
+  - platform: levoit
+    levoit: dev
+    name: "auto_profile_room_size_input"
+    type: auto_profile_room_size_input
+  - platform: levoit
+    levoit: dev
+    name: "humidity_target"
+    type: humidity_target
+
+text_sensor:
+  - platform: levoit
+    levoit: dev
+    name: "mcu_version"
+    type: mcu_version
+  - platform: levoit
+    levoit: dev
+    name: "esp_version"
+    type: esp_version
+  - platform: levoit
+    levoit: dev
+    name: "timer_duration_initial"
+    type: timer_duration_initial
+  - platform: levoit
+    levoit: dev
+    name: "timer_duration_remaining"
+    type: timer_duration_remaining
+  - platform: levoit
+    levoit: dev
+    name: "auto_mode_room_size_high_fan"
+    type: auto_mode_room_size_high_fan
+  - platform: levoit
+    levoit: dev
+    name: "error_message"
+    type: error_message
+  - platform: levoit
+    levoit: dev
+    name: "sprout_event"
+    type: sprout_event
+
+button:
+  - platform: levoit
+    levoit: dev
+    name: "reset_filter_stats"
+    type: reset_filter_stats

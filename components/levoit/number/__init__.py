@@ -129,6 +129,9 @@ CONFIG_SCHEMA = number.number_schema(LevoitNumber).extend(
 )
 
 async def to_code(config):
+    # Tells the levoit sources this platform is in the build - see the note
+    # at the top of levoit.cpp on why USE_NUMBER is not sufficient.
+    cg.add_define("USE_LEVOIT_NUMBER")
     parent = await cg.get_variable(config[CONF_LEVOIT_ID])
 
     ntype = config[CONF_TYPE]

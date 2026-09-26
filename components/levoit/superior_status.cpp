@@ -1,9 +1,8 @@
 #include "superior_status.h"
+#include "esphome/core/defines.h"
 #include "esphome/core/log.h"
 #include "tlv.h"
 #include "types.h"
-#include "fan/levoit_fan.h"
-#include "sensor/levoit_sensor.h"
 #include "decoder_helpers.h"
 #include <vector>
 #include <string>
@@ -193,9 +192,7 @@ namespace esphome
             float temp_c = temp_x10 / 10.0f;
             ESP_LOGV(TAG_SUP, "TemperaturePrecise=%.1f°C", temp_c);
             // Publish as integer (x10) to sensor, or as float
-            auto *se = self->get_sensor(SensorType::TEMPERATURE);
-            if (se != nullptr)
-              se->publish_state(temp_c);
+            self->publish_sensor(SensorType::TEMPERATURE, temp_c);
           }
           break;
         }
@@ -227,10 +224,7 @@ namespace esphome
       }
 
       // Apply fan state
-      auto *fan = self->get_fan();
-      if (fan != nullptr)
-      {
-        int pwr = have_power ? (power ? 1 : 0) : -1;
+              int pwr = have_power ? (power ? 1 : 0) : -1;
         int spd = have_speed ? (int)speed : -1;
         // Map MCU mode values (1-based) to internal MODE_MAP values (0-based)
         // MCU: 1=Manual, 2=Sleep, 3=Humidity, 4=Auto
@@ -253,8 +247,7 @@ namespace esphome
         if (have_dry_active && dry_active)
           mod = 6;
         ESP_LOGV(TAG_SUP, "Applying to fan: power=%d speed=%d mode=%d", pwr, spd, mod);
-        fan->apply_device_status(pwr, spd, mod);
-      }
+      self->apply_fan_status(pwr, spd, mod);
     }
 
     void decode_superior_timer(Levoit *self,

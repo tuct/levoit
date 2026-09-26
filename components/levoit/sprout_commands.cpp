@@ -1,8 +1,7 @@
 #include "sprout_commands.h"
 #include "levoit_message.h"
 #include "levoit.h"
-#include "number/levoit_number.h"
-#include "select/levoit_select.h"
+#include "esphome/core/defines.h"
 #include "esphome/core/log.h"
 #include <algorithm>
 
@@ -88,10 +87,11 @@ namespace esphome
       {
         uint8_t max_pct = self->get_pending_led_bri();
         uint16_t ct_k = self->get_pending_led_ct();
-        auto *n_min = self->get_number(NumberType::LED_BRIGHTNESS_MIN);
-        auto *n_spd = self->get_number(NumberType::LED_SPEED);
-        uint8_t min_pct = (n_min != nullptr) ? static_cast<uint8_t>(n_min->state) : 5;
-        uint8_t speed = (n_spd != nullptr) ? static_cast<uint8_t>(n_spd->state) : 5;
+        float v_min, v_spd;
+        uint8_t min_pct = self->try_get_number_state(NumberType::LED_BRIGHTNESS_MIN, v_min)
+                              ? static_cast<uint8_t>(v_min) : 5;
+        uint8_t speed = self->try_get_number_state(NumberType::LED_SPEED, v_spd)
+                            ? static_cast<uint8_t>(v_spd) : 5;
         // Clamp speed to minimum 1
         if (speed < 1) speed = 1;
         // If min >= max, pull min down to max-20 (floor 0)
@@ -105,18 +105,15 @@ namespace esphome
       case CommandType::setSproutWhiteNoiseOff:
       {
         bool active = (cmd == CommandType::setSproutWhiteNoiseOn);
-        auto *n_vol = self->get_number(NumberType::WHITE_NOISE_VOLUME);
-        uint8_t volume = (n_vol != nullptr) ? static_cast<uint8_t>(n_vol->state) : 128;
+        float v_vol;
+        uint8_t volume = self->try_get_number_state(NumberType::WHITE_NOISE_VOLUME, v_vol)
+                             ? static_cast<uint8_t>(v_vol) : 128;
 
         // Get current sound index from select state
         uint8_t sound_index = 0;
-        auto *s_sound = self->get_select(SelectType::WHITE_NOISE_SOUND);
-        if (s_sound != nullptr && s_sound->has_state()) {
-          const auto &opts = s_sound->traits.get_options();
-          auto it = std::find(opts.begin(), opts.end(), s_sound->current_option());
-          if (it != opts.end())
-            sound_index = static_cast<uint8_t>(it - opts.begin());
-        }
+        size_t sel_idx;
+        if (self->try_get_select_index(SelectType::WHITE_NOISE_SOUND, sel_idx))
+          sound_index = static_cast<uint8_t>(sel_idx);
 
         ESP_LOGD(TAG_SPROUT_CMD, "%s: vol=%u sound=%u",
                  active ? "setSproutWhiteNoiseOn" : "setSproutWhiteNoiseOff",

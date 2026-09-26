@@ -19,6 +19,9 @@ CONFIG_SCHEMA = (
 
 
 async def to_code(config):
+    # Tells the levoit sources this platform is in the build - see the note
+    # at the top of levoit.cpp on why USE_FAN is not sufficient.
+    cg.add_define("USE_LEVOIT_FAN")
 
     var = await fan.new_fan(config)
     await cg.register_component(var, config)

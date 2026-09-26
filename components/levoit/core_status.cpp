@@ -1,8 +1,8 @@
 #include "core_status.h"
+#include "esphome/core/defines.h"
 #include "esphome/core/log.h"
 #include "tlv.h" // <- TLV extraction
 #include "types.h"
-#include "fan/levoit_fan.h"
 #include "decoder_helpers.h"
 #include <vector>
 #include <string>
@@ -106,12 +106,8 @@ namespace esphome
         self->publish_switch(SwitchType::CHILD_LOCK, child_lock);
         self->publish_select(SelectType::NIGHTLIGHT, nightlight_idx);
 
-        auto *fan = self->get_fan();
-        if (fan != nullptr)
-        {
-          ESP_LOGV(TAG_CORE, "Core200S fan: power=%d speed=%d mode=%d", power, fan_speed, (int)fan_mode);
-          fan->apply_device_status(power, fan_speed, fan_mode);
-        }
+                  ESP_LOGV(TAG_CORE, "Core200S fan: power=%d speed=%d mode=%d", power, fan_speed, (int)fan_mode);
+        self->apply_fan_status(power, fan_speed, fan_mode);
         return;
       }
 
@@ -144,12 +140,8 @@ namespace esphome
         self->publish_select(SelectType::AUTO_MODE, fan_auto_mode);
         self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, efficency_area_m2);
 
-        auto *fan = self->get_fan();
-        if (fan != nullptr)
-        {
-          ESP_LOGV(TAG_CORE, "Core600S fan: power=%d speed=%d mode=%d", power, fan_speed, (int)fan_mode);
-          fan->apply_device_status(power, fan_speed, fan_mode);
-        }
+                  ESP_LOGV(TAG_CORE, "Core600S fan: power=%d speed=%d mode=%d", power, fan_speed, (int)fan_mode);
+        self->apply_fan_status(power, fan_speed, fan_mode);
         return;
       }
 
@@ -189,12 +181,8 @@ namespace esphome
       self->publish_select(SelectType::AUTO_MODE, fan_auto_mode);
       self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, efficency_area_m2);
 
-      auto *fan = self->get_fan();
-      if (fan != nullptr)
-      {
-        ESP_LOGV(TAG_CORE, "Applying to fan: power=%d speed=%d mode=%d", power, fan_speed, (int)fan_mode);
-        fan->apply_device_status(power, fan_speed, fan_mode);
-      }
+              ESP_LOGV(TAG_CORE, "Applying to fan: power=%d speed=%d mode=%d", power, fan_speed, (int)fan_mode);
+      self->apply_fan_status(power, fan_speed, fan_mode);
     }
 
   } // namespace levoit

@@ -1,10 +1,7 @@
 #include "vital_commands.h"
 #include "levoit_message.h"
 #include "levoit.h"
-#include "number/levoit_number.h"
-#include "select/levoit_select.h"
-#include "switch/levoit_switch.h"
-#include "esphome/components/switch/switch.h"
+#include "esphome/core/defines.h"
 #include "esphome/core/log.h"
 
 namespace esphome
@@ -119,11 +116,10 @@ namespace esphome
       case CommandType::setAutoModeEfficient:
       {
         msg_type = {0x02, 0x02, 0x55};
-        auto *num = self->get_number(NumberType::EFFICIENCY_ROOM_SIZE);
-        if (num != nullptr)
+        float m2;
+        if (self->try_get_number_state(NumberType::EFFICIENCY_ROOM_SIZE, m2))
         {
           // Convert m² → raw MCU value: 1 m² = 10.764 sq ft, Vital MCU uses sq_ft × 1.3
-          float m2 = num->state;
           uint32_t room_size = static_cast<uint32_t>(m2 * 10.764f * 1.3f + 0.5f);
           uint8_t size_low = room_size & 0xFF;
           uint8_t size_high = (room_size >> 8) & 0xFF;
@@ -155,10 +151,10 @@ namespace esphome
       case CommandType::setTimerMinutes:
       {
         msg_type = {0x02, 0x19, 0x50};
-        auto *num = self->get_number(NumberType::TIMER);
-        if (num != nullptr)
+        float mins;
+        if (self->try_get_number_state(NumberType::TIMER, mins))
         {
-          uint32_t secs = static_cast<uint32_t>(num->state) * 60;
+          uint32_t secs = static_cast<uint32_t>(mins) * 60;
           uint8_t b0 = (secs >> 0) & 0xFF;
           uint8_t b1 = (secs >> 8) & 0xFF;
           uint8_t b2 = (secs >> 16) & 0xFF;
@@ -225,36 +221,18 @@ namespace esphome
         uint8_t  dt_mode    = c.dt_mode;
         uint8_t  dt_level   = c.dt_level;
 
-        if (auto *sel = self->get_select(SelectType::SLEEP_PREFERENCE)) {
-          if (auto idx = sel->active_index()) sleep_type = (uint8_t)idx.value();
-        }
-        if (auto *n = self->get_number(NumberType::SLEEP_FAN_LEVEL)) {
-          if (n->has_state()) sleep_fan = (uint8_t)n->state;
-        }
-        if (auto *n = self->get_number(NumberType::SLEEP_MODE_MIN)) {
-          if (n->has_state()) sleep_min = (uint16_t)n->state;
-        }
+        { size_t i; if (self->try_get_select_index(SelectType::SLEEP_PREFERENCE, i)) sleep_type = (uint8_t)i; }
+        { float v; if (self->try_get_number_state(NumberType::SLEEP_FAN_LEVEL, v)) sleep_fan = (uint8_t)v; }
+        { float v; if (self->try_get_number_state(NumberType::SLEEP_MODE_MIN, v)) sleep_min = (uint16_t)v; }
         // QC cluster (Stage 4). Optimistic publish in LevoitSwitch / LevoitNumber
         // means the entity reflects the new value by the time we read it here.
-        if (auto *sw = self->get_switch(SwitchType::QUICK_CLEAN)) {
-          if (sw->has_state()) qc_enabled = sw->state ? 1 : 0;
-        }
-        if (auto *n = self->get_number(NumberType::QUICK_CLEAN_MIN)) {
-          if (n->has_state()) qc_min = (uint16_t)n->state;
-        }
-        if (auto *n = self->get_number(NumberType::QUICK_CLEAN_FAN_LEVEL)) {
-          if (n->has_state()) qc_fan = (uint8_t)n->state;
-        }
+        { bool b; if (self->try_get_switch_state(SwitchType::QUICK_CLEAN, b)) qc_enabled = b ? 1 : 0; }
+        { float v; if (self->try_get_number_state(NumberType::QUICK_CLEAN_MIN, v)) qc_min = (uint16_t)v; }
+        { float v; if (self->try_get_number_state(NumberType::QUICK_CLEAN_FAN_LEVEL, v)) qc_fan = (uint8_t)v; }
         // DT cluster (Stage 5).
-        if (auto *sw = self->get_switch(SwitchType::DAYTIME_ENABLED)) {
-          if (sw->has_state()) dt_enabled = sw->state ? 1 : 0;
-        }
-        if (auto *sel = self->get_select(SelectType::DAYTIME_FAN_MODE)) {
-          if (auto idx = sel->active_index()) dt_mode = (uint8_t)idx.value();
-        }
-        if (auto *n = self->get_number(NumberType::DAYTIME_FAN_LEVEL)) {
-          if (n->has_state()) dt_level = (uint8_t)n->state;
-        }
+        { bool b; if (self->try_get_switch_state(SwitchType::DAYTIME_ENABLED, b)) dt_enabled = b ? 1 : 0; }
+        { size_t i; if (self->try_get_select_index(SelectType::DAYTIME_FAN_MODE, i)) dt_mode = (uint8_t)i; }
+        { float v; if (self->try_get_number_state(NumberType::DAYTIME_FAN_LEVEL, v)) dt_level = (uint8_t)v; }
         // WN cluster is cache-only by design — Vital 200S Pro has no WN
         // hardware, but the MCU still requires those 3 fields in every
         // bulk write or the parser silently drops the whole frame.
@@ -339,11 +317,9 @@ namespace esphome
         // Status echoes the angle back in TLV tag 0x14. Hardware range 45–90°.
         msg_type = {0x02, 0x12, 0x55};
         uint8_t angle = 75;  // default louver position on power-up
-        if (auto *num = self->get_number(NumberType::VENT_ANGLE))
-        {
-          if (num->has_state())
-            angle = static_cast<uint8_t>(num->state);
-        }
+        float v_angle;
+        if (self->try_get_number_state(NumberType::VENT_ANGLE, v_angle))
+          angle = static_cast<uint8_t>(v_angle);
         if (angle < 45) angle = 45;
         if (angle > 90) angle = 90;
         ESP_LOGD(TAG_VITAL_CMD, "setVentAngle: %u deg", angle);

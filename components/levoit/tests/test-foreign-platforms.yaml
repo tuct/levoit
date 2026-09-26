@@ -1,0 +1,81 @@
+# GENERATED-ish: hand-editable. See README.md in this folder.
+esphome:
+  name: test-levoit-foreign
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+
+# Dummy credentials on purpose - these tests must build without a secrets.yaml.
+# levoit.cpp includes esphome/components/network/util.h, so some network
+# component has to be present or the build fails to find that header.
+wifi:
+  ssid: "compile-test"
+  password: "compile-test"
+
+api:
+  encryption:
+    key: "mfEv/h5ZAzrr46UQ/Mt35PpgcbVPFlPNhlLMZzAol4w="
+
+external_components:
+  - source: ../..
+    components: [levoit]
+
+uart:
+  - id: uart_mcu
+    tx_pin: GPIO17
+    rx_pin: GPIO16
+    baud_rate: 115200
+
+levoit:
+  id: dev
+  model: CORE200S
+  uart_id: uart_mcu
+
+fan:
+  - platform: levoit
+    levoit: dev
+    name: "Fan"
+
+# No levoit entities on these platforms, but the platforms ARE in the build.
+# That defines USE_SWITCH / USE_SELECT / USE_NUMBER / USE_SENSOR / ... while
+# ESPHome copies no levoit/<platform>/ sources, which is exactly the mismatch
+# that used to break the build before the USE_LEVOIT_* guards.
+switch:
+  - platform: template
+    name: "Foreign Switch"
+    optimistic: true
+
+select:
+  - platform: template
+    name: "Foreign Select"
+    optimistic: true
+    options: ["a", "b"]
+
+number:
+  - platform: template
+    name: "Foreign Number"
+    optimistic: true
+    min_value: 0
+    max_value: 10
+    step: 1
+
+sensor:
+  - platform: template
+    name: "Foreign Sensor"
+
+binary_sensor:
+  - platform: template
+    name: "Foreign Binary Sensor"
+
+text_sensor:
+  - platform: template
+    name: "Foreign Text Sensor"
+
+button:
+  - platform: template
+    name: "Foreign Button"

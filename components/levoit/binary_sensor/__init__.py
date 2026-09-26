@@ -46,6 +46,9 @@ CONFIG_SCHEMA = binary_sensor.binary_sensor_schema(LevoitBinarySensor).extend(
 )
 
 async def to_code(config):
+    # Tells the levoit sources this platform is in the build - see the note
+    # at the top of levoit.cpp on why USE_BINARY_SENSOR is not sufficient.
+    cg.add_define("USE_LEVOIT_BINARY_SENSOR")
     parent = await cg.get_variable(config[CONF_LEVOIT_ID])
 
     var = cg.new_Pvariable(config[CONF_ID])

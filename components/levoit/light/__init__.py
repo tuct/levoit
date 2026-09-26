@@ -16,6 +16,9 @@ CONFIG_SCHEMA = light.light_schema(LevoitSproutLight, LightType.BRIGHTNESS_ONLY)
 
 
 async def to_code(config):
+    # Tells the levoit sources this platform is in the build - see the note
+    # at the top of levoit.cpp on why USE_LIGHT is not sufficient.
+    cg.add_define("USE_LEVOIT_LIGHT")
     parent = await cg.get_variable(config[CONF_LEVOIT_ID])
     var = cg.new_Pvariable(config[CONF_OUTPUT_ID])
     await light.register_light(var, config)

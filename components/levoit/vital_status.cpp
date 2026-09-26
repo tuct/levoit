@@ -1,8 +1,8 @@
 #include "vital_status.h"
+#include "esphome/core/defines.h"
 #include "esphome/core/log.h"
 #include "tlv.h" // <- TLV extraction
 #include "types.h"
-#include "fan/levoit_fan.h"
 #include "decoder_helpers.h"
 #include <vector>
 #include <string>
@@ -460,10 +460,7 @@ namespace esphome
       }
 
       // Apply to ESPHome fan once, with consistent values
-      auto *fan = (self != nullptr) ? self->get_fan() : nullptr;
-      if (fan != nullptr)
-      {
-        // Use sentinels: power_known, speed_known, mode_known
+              // Use sentinels: power_known, speed_known, mode_known
         // - power: pass 0/1 only if have_power, otherwise pass -1
         // - speed: pass >0 only if have_speed, otherwise -1
         // - mode : pass >=0 only if have_mode, otherwise -1
@@ -472,8 +469,7 @@ namespace esphome
         int spd = have_speed ? (int)speed : -1;
         int mod = have_mode ? (int)mode : -1;
         ESP_LOGV(TAG_VITAL, "Applying to fan: power=%d speed=%d mode=%d", pwr, spd, mod);
-        fan->apply_device_status(pwr, spd, mod);
-      }
+      self->apply_fan_status(pwr, spd, mod);
     }
 
   } // namespace levoit

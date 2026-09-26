@@ -1,0 +1,42 @@
+# GENERATED-ish: hand-editable. See README.md in this folder.
+esphome:
+  name: test-levoit-fan-only
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+
+# Dummy credentials on purpose - these tests must build without a secrets.yaml.
+# levoit.cpp includes esphome/components/network/util.h, so some network
+# component has to be present or the build fails to find that header.
+wifi:
+  ssid: "compile-test"
+  password: "compile-test"
+
+api:
+  encryption:
+    key: "mfEv/h5ZAzrr46UQ/Mt35PpgcbVPFlPNhlLMZzAol4w="
+
+external_components:
+  - source: ../..
+    components: [levoit]
+
+uart:
+  - id: uart_mcu
+    tx_pin: GPIO17
+    rx_pin: GPIO16
+    baud_rate: 115200
+
+levoit:
+  id: dev
+  model: CORE200S
+  uart_id: uart_mcu
+
+fan:
+  - platform: levoit
+    levoit: dev
+    name: "Fan"

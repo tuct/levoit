@@ -24,23 +24,25 @@
 #include "superior_commands.h"
 #include "decoder_helpers.h"   // format_duration_minutes
 #include "sprout_status.h"
-#ifdef USE_LIGHT
+#ifdef USE_LEVOIT_LIGHT
 #include "light/levoit_light.h"
 #endif
-#ifdef USE_SWITCH
+#ifdef USE_LEVOIT_SWITCH
 #include "switch/levoit_switch.h"
 #endif
+#ifdef USE_LEVOIT_FAN
 #include "fan/levoit_fan.h"
-#ifdef USE_NUMBER
+#endif
+#ifdef USE_LEVOIT_NUMBER
 #include "number/levoit_number.h"
 #endif
-#ifdef USE_SENSOR
+#ifdef USE_LEVOIT_SENSOR
 #include "sensor/levoit_sensor.h"
 #endif
-#ifdef USE_SELECT
+#ifdef USE_LEVOIT_SELECT
 #include "select/levoit_select.h"
 #endif
-#ifdef USE_TEXT_SENSOR
+#ifdef USE_LEVOIT_TEXT_SENSOR
 #include "text_sensor/levoit_text_sensor.h"
 #endif
 
@@ -123,7 +125,7 @@ namespace esphome
         {
             if (type == SwitchType::DISPLAY)
                 display_on_ = state;
-#ifdef USE_SWITCH
+#ifdef USE_LEVOIT_SWITCH
             auto *sw = switches_[st_idx_(type)];
             if (!sw)
                 return;
@@ -142,7 +144,7 @@ namespace esphome
 
         void Levoit::publish_sensor(SensorType type, float value)
         {
-#ifdef USE_SENSOR
+#ifdef USE_LEVOIT_SENSOR
             auto *se = sensors_[st_idx_(type)];
             if (!se)
                 return;
@@ -154,7 +156,7 @@ namespace esphome
 
         void Levoit::publish_number(NumberType type, float value)
         {
-#ifdef USE_NUMBER
+#ifdef USE_LEVOIT_NUMBER
             auto *nm = numbers_[nt_idx_(type)];
             if (!nm)
                 return;
@@ -165,7 +167,7 @@ namespace esphome
         }
         void Levoit::publish_select(SelectType type, uint32_t value)
         {
-#ifdef USE_SELECT
+#ifdef USE_LEVOIT_SELECT
             auto *sl = selects_[sl_idx_(type)];
             if (!sl)
                 return;
@@ -202,7 +204,7 @@ namespace esphome
         }
         void Levoit::publish_text_sensor(TextSensorType type, const std::string &value)
         {
-#ifdef USE_TEXT_SENSOR
+#ifdef USE_LEVOIT_TEXT_SENSOR
             auto *tsl = text_sensor_[static_cast<uint8_t>(type)];
             if (!tsl)
                 return;
@@ -256,7 +258,7 @@ namespace esphome
                          bulk_prefs_.dt_enabled, bulk_prefs_.dt_mode, bulk_prefs_.dt_level);
             }
         }
-#ifdef USE_LIGHT
+#ifdef USE_LEVOIT_LIGHT
         void Levoit::publish_sprout_light(bool on, float brightness, float color_temp, bool breathing)
         {
             if (sprout_light_ != nullptr)
@@ -292,6 +294,67 @@ namespace esphome
         // caller goes through here so the MCU-owned guard cannot be forgotten in one
         // of them - which is exactly what happened when the periodic CADR path kept
         // overwriting the Core200S value once a minute.
+
+        bool Levoit::try_get_number_state(NumberType type, float &out) const
+        {
+#ifdef USE_LEVOIT_NUMBER
+            auto *n = this->numbers_[nt_idx_(type)];
+            if (n == nullptr || !n->has_state())
+                return false;
+            out = n->state;
+            return true;
+#else
+            (void) type;
+            (void) out;
+            return false;
+#endif
+        }
+
+        bool Levoit::try_get_select_index(SelectType type, size_t &out) const
+        {
+#ifdef USE_LEVOIT_SELECT
+            auto *sel = this->selects_[sl_idx_(type)];
+            if (sel == nullptr || !sel->has_state())
+                return false;
+            auto idx = sel->active_index();
+            if (!idx.has_value())
+                return false;
+            out = idx.value();
+            return true;
+#else
+            (void) type;
+            (void) out;
+            return false;
+#endif
+        }
+
+        bool Levoit::try_get_switch_state(SwitchType type, bool &out) const
+        {
+#ifdef USE_LEVOIT_SWITCH
+            auto *sw = this->switches_[st_idx_(type)];
+            if (sw == nullptr || !sw->has_state())
+                return false;
+            out = sw->state;
+            return true;
+#else
+            (void) type;
+            (void) out;
+            return false;
+#endif
+        }
+
+        void Levoit::apply_fan_status(bool power, uint8_t speed, uint32_t mode)
+        {
+#ifdef USE_LEVOIT_FAN
+            if (this->fan_ != nullptr)
+                this->fan_->apply_device_status(power, speed, mode);
+#else
+            (void) power;
+            (void) speed;
+            (void) mode;
+#endif
+        }
+
         void Levoit::publish_filter_stats_now()
         {
             // On models where the MCU reports filter life, leave the sensor alone -
@@ -300,7 +363,7 @@ namespace esphome
             if (this->filter_life_from_mcu())
                 return;
             float filter_left = this->calculate_filter_life_left_percent();
-#ifdef USE_SENSOR
+#ifdef USE_LEVOIT_SENSOR
             auto *se = this->sensors_[st_idx_(SensorType::FILTER_LIFE_LEFT)];
             if (se != nullptr)
                 se->publish_state(filter_left);
@@ -521,10 +584,9 @@ namespace esphome
                         // Inject the remembered room size target so the command
                         // builder sends the right value, not the last MCU-echoed one.
                         {
-                            auto *input = this->get_number(NumberType::AUTO_PROFILE_ROOM_SIZE_INPUT);
-                            auto *eff   = this->get_number(NumberType::EFFICIENCY_ROOM_SIZE);
-                            if (input != nullptr && eff != nullptr && input->has_state())
-                                eff->publish_state(input->state);
+                            float room_size;
+                            if (this->try_get_number_state(NumberType::AUTO_PROFILE_ROOM_SIZE_INPUT, room_size))
+                                this->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, room_size);
                         }
                         this->sendCommand(setAutoModeEfficient);
                         sent_auto_profile = true;
@@ -847,7 +909,7 @@ namespace esphome
 
         float Levoit::calculate_filter_life_left_percent() const
         {
-#ifndef USE_NUMBER
+#ifndef USE_LEVOIT_NUMBER
             return 100.0f;
 #else
             auto *filter_lifetime_num = this->get_number(NumberType::FILTER_LIFETIME_MONTHS);

@@ -1,0 +1,66 @@
+name: Compile tests
+
+# Runs on every PR, and on pushes to main so the badge reflects the branch
+# everyone builds from. Paths are filtered so doc-only changes skip the build.
+on:
+  pull_request:
+    paths:
+      - 'components/**'
+      - '.github/workflows/compile-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'components/**'
+      - '.github/workflows/compile-tests.yml'
+  workflow_dispatch:
+
+# A new push to the same PR cancels the previous run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  levoit:
+    name: levoit · ${{ matrix.config }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          # every platform and every entity type - maximum codegen coverage
+          - test-all-entities.yaml
+          # only a fan: every optional platform absent. Catches sources that
+          # include a platform header without guarding on USE_LEVOIT_*.
+          - test-fan-only.yaml
+          # levoit fan plus template entities on the other platforms. Defines the
+          # generic USE_SWITCH / USE_SELECT / ... without any levoit entity of
+          # that kind, which is the mismatch that broke the build before.
+          - test-foreign-platforms.yaml
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # PlatformIO toolchains and the ESP-IDF sources are the slow part, not the
+      # compile itself, so cache them across runs.
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('components/levoit/tests/*.yaml') }}
+          restore-keys: pio-${{ runner.os }}-
+
+      - name: Install ESPHome
+        run: pip install esphome
+
+      - name: esphome config
+        working-directory: components/levoit/tests
+        run: esphome config ${{ matrix.config }}
+
+      - name: esphome compile
+        working-directory: components/levoit/tests
+        run: esphome compile ${{ matrix.config }}

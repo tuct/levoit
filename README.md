@@ -485,10 +485,21 @@ Auto mode options per model:
     the purifiers use minutes
   * **`dry_level` does not act on its own** — the select records Low/High and
     the value is applied when Dry is picked on the fan entity
-* Fix a latent build bug: platform includes were guarded on the generic
-  `USE_SWITCH` / `USE_SENSOR` / … macros, which any component defines, so a
-  config with (say) a `template` switch but no `levoit` switch failed to
-  compile. Each platform now defines its own `USE_LEVOIT_*` guard
+* **Fix two build failures around optional platforms.** A levoit config with
+  only a fan did not build at all, and one with an unrelated `template` switch
+  (or select, number, …) failed the same way: several sources included
+  `number/levoit_number.h` and friends either unguarded or guarded on the
+  *generic* `USE_SWITCH` / `USE_NUMBER` macros, which any component defines,
+  while ESPHome only copies `levoit/<platform>/` when a **levoit** entity of
+  that platform is configured
+  * Each platform now defines its own `USE_LEVOIT_*` macro, and the entity
+    classes are confined to `levoit.cpp` behind new value accessors
+    (`try_get_number_state()`, `try_get_select_index()`,
+    `try_get_switch_state()`, `apply_fan_status()`), so the other sources no
+    longer need those headers at all
+  * Added compile tests in [`components/levoit/tests`](./components/levoit/tests)
+    covering every entity type and both of the above cases, run by GitHub
+    Actions on every PR
 * `publish_sensor` widened `uint32_t` → `float` so the humidifier can report
   fractional temperature and humidity (it already converted internally)
 * ⚠️ Superior 6000S not verified on hardware — see

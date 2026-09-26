@@ -1,7 +1,7 @@
 #include "superior_commands.h"
 #include "levoit_message.h"
 #include "levoit.h"
-#include "number/levoit_number.h"
+#include "esphome/core/defines.h"
 #include "esphome/core/log.h"
 
 namespace esphome
@@ -143,10 +143,12 @@ namespace esphome
       case CommandType::setHumidityTarget:
       {
         msg_type = {0x02, 0x36, 0x55};
-        auto *num = self->get_number(NumberType::HUMIDITY_TARGET);
-        if (num != nullptr)
+        float humidity_target;
+        const bool have_humidity_target =
+            self->try_get_number_state(NumberType::HUMIDITY_TARGET, humidity_target);
+        if (have_humidity_target)
         {
-          uint8_t target = static_cast<uint8_t>(num->state);
+          uint8_t target = static_cast<uint8_t>(humidity_target);
           ESP_LOGD(TAG_SUP_CMD, "setHumidityTarget: %u%%", target);
           payload = {0x01, 0x01, target};
         }
@@ -161,10 +163,12 @@ namespace esphome
       case CommandType::setTimerMinutes:
       {
         msg_type = {0x02, 0x19, 0x50};
-        auto *num = self->get_number(NumberType::TIMER);
-        if (num != nullptr)
+        float timer_hours;
+        const bool have_timer =
+            self->try_get_number_state(NumberType::TIMER, timer_hours);
+        if (have_timer)
         {
-          uint32_t secs = static_cast<uint32_t>(num->state * 3600);
+          uint32_t secs = static_cast<uint32_t>(timer_hours * 3600);
           uint8_t b0 = (secs >> 0) & 0xFF;
           uint8_t b1 = (secs >> 8) & 0xFF;
           uint8_t b2 = (secs >> 16) & 0xFF;

@@ -1,8 +1,8 @@
 #include "core_commands.h"
 #include "levoit_message.h"
 #include "levoit.h"
-#include "number/levoit_number.h"
 #include "decoder_helpers.h"
+#include "esphome/core/defines.h"
 #include "esphome/core/log.h"
 
 namespace esphome
@@ -120,10 +120,9 @@ namespace esphome
             case CommandType::setAutoModeEfficient:
             {
                 msg_type = {0x01, 0xE6, 0xA5};
-                auto *num = self->get_number(NumberType::EFFICIENCY_ROOM_SIZE);
-                if (num != nullptr)
+                float m2;
+                if (self->try_get_number_state(NumberType::EFFICIENCY_ROOM_SIZE, m2))
                 {
-                    float m2 = num->state;
                     uint32_t raw = encode_core_room_size_raw(m2);
                     uint8_t size_low = raw & 0xFF;
                     uint8_t size_high = (raw >> 8) & 0xFF;
@@ -149,10 +148,10 @@ namespace esphome
             case CommandType::setTimerMinutes:
             {
                 msg_type = {0x01, 0x64, 0xA2};
-                auto *num = self->get_number(NumberType::TIMER);
-                if (num != nullptr)
+                float mins;
+                if (self->try_get_number_state(NumberType::TIMER, mins))
                 {
-                    uint32_t secs = static_cast<uint32_t>(num->state) * 60;
+                    uint32_t secs = static_cast<uint32_t>(mins) * 60;
                     uint8_t b0 = (secs >> 0) & 0xFF;
                     uint8_t b1 = (secs >> 8) & 0xFF;
                     uint8_t b2 = (secs >> 16) & 0xFF;
