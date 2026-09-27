@@ -357,11 +357,6 @@ namespace esphome
 
         void Levoit::publish_filter_stats_now()
         {
-            // On models where the MCU reports filter life, leave the sensor alone -
-            // the status decoder publishes the real value. Resetting the ESP-side
-            // CADR counters still happens, it just does not move this sensor.
-            if (this->filter_life_from_mcu())
-                return;
             float filter_left = this->calculate_filter_life_left_percent();
 #ifdef USE_LEVOIT_SENSOR
             auto *se = this->sensors_[st_idx_(SensorType::FILTER_LIFE_LEFT)];
@@ -849,17 +844,28 @@ namespace esphome
                 // Fan is enabled - track usage
                 total_runtime_++;
                 
-                // Get fan speed level (1-4) from .speed member
+                // calculate_current_cadr_per_hour() validates the speed against the
+                // model's own maximum and returns 0 if it is out of range, so no bound
+                // is needed here. The old `speed <= 4` check silently dropped the
+                // Superior 6000S's speeds 5-9.
                 int speed = this->fan_->speed;
-                if (speed > 0 && speed <= 4) {
-                    // Use helper to compute current CADR/hour, then convert to per-minute
-                    uint32_t cadr_per_hour = this->calculate_current_cadr_per_hour();
-                    uint32_t cadr_per_min = cadr_per_hour / 60;
+                uint32_t cadr_per_hour = this->calculate_current_cadr_per_hour();
+                if (cadr_per_hour > 0) {
+                    // Carry the sub-m³ remainder between minutes. Dividing by 60
+                    // directly truncated to zero for any model whose per-hour CADR at
+                    // the current speed was under 60 m³/h - a Core200S on speed 1
+                    // (55 m³/h) or in Sleep (34 m³/h), or a Sprout on speed 1
+                    // (36 m³/h), accumulated nothing at all and the filter estimate
+                    // stayed at exactly 100% forever. Higher speeds lost 28-46% to the
+                    // same truncation.
+                    cadr_remainder_ += cadr_per_hour;
+                    uint32_t cadr_per_min = cadr_remainder_ / 60;
+                    cadr_remainder_ %= 60;
                     used_cadr_ += cadr_per_min;
-                    ESP_LOGD(TAG, "CADR tracked: +%u m³ (speed=%d, total=%u m³, runtime=%u min)", 
-                             (unsigned)cadr_per_min, speed, (unsigned)used_cadr_,
+                    ESP_LOGD(TAG, "CADR tracked: +%u m³ (speed=%d, %u m³/h, carry=%u/60, total=%u m³, runtime=%u min)",
+                             (unsigned)cadr_per_min, speed, (unsigned)cadr_per_hour,
+                             (unsigned)cadr_remainder_, (unsigned)used_cadr_,
                              (unsigned)total_runtime_);
-                    
                 }
                 
                 // Publish filter life left (once per minute here)
@@ -895,8 +901,11 @@ namespace esphome
                 return 0;
             }
 
-            // Determine max speed based on model (Core300S has 3 speeds)
-            uint32_t max_speed = (this->model_ == ModelType::CORE300S)     ? 3u
+            // Determine max speed based on model. Core200S and Core300S have 3
+            // speeds - using 4 here undercounted their CADR by 25% at every level,
+            // so the filter estimate decayed a quarter too slowly.
+            uint32_t max_speed = (this->model_ == ModelType::CORE200S ||
+                                  this->model_ == ModelType::CORE300S)        ? 3u
                                  : (this->model_ == ModelType::SUPERIOR6000S) ? 9u
                                                                               : 4u;
             if (speed <= 0 || (uint32_t)speed > max_speed)
@@ -1038,8 +1047,7 @@ namespace esphome
                 this->publish_sensor(SensorType::CURRENT_CADR, current_cadr_hour);
             }
 
-            // Every 10 seconds: publish filter life left. publish_filter_stats_now()
-            // skips models where the MCU owns the value (Core200S).
+            // Every 10 seconds: publish filter life left.
             if (now - last_filter_check >= 10000)
             {
                 last_filter_check = now;

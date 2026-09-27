@@ -89,9 +89,11 @@ class Levoit : public Component, public uart::UARTDevice {
   void track_cadr_usage();  // Track CADR and runtime based on fan state
   uint32_t calculate_current_cadr_per_hour() const;  // Compute current CADR/h based on speed and model
   float calculate_filter_life_left_percent() const;  // Remaining filter life percentage (0-100 with decimals)
-  // True where the MCU reports filter life itself, so the ESP-side estimate
-  // from used_cadr must not be published over it. Core200S only so far.
-  bool filter_life_from_mcu() const { return this->model_ == ModelType::CORE200S; }
+  // True where the MCU accepts a filter-counter reset of its own, in addition
+  // to the ESP-side CADR counters. The Core200S does (01 E4 A5, captured from
+  // the stock firmware); it does not report filter life back, so the ESP
+  // estimate stays authoritative for the sensor.
+  bool has_mcu_filter_reset() const { return this->model_ == ModelType::CORE200S; }
   void sendCommand(CommandType commandType);   // if CommandType exists in your project
   void ackMessage(uint8_t ptype0, uint8_t ptype1);
   void ackFilterReset(uint8_t ptype0, uint8_t ptype1);   // Superior 6000S: filter reset pressed on the panel
@@ -228,6 +230,10 @@ class Levoit : public Component, public uart::UARTDevice {
   
   // Internal tracked values (persisted in preferences)
   uint32_t used_cadr_{0};
+  // Sub-m³ carry for the per-minute CADR accumulation, always < 60. Deliberately
+  // not persisted: a reboot loses under 1 m³ against a filter capacity in the
+  // hundreds of thousands.
+  uint32_t cadr_remainder_{0};
   uint32_t total_runtime_{0};
   ESPPreferenceObject pref_used_cadr_;
   ESPPreferenceObject pref_total_runtime_;

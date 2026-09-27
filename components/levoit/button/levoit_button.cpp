@@ -39,11 +39,11 @@ namespace esphome
                 this->parent_->publish_filter_stats_now();
 
                 ESP_LOGI(TAG, "Reset filter stats: used_cadr=0, total_runtime=0");
-                if (this->parent_->filter_life_from_mcu())
+                if (this->parent_->has_mcu_filter_reset())
                 {
-                    // Core200S: the filter percentage is counted by the MCU, so clearing
-                    // the ESP-side counters alone would leave the sensor untouched. Send
-                    // the MCU its own reset as well; the next status frame reports 100%.
+                    // Core200S: the MCU keeps a filter counter of its own that the
+                    // stock app resets with 01 E4 A5, so clear that too. It is not
+                    // what feeds the sensor - the ESP-side estimate above is.
                     this->parent_->sendCommand(CommandType::resetFilter);
                     ESP_LOGI(TAG, "Sent MCU filter reset");
                 }
