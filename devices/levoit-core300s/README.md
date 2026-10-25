@@ -44,6 +44,17 @@
 
 ## Teardown / Disassembly
 
+There are three ways onto this device, in rough order of how much you have to
+take apart:
+
+| Route | Teardown | Notes |
+|-------|----------|-------|
+| [Over the air](#flash-over-the-air--no-disassembly-third-party) | **none** | Third-party proof of concept, hijacks the stock OTA over the LAN |
+| [Install a new ESP32](#install-new-esp32-recommended) | full | Recommended — keeps the original module intact and reversible |
+| [Flash the original ESP32](#flash-original-esp32) | full + soldering | Smallest parts count, hardest to undo |
+
+The rest of this section covers getting the unit open, needed for the latter two.
+
 * Place upside down, remove base cover and filter to expose 8 screws (4 have washers)
 * Remove all 8 screws — they are soft metal, do not overtighten when reassembling
 * Slide a pry tool between the tabs to separate base and top sleeve
@@ -79,6 +90,57 @@ The small xiao seeeds fit into the small existing space, make sure to isolate an
 I connected to 5V, cause i had issues on the 3.3v with my xioa seeed s3. It rebooted with brownout (power issues). I think my en to gnd connection might not have been stable but still decided to use 5V.
 
 ![Custom ESP wires](./images/custom_esp_placement.jpg)
+
+## Flash Over the Air — No Disassembly (third-party)
+
+[**nico202/levoit-core300s-ota-wifi-flash**](https://github.com/nico202/levoit-core300s-ota-wifi-flash)
+gets ESPHome onto the **stock ESP32 without opening the unit or soldering
+anything**, by hijacking the device's own firmware update. It is the only route
+documented for this model that needs no teardown at all.
+
+It is a **proof of concept by a third party**, not tested by this project. It
+worked on a Core 300S EU with stock `mainFw` 1.1.08, upgraded to 2.0.00.
+
+### Why it works
+
+* The purifier is told by the VeSync cloud to fetch an update, and then makes a
+  **plain HTTP GET** for the firmware
+* A VeSync OTA file is a **128-byte header** (MD5, name, version, region)
+  followed by a raw ESP32 application image
+* There is **no firmware signature and Secure Boot is disabled**, so an image
+  wrapped in that container is accepted
+
+### How it goes
+
+1. Build an ESPHome image and wrap it in the VeSync OTA container
+2. Serve it from a Linux box on the same subnet as the purifier
+3. Redirect the device's HTTP firmware fetch to that server, and block its HTTPS
+   to the vendor's firmware host so it cannot get the genuine binary. The device
+   stays connected to the real cloud throughout
+4. Trigger an update from the VeSync app or API
+5. The purifier reboots into the ESPHome fallback access point; enter Wi-Fi
+   credentials, and from then on updates are ordinary ESPHome OTA
+
+### What you need
+
+* A Linux machine with root on the same network — a Raspberry Pi is suggested
+* Python 3, `iptables`, and `scapy` or `dsniff`/`arpspoof`
+* ESPHome, via pip or Docker
+* A VeSync account with the device added; `pyvesync` optionally, for CLI cloud
+  queries
+
+### Caveats
+
+* **The version string in the header must match exactly** what the cloud
+  announces, or the device aborts partway through the update
+* **Intercepting network traffic you do not own may be illegal where you live.**
+  Only do this to your own hardware
+* It may void your warranty, and the author offers no warranty of their own
+* A proof of concept — if it goes wrong mid-flash you are back to the soldered
+  route below to recover
+
+MIT licensed. Credits acvigue, mulcmu, tuct, epicRE, and the pyvesync and
+ESPHome communities.
 
 ## Flash Original ESP32
 
