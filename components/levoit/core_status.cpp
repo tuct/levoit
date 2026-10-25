@@ -79,11 +79,18 @@ namespace esphome
           return;
         // Byte map verified command-by-command against the captures in
         // devices/levoit-core200s/uart/ (stock firmware, both directions):
-        //   [6] display brightness, 0x00 or 0x64, and [7] display on/off - both
-        //       move together in the same frame as 01 05 A1 (display_on_off.txt)
+        //   [6] or [7] display brightness, 0x00 or 0x64, written by 01 05 A1
+        //       (display_on_off.txt). WHICH of the two holds it depends on the
+        //       MCU firmware - 2.0.11 puts brightness in [6], while 4.0.34 on
+        //       the Core 200S Plus puts it in [7] (issue #60). The other byte of
+        //       the pair is a transient flag that goes 0x01 for a few seconds
+        //       after any command, which is why both appeared to move together
+        //       in a short capture. Matching on the value 0x64 rather than on a
+        //       position handles both layouts without sniffing the version.
         //   [10] child lock, 1:1 with 01 00 D1 (childlock.txt)
         //   [11] nightlight, 0x00/0x32/0x64, 1:1 with 01 03 A0 (nightlight.txt)
-        //   [8] and [9] are 0x00 in every frame of every capture
+        //   [8] and [9] never change within a unit (0x00 on 2.0.11, [8]=0x01 on
+        //       4.0.34)
         // Filter life is NOT in this frame. A capture taken while the stock app
         // showed 99% still reports [6] = 0x64 (filter_99.txt), and no message in
         // any capture carries 99 or a runtime counter - the Core200S filter
@@ -91,7 +98,11 @@ namespace esphome
         // ESP-side CADR estimate is what feeds FILTER_LIFE_LEFT, as on the
         // other Core models.
         uint8_t fan_speed = payload[5];
-        bool display_on = payload[6] != 0;
+        // setDisplayOn sends 0x64 and setDisplayOff sends 0x00, so the brightness
+        // byte is the one holding 0x64. Reading [6] as a plain bool reported the
+        // display ON for a few seconds after every command on 4.0.34, where [6] is
+        // the transient flag.
+        bool display_on = (payload[6] == 0x64) || (payload[7] == 0x64);
         bool child_lock = payload[10] != 0;  // Display Lock = child lock
         uint8_t nightlight_raw = payload[11]; // 0x00=off, 0x32=mid, 0x64=full
         uint8_t nightlight_idx = (nightlight_raw == 0x32) ? 1 : (nightlight_raw == 0x64) ? 2 : 0;
