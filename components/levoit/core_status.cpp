@@ -77,30 +77,24 @@ namespace esphome
       {
         if (payload_len < 12)
           return;
-        // payload[6] is the MCU's filter life percent, not a display flag: it reads
-        // 0x64 (100) on a fresh filter, matching what the stock app shows. Display
-        // sits at payload[7], as on the Core400S - the Core200S does not follow the
-        // Core300S layout here. Reading [6] as a bool pinned Display permanently on.
-        uint8_t filter_life_pct = payload[6];
-        bool display_on = payload[7] != 0;
+        // Byte map verified command-by-command against the captures in
+        // devices/levoit-core200s/uart/ (stock firmware, both directions):
+        //   [6] display brightness, 0x00 or 0x64, and [7] display on/off - both
+        //       move together in the same frame as 01 05 A1 (display_on_off.txt)
+        //   [10] child lock, 1:1 with 01 00 D1 (childlock.txt)
+        //   [11] nightlight, 0x00/0x32/0x64, 1:1 with 01 03 A0 (nightlight.txt)
+        //   [8] and [9] are 0x00 in every frame of every capture
+        // Filter life is NOT in this frame. A capture taken while the stock app
+        // showed 99% still reports [6] = 0x64 (filter_99.txt), and no message in
+        // any capture carries 99 or a runtime counter - the Core200S filter
+        // percentage is kept by the stock Wi-Fi module, not the MCU. So the
+        // ESP-side CADR estimate is what feeds FILTER_LIFE_LEFT, as on the
+        // other Core models.
         uint8_t fan_speed = payload[5];
+        bool display_on = payload[6] != 0;
         bool child_lock = payload[10] != 0;  // Display Lock = child lock
         uint8_t nightlight_raw = payload[11]; // 0x00=off, 0x32=mid, 0x64=full
         uint8_t nightlight_idx = (nightlight_raw == 0x32) ? 1 : (nightlight_raw == 0x64) ? 2 : 0;
-
-        // The MCU keeps this counter itself (SC95F8617) and the ESP cannot reset it,
-        // so it is published straight through rather than estimated from used_cadr.
-        if (filter_life_pct <= 100)
-        {
-          self->publish_sensor(SensorType::FILTER_LIFE_LEFT, filter_life_pct);
-          self->publish_sensor(SensorType::FILTER_LIFE_MCU, filter_life_pct);
-          self->publish_binary_sensor(BinarySensorType::FILTER_LOW, filter_life_pct < 5);
-        }
-        else
-        {
-          ESP_LOGW(TAG_CORE, "Core200S filter life byte out of range (%u), ignoring",
-                   (unsigned) filter_life_pct);
-        }
 
         self->publish_switch(SwitchType::DISPLAY, display_on);
         self->publish_switch(SwitchType::CHILD_LOCK, child_lock);

@@ -107,6 +107,22 @@ namespace esphome
           self->ackMessage(ptype0, ptype1);
       }
 
+      // Core200S: the MCU pushes 01 E4 A5 with payload 0x01 when the filter is
+      // reset with the button on the unit itself (captured in
+      // devices/levoit-core200s/uart/filter_from_device.txt). The same message
+      // travels the other way with payload 0x00 as the reset command. Handled
+      // ahead of the dedup gate below, because two panel resets in a row carry
+      // an identical payload and the second would otherwise be skipped.
+      if (model == ModelType::CORE200S && msg_type == 0x22 &&
+          ptype0 == 0xE4 && ptype1 == 0xA5 &&
+          payload_len >= 1 && payload[0] != 0x00)
+      {
+        ESP_LOGI(TAG_DEC, "Filter reset from the unit's button (Core200S)");
+        self->set_used_cadr(0);
+        self->set_total_runtime(0);
+        self->publish_filter_stats_now();
+      }
+
       uint8_t h = compute_payload_hash_(payload, payload_len);
       ESP_LOGD("levoit.dedup", "model=%d ptype=%02X%02X payload_len=%u hash=0x%02X last=0x%02X",
                (int)model, ptype0, ptype1, (unsigned)payload_len, h,
