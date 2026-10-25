@@ -84,10 +84,36 @@ sent against the status frame that followed it in the same capture.
 | 3 | Power | `00` / `01` | `01 00 A0` in `startup.txt` |
 | 4 | Fan mode | `00` Manual, `01` Sleep (no Auto on the 200S) | `01` seen in `filter_from_device.txt` |
 | 5 | Fan speed | `00`–`03` | `01 60 A2` in `startup.txt` |
-| 6 | **Display brightness** | `00` off, `64` on | `01 05 A1` in `display_on_off.txt` |
-| 7 | unresolved | `00` / `01` | see below |
-| 8 | unused | `00` in every frame of every capture | — |
+| 6 / 7 | **Display brightness** | `00` off, `64` on | `01 05 A1` in `display_on_off.txt` |
+| 7 / 6 | Transient flag | `01` for a few seconds after any command | [#60](https://github.com/tuct/levoit/issues/60) |
+| 8 | unused | constant per unit (`00` on 2.0.11, `01` on 4.0.34) | — |
 | 9 | unused | `00` in every frame of every capture | — |
+
+#### The display pair swaps between firmware versions
+
+Bytes 6 and 7 are a pair — one holds the **display brightness** (`0x00` / `0x64`,
+exactly what `01 05 A1` writes) and the other is a **transient flag** that goes
+`0x01` for a few seconds after any command. Which is which **depends on the MCU
+firmware**:
+
+| MCU FW | Unit | Brightness | Transient |
+|--------|------|-----------|-----------|
+| 2.0.11 | Core 200S | byte **6** | byte 7 |
+| 4.0.34 | Core 200S Plus (`lap-c201s-musw`) | byte **7** | byte 6 |
+
+```
+display on,  2.0.11 : 0B 00 02 01 00 03 | 64 01 | 00 00 01 00
+display on,  4.0.34 : 22 00 04 01 00 03 | 01 64 | 01 00 00 00
+display off, both   : .. .. .. 01 00 03 | 00 00 | .. .. .. ..
+```
+
+The component therefore matches on the **value** `0x64` across both bytes
+rather than on a position, which handles either layout without having to detect
+the firmware version.
+
+The transient flag is also why a short capture is misleading: toggling the
+display sets the brightness byte *and* trips the flag in the same frame, so the
+two look locked together until you watch for a few seconds longer.
 | 10 | **Child lock** | `00` / `01` | `01 00 D1` in `childlock.txt` |
 | 11 | **Night light** | `00` off, `32` mid, `64` full | `01 03 A0` in `nightlight.txt` |
 
@@ -147,6 +173,26 @@ happened.
 | `01 E2 A5` | `00` | Named "filter LED off" in the component; only this payload was ever sent, always shortly after boot, so the name is unverified |
 | `01 E4 A5` | `00` | Reset the MCU filter counter, sent when the filter was reset in the app. The MCU sends the same type back with `01` — see below |
 
+### Reported symptoms, and which fix covers them
+
+From [#60](https://github.com/tuct/levoit/issues/60), across several units and
+firmware versions — Core 200S, Core 200S-P and Core 200S Plus, MCU 1.1.23,
+2.0.11 and 4.0.34:
+
+| Symptom | Cause |
+|---------|-------|
+| **Filter life stuck at exactly 100%**, for months | Per-minute CADR accumulation truncated to zero at low speeds |
+| **A "downward staircase"** instead of the smooth slope a Core 400S shows | Same truncation: nothing accrues on speed 1, whole units jump on speeds 2–3 |
+| **Filter life reads 0.0% or 1.0%**, flipping with the display | The 1.5.0 pre-release published byte 6 as a filter percentage. On 4.0.34 byte 6 is the transient flag, so the sensor reported its `0`/`1` |
+| **Filter Low shows "Problem"** on a new filter | Follows from the 0.0% above |
+| **Panel filter reset does nothing in HA** | The inbound `01 E4 A5` push was not handled |
+| **HA's Reset Filter button does not clear the unit's red light** | There was no `resetFilter` implementation for Core models at all |
+
+A useful independent check from that thread: **Current CADR** read
+125 / 83 / 41 m³/h at speeds 3 / 2 / 1. That is `167 × speed ÷ 4` — confirming
+both the wrong 4-speed divisor on a 3-speed unit, and that speed 1's 41 m³/h
+divided by 60 truncates to zero.
+
 ### The MCU pushes a filter reset (`01 E4 A5`)
 
 `01 E4 A5` travels **both ways**, and the reverse direction is the more
@@ -157,6 +203,12 @@ button on the unit rather than the app:
 12.755  MCU -> module   typ=22   01 E4 A5   01     unsolicited push
 12.761  module -> MCU   typ=52   01 E4 A5          plain ack
 ```
+
+**The payload is not a reliable marker.** MCU 2.0.11 pushes `01`, while 4.0.34
+pushes `00` ([#60](https://github.com/tuct/levoit/issues/60)). Direction alone
+identifies the event: our own reset leaves as a `0x22` and the MCU answers with
+a `0x12`, so any **inbound** `0x22` of this type came from the unit's button.
+The component keys on that rather than on the payload.
 
 So the MCU reports the event as a normal `0x22` request that the module
 acknowledges like any other. ESPHome handles this: a panel filter reset clears

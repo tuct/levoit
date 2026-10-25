@@ -533,9 +533,17 @@ Auto mode options per model:
     payload `0x01` when the panel button is used, and the component now clears
     its CADR counters on that. Handled ahead of the payload-dedup cache, so two
     panel resets in a row both take effect
-  * Confirmed unchanged: display at byte 6 (brightness, `0x00`/`0x64`), child
-    lock at byte 10, nightlight at byte 11. Bytes 8 and 9 are `0x00` in every
-    frame of every capture
+  * **Display now works across MCU firmware versions.** Bytes 6 and 7 are a
+    pair — one carries the brightness (`0x00`/`0x64`) and the other a transient
+    flag that trips for a few seconds after any command — and **they swap
+    between firmware versions**: 2.0.11 puts brightness in byte 6, 4.0.34 on
+    the Core 200S Plus puts it in byte 7. The decoder matches on the value
+    `0x64` across both bytes instead of a fixed position, so either layout
+    works without detecting the version
+  * **A panel filter reset is recognised on all firmwares.** The MCU's push
+    carries payload `0x01` on 2.0.11 but `0x00` on 4.0.34, so the component now
+    keys on the message direction instead of the payload
+  * Confirmed unchanged: child lock at byte 10, nightlight at byte 11
   * **Filter life is not on the wire.** A capture taken while the stock app
     displayed 99% reports byte 6 as `0x64` (100), and no message in any capture
     carries 99 or a runtime counter — the Core 200S filter percentage is kept
