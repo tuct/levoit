@@ -88,8 +88,11 @@ Replacing the original ESP32 lets you keep the original firmware intact and swit
 
 > The RX/TX pads are **not** on the pin header — use the test pads near the original ESP32 on the board.
 > Pull the `EN` pin of the original ESP32 to GND to disable it.
+> One of the pins on the pinheader is EN and GND, you need a multimeter to check!
+> Not sure which oin is RX/TX but simply change if you got it wrong
 
-> TODO: add wiring photos and placement photos
+![ha](./images/pcp_front.jpg)
+
 
 ## Flash Original ESP32
 
