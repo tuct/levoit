@@ -504,52 +504,65 @@ Auto mode options per model:
 
 ## Change Log
 
+#### ESP Version: 1.6.0 - 2026.10.25
+
+**Core 200S filter life, properly this time.** 1.5.0 shipped a guess that made
+things worse on some units — see the warning under 1.5.0 below. It is reverted,
+and the real causes are fixed. Thanks to everyone in
+[#60](https://github.com/tuct/levoit/issues/60) for the reports, the captures
+and the byte maps.
+
+* **Fixes filter life never moving off 100%.** The per-minute CADR
+  accumulation did `cadr_per_hour / 60` in integer arithmetic, which truncates
+  to **zero** for any model under 60 m³/h at the current speed. A Core 200S on
+  speed 1 (41 m³/h as it was then calculated) or in Sleep accumulated nothing
+  at all, so the sensor sat at exactly 100% indefinitely — for months, in the
+  reports. Higher speeds lost 28–46% to the same truncation, which is why the
+  graph looked like a staircase where a Core 400S shows a smooth slope. The
+  remainder is now carried between minutes
+* **Fixes the estimate decaying a further 25% too slowly.** The CADR
+  calculation used a 4-speed divisor for the Core 200S, which has 3 speeds
+* Fixes the **Superior 6000S losing speeds 5–9** entirely: the accumulator was
+  gated on `speed <= 4`, while its fan has 9
+* **Reverts the 1.5.0 Core 200S filter mapping.** Status byte 6 is not filter
+  life. A capture taken while the stock app displayed 99% still reports byte 6
+  as `0x64` (100), and no message in any capture carries a percentage or a
+  runtime counter. On MCU 4.0.34 byte 6 is a transient flag, which is why that
+  release reported **0.0% or 1.0%** flipping with the display
+* **Display works across MCU firmware versions.** Bytes 6 and 7 are a pair —
+  one carries the brightness (`0x00`/`0x64`), the other a transient flag that
+  trips for a few seconds after any command — and **they swap between firmware
+  versions**: 2.0.11 puts brightness in byte 6, 4.0.34 on the Core 200S Plus
+  puts it in byte 7. The decoder matches on the value `0x64` across both bytes
+  instead of a fixed position, so either layout works
+* **A filter reset done on the unit itself now resets the sensor.** `01 E4 A5`
+  is bidirectional: the MCU pushes it back when the panel button is used.
+  Handled ahead of the payload-dedup cache so two resets in a row both take
+  effect, and keyed on message direction rather than payload, because the push
+  carries `0x01` on MCU 2.0.11 but `0x00` on 4.0.34
+* The full byte map, both firmware layouts and a symptom-to-cause table are in
+  [the device README](../../devices/levoit-core200s/README.md)
+
+> **The Core 200S filter percentage is an estimate and always was.** Three
+> independent counters exist on these units: the VeSync cloud's, the MCU's own
+> timer that drives the red filter light, and ESPHome's CADR estimate. The MCU
+> never reports a percentage on the wire, so the number in Home Assistant will
+> not track the panel light exactly. Tune `filter_lifetime_months` to taste.
+
 #### ESP Version: 1.5.0 - 2026.09.26
 
-* **Core 200S: the status frame is now fully decoded**, byte by byte, against
-  stock-firmware UART captures in
-  [`devices/levoit-core200s/uart`](../../devices/levoit-core200s/uart). Each
-  mapping below was confirmed by matching a command sent by the stock app
-  against the status frame it produced — see the
-  [byte map](../../devices/levoit-core200s/README.md#status-frame-byte-map)
-  * **Fixes the filter life estimate never moving off 100%.** The per-minute
-    accumulation did `cadr_per_hour / 60` in integer arithmetic, which
-    truncates to **zero** for any model under 60 m³/h at the current speed — a
-    Core 200S on speed 1 (55 m³/h) or in Sleep (34 m³/h), and a Sprout on
-    speed 1 (36 m³/h), accumulated nothing at all, so the sensor sat at exactly
-    100% indefinitely. Higher speeds lost 28–46% to the same truncation. The
-    remainder is now carried between minutes
-  * **Fixes the estimate decaying 25% too slowly on top of that.** The CADR
-    calculation used a 4-speed divisor for the Core 200S, which has 3 speeds,
-    so every level accumulated only three quarters of the air it should have
-  * Fixes the Superior 6000S losing **speeds 5–9** entirely: the accumulator was
-    gated on `speed <= 4`, while its fan has 9
-  * **Filter Reset now also resets the MCU's own counter** (`01 E4 A5`,
-    captured from the stock firmware). Previously there was no core
-    implementation of `resetFilter` at all. The sensor itself is still driven by
-    the ESP-side estimate
-  * **A filter reset done with the button on the unit now resets the sensor
-    too.** `01 E4 A5` turns out to be bidirectional: the MCU pushes it back with
-    payload `0x01` when the panel button is used, and the component now clears
-    its CADR counters on that. Handled ahead of the payload-dedup cache, so two
-    panel resets in a row both take effect
-  * **Display now works across MCU firmware versions.** Bytes 6 and 7 are a
-    pair — one carries the brightness (`0x00`/`0x64`) and the other a transient
-    flag that trips for a few seconds after any command — and **they swap
-    between firmware versions**: 2.0.11 puts brightness in byte 6, 4.0.34 on
-    the Core 200S Plus puts it in byte 7. The decoder matches on the value
-    `0x64` across both bytes instead of a fixed position, so either layout
-    works without detecting the version
-  * **A panel filter reset is recognised on all firmwares.** The MCU's push
-    carries payload `0x01` on 2.0.11 but `0x00` on 4.0.34, so the component now
-    keys on the message direction instead of the payload
-  * Confirmed unchanged: child lock at byte 10, nightlight at byte 11
-  * **Filter life is not on the wire.** A capture taken while the stock app
-    displayed 99% reports byte 6 as `0x64` (100), and no message in any capture
-    carries 99 or a runtime counter — the Core 200S filter percentage is kept
-    by the stock Wi-Fi module and the cloud, not the MCU. An earlier 1.5.0
-    pre-release read byte 6 as MCU filter life and moved display to byte 7;
-    both were wrong and are reverted here
+> ⚠️ **Superseded for the Core 200S — upgrade to 1.6.0.** This release read
+> status byte 6 as an MCU filter-life percentage and moved the Display switch to
+> byte 7. Both were wrong. On MCU 4.0.34 it made `filter_life_left` report
+> **0.0% or 1.0%** and `filter_low` show a problem on a brand-new filter; on
+> other firmwares it pinned the sensor at a constant 100%. Fixed in 1.6.0.
+
+* **Core 200S: read filter life from the MCU status frame** and suppress the
+  ESP-side estimate on that model — incorrect, see the warning above
+* **Filter Reset now also resets the MCU's own counter** (`01 E4 A5`, captured
+  from the stock firmware). Previously there was no core implementation of
+  `resetFilter` at all. This part was right and is kept
+
 * Fix `filter_low` device class — it is a `problem` binary sensor, not a
   `battery` one, so a low filter now shows as a problem in Home Assistant
 
