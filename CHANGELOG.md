@@ -5,6 +5,67 @@
 Project-level changes. Component releases have their own log:
 [levoit](./components/levoit/README.md#change-log).
 
+### 2026.10.25
+
+* **Levoit component [1.6.0](./components/levoit/README.md#change-log)** — the
+  Core 200S filter life finally works, and the 1.5.0 attempt at it is reverted.
+  Three separate bugs, found with the help of the reports and UART captures in
+  [#60](https://github.com/tuct/levoit/issues/60)
+  * The per-minute CADR accumulation **truncated to zero below 60 m³/h**, so a
+    Core 200S on low or Sleep — and a Sprout on speed 1 — accumulated nothing
+    at all and sat at 100% for months
+  * A further 25% undercount from a 4-speed divisor on a 3-speed unit, and the
+    Superior 6000S lost speeds 5–9 from the calculation entirely
+  * ⚠️ **1.5.0 is superseded for the Core 200S**: it read the wrong status byte
+    as a percentage, reporting 0.0% on some firmwares and a constant 100% on
+    others
+  * Status bytes 6 and 7 **swap roles between MCU firmware versions**, so the
+    decoder now matches on value rather than position — the full byte map and
+    both layouts are in
+    [devices/levoit-core200s](./devices/levoit-core200s/README.md)
+* **Core 300S: a no-disassembly flashing route.** Added
+  [nico202/levoit-core300s-ota-wifi-flash](https://github.com/nico202/levoit-core300s-ota-wifi-flash)
+  to the device page — a third-party proof of concept that gets ESPHome onto
+  the stock ESP32 by hijacking the VeSync OTA on the LAN, with no teardown and
+  no soldering. The teardown section now opens with a table of all three routes
+* **Core 400S: board `Core400S_C_V2.2P2.2SP3` confirmed working** on the
+  existing config (MCU 2.0.18), so the page lists confirmed revisions rather
+  than implying V1.2 is the only one. Plus a warning to keep the backup baud
+  low, and a note that the board can be flashed outside the unit
+  ([#79](https://github.com/tuct/levoit/issues/79))
+* **Vital 100S: an "Install New ESP32" section**, which this page was missing
+  entirely — built around an install photo contributed in
+  [#72](https://github.com/tuct/levoit/issues/72), showing an external FPC
+  antenna and the wiring to the debug header. The auto-mode fan speed reading
+  25% at the lowest rate is recorded there as a known issue, with the
+  datapoint it most likely comes from
+
+### 2026.09.26
+
+* **Levoit component 1.5.0** — Superior 6000S support, the `filter_low` device
+  class fix, and build fixes for optional platforms.
+  ⚠️ **Superseded for the Core 200S by 1.6.0**, see above
+* **Compile tests in CI.** Both components gained a `tests/` folder of
+  self-contained configs, run by GitHub Actions on every pull request that
+  touches `components/`. They caught two real build failures on their first run
+* **The root README split into focused docs** — it had grown to ~650 lines.
+  Device and component specifics moved to their own pages, leaving an overview,
+  plus new [CONTRIBUTING.md](./CONTRIBUTING.md), this change log,
+  [adding a new device](./docs/adding-a-new-device.md) and
+  [capturing a UART dump](./docs/capturing-uart.md)
+* **FCC internal photos** documented as a way to check a PCB *before* buying or
+  opening a device — most Levoit filings are under grantee
+  [`2ARBY`](https://fccid.io/2ARBY) and include photos of the bare board
+
+### 2026.09.12
+
+* Levoit component **1.4.3** — `filter_low` corrected to a `problem` binary
+  sensor rather than a `battery` one, so a spent filter shows as a problem in
+  Home Assistant
+* Added the Silo City Labs ESP32-C6 replacement controller for the non-smart
+  **Core 300-P**, which has no Wi-Fi module to convert
+* Vital 100S: use `board_build.f_flash` for the 40 MHz override
+
 ### 2026.09.11
 
 * **Philips Series 900 — an AC0951 now runs ESPHome.** The MCU↔module protocol
