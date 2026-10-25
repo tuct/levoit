@@ -40,6 +40,40 @@
 | MCU Version | text_sensor | |
 | Error | text_sensor | "Ok" or "Sensor Error" |
 
+## Known issue: Auto mode reports 25% at the lowest fan rate
+
+In **Auto** mode with good air quality (blue indicator), the unit drops the fan
+below its first manual level — roughly 10% by ear — but Home Assistant keeps
+reporting **25%**, the same as level 1. Reported in
+[#72](https://github.com/tuct/levoit/issues/72). Not yet fixed.
+
+The likely cause: the MCU sends **two** separate datapoints, and the component
+only uses one.
+
+| DP | Name | Used for |
+|----|------|----------|
+| `0x04` | `FanLevel` | The fan entity's speed — 1–4, so 25 / 50 / 75 / 100% |
+| `0x05` | `FanSpeed` | Parsed and **discarded** ([`vital_status.cpp:159`](../../components/levoit/vital_status.cpp#L159)) |
+
+In auto-low the MCU most likely holds `FanLevel` at 1 while `FanSpeed` carries
+the real rate. The fan entity has four discrete speeds and cannot express
+anything below 25%, so the number HA shows is correct for `FanLevel` and simply
+does not describe what the fan is doing.
+
+**To confirm it**, set the logger to `VERBOSE` and watch for `FanSpeed=` while
+the unit is in auto with a blue indicator:
+
+```yaml
+logger:
+  level: VERBOSE
+  logs:
+    levoit.vital: VERBOSE
+```
+
+If `FanSpeed` moves while `FanLevel` stays at 1, that is the value worth
+exposing — as its own sensor rather than by changing the fan entity, since
+redefining the existing percentages would break anyone's automations.
+
 ## Teardown / Disassembly
 
 Remove the top cover to access the PCB. Start by carefully opening the left side with a plastic pry tool or kitchen knife:
@@ -75,6 +109,48 @@ PCB fully accessible:
 
 ![Board pinout](./images/Vital100s-board_pinout_small.jpg)
 ![Board connector](./images/Vital100s-board_connector_small.jpg)
+
+## Install New ESP32 (Recommended)
+
+Adding your own ESP alongside the stock module leaves the original firmware
+untouched and the change fully reversible — nothing is desoldered.
+
+Photo by [@gorischek](https://github.com/tuct/levoit/issues/72), used with
+permission:
+
+![Vital 100S with a XIAO ESP32 installed](./images/Vital100s-esp_installed_small.jpg)
+
+What the photo shows, top to bottom:
+
+* The **stock ESP32** in its shield can at the top, still fitted, with wires
+  tapped onto its pads
+* A **Seeed Studio XIAO** laid flat on the board in free space to the right of
+  the MCU, wired with fine enamelled wire
+* A **XIAO FPC Antenna A-01** — the flexible external antenna — stuck to the
+  inside of the housing and run to the XIAO's u.FL connector
+* **Hot glue at every wire anchor**, which is what makes this survive the fan's
+  vibration
+
+### Wiring
+
+Four wires, plus one to silence the stock module:
+
+| Connection | Where |
+|-----------|-------|
+| `3.3V`, `GND` | Debug header pins 3 and 2 |
+| ESP `RX` ← MCU `TX` | Debug header pin 4 |
+| ESP `TX` → MCU `RX` | Debug header pin 5 |
+| Stock ESP32 `EN` → `GND` | Debug header **pin 1**, tied to pin 2 |
+
+The debug header carries `EN` on pin 1, so the stock module can be held in reset
+straight from the header — no probing needed. See
+[Debug Header Pinout](#debug-header-pinout) above. Until it is held low, keep
+your ESP's TX disconnected: both modules would otherwise drive the same line.
+
+> **Use an external antenna.** The board sits low in a plastic housing beside a
+> metal fan assembly. The XIAO's onboard antenna works, but the FPC antenna in
+> the photo is a worthwhile upgrade if your Wi-Fi is marginal — and the XIAO
+> variants with a u.FL connector need their antenna switch set in firmware.
 
 ## Flash Original ESP32
 
