@@ -9,9 +9,9 @@ Started from community projects ([acvigue](https://github.com/acvigue/esphome-le
 | Item | Value |
 |------|-------|
 | Model | Core 400S |
-| Tested MCU FW | 3.0.0 |
-| ESP Module | ESP32-SOLO-1C |
-| Board | CORE400S Ctrl V1.2 |
+| Tested MCU FW | 3.0.0, 2.0.18 |
+| ESP Module | ESP32-SOLO-1C (ESP32-S0WD rev v1.0, single core, 4 MB flash) |
+| Board | CORE400S Ctrl V1.2, `Core400S_C_V2.2P2.2SP3` |
 | Fan Speeds | 4 |
 | CADR (spec) | 442 m³/h |
 | Noise | 24–52 dB |
@@ -41,6 +41,32 @@ Started from community projects ([acvigue](https://github.com/acvigue/esphome-le
 | Error | text_sensor | "Ok" or "Sensor Error" |
 
 ![ha](./images/ha.png)
+
+## Confirmed board revisions
+
+The same config works across revisions — no changes have been needed so far.
+
+| Board silkscreen | MCU FW | Notes |
+|------------------|--------|-------|
+| `CORE400S Ctrl V1.2` | 3.0.0 | The original revision this guide was written against |
+| `Core400S_C_V2.2P2.2SP3` | 2.0.18 | Reported in [#79](https://github.com/tuct/levoit/issues/79). `devices/levoit-core400s/levoit-core400s.yaml` unchanged in substance (esp32dev, esp-idf, `CONFIG_FREERTOS_UNICORE: y`, UART RX `GPIO16` / TX `GPIO17` at 115200), component at `ac0cffa`, ESPHome 2026.9.1. MCU frames decode immediately (ptype `B040`, model 3); PM2.5, AQI, filter life and the Error sensor all populate |
+
+If you have a revision not listed, a short report is welcome — board silkscreen,
+module marking, MCU FW from the **MCU Version** text sensor, and whether
+anything needed changing.
+
+### Known quirk: Auto Mode Room Size below its minimum
+
+**Auto Mode Room Size** can read a value under the configured `min_value` of 9 —
+`6` was reported on FW 2.0.18 ([#79](https://github.com/tuct/levoit/issues/79)).
+The number reflects whatever the MCU currently holds, and the MCU appears to
+park it at a placeholder when auto mode is not set to Room Size. That is the
+reason the separate **Auto Mode Room Size Preset** number exists: it remembers
+your intended target so selecting Room Size restores it, rather than inheriting
+whatever Default or Quiet left behind.
+
+Not yet investigated, so treat the placeholder explanation as unconfirmed. Set
+Room Size once and the value should track what you asked for.
 
 ## Teardown / Disassembly
 
@@ -109,6 +135,15 @@ esptool read_flash 0 ALL levoit-core400s-backup.bin
 ```
 
 > Note: may fail if watchdog-protected. Try while the PCB is externally powered.
+>
+> **Keep the baud rate low.** A full-flash read at `-b 460800` has been reported
+> failing partway through over jumper wires; plain 115200 completed, and two
+> identical reads confirmed it. Verify any backup by reading twice and comparing
+> before you rely on it.
+
+The board can be flashed with the logic board **out of the unit**, powered from
+the 3.3 V on J1 — the fan MCU runs from it on the bench, so the sensors come up
+and you can confirm the UART link before reassembling.
 
 ### Configure
 
