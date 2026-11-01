@@ -17,6 +17,29 @@
 | ESPHome | 2026.5.3+ |
 | PM Sensor | None  |
 
+### Board revisions: the MCU UART pins differ
+
+The Core 200S and the Core 200S-P use the same ESP32-SOLO-1C and the same
+protocol, but the two UART lines between the module and the MCU are wired the
+other way round. The YAML files in this folder default to the Core 200S; on a
+200S-P swap the two pins in `substitutions:` (that is the Core 300S/400S
+mapping, see [#60](https://github.com/tuct/levoit/issues/60)).
+
+| Board | Stock boot banner | `rx_pin` | `tx_pin` |
+|-------|-------------------|----------|----------|
+| Core 200S, MCU 2.0.11 | — | `GPIO17` | `GPIO16` |
+| Core 200S-P, "Core200s_MCU", Hardware version 2.0, Wi-Fi FW 1.1.15 | `Device model: Core200s_MCU` / `Hardware version: 2.0` | `GPIO16` | `GPIO17` |
+
+How to tell before flashing: with the stock firmware still on the module, the
+boot banner on the debug pads (TXD0/RXD0, 115200 8N1) prints `Device model`,
+`Hardware version` and `Firmware version`.
+
+How to tell after flashing: the ESPHome log shows `>>> TX:` frames every few
+seconds but never a received frame, `MCU Version` stays unknown and the fan
+entity does not follow the buttons on the unit. Wi-Fi and the Home Assistant
+connection work fine, so it looks like an ESPHome problem; it is only the two
+pins.
+
 ## Features
 
 | Feature | Type | Notes |
@@ -275,15 +298,34 @@ No room to fit the esp32! i placed mine outside in the airstream. I had to break
 
 ### Prerequisites
 
-Solder wires to **TXD0, RXD0, IO0, +3V3, GND** near the ESP32 on the logic board and connect to a USB-UART converter (3.3V TTL).
+Solder wires to **TXD0, RXD0, IO0, GND** near the ESP32 on the logic board and connect to a USB-UART converter (3.3V TTL).
 
-Connect **IO0 to GND before powering on** to enter bootloader mode.
+**Power the board from its own +5V pad, not from the 3V3 of the USB-UART
+converter.** The 3V3 output of a CP2102/CH340 adapter is too weak for the
+module: the boot log then shows `Brownout detector was triggered` in a loop and
+esptool reports flash ID `ff`/`ff` and "Failed to communicate with the flash
+chip", which looks like a dead flash but is not. A 5 V / 1 A supply on the
+**+5V** pad of the board (the on-board regulator makes the 3.3 V), with its GND
+tied to the converter's GND, reads and writes the full 4 MB without a single
+brownout. Leave the converter's 3V3 and 5V pins unconnected.
+
+Connect **IO0 to GND before powering on** to enter bootloader mode. On the
+ESP32-SOLO-1C, antenna up, IO0 is the bottom pin of the right-hand row (pin 25).
+
+Seen on a Core 200S-P (ESP32-S0WD rev 1.0, 4 MB flash, manufacturer `0x20`
+device `0x4016`): the stock image is a two-slot OTA layout (`ota_0` at
+`0x10000`, `ota_1` at `0x190000`, plus `nvs`, `usercfg`, `storage` and `log`
+partitions), so erase the whole flash before writing the ESPHome factory image.
 
 ### Backup Existing Firmware
 
 ```bash
-esptool read_flash 0 ALL levoit-core200s-backup.bin
+esptool --baud 115200 read_flash 0 ALL levoit-core200s-backup.bin
 ```
+
+Read it twice and compare the two files (`cmp`): a backup that differs between
+two reads is not a backup. The image holds your Wi-Fi credentials and the
+VeSync pairing, so keep it private.
 
 > Note: backup may fail on some boards — proceed at your own risk.
 
