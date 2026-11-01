@@ -504,6 +504,16 @@ Auto mode options per model:
 
 ## Change Log
 
+#### Unreleased
+
+* **Builds on Ethernet boards.** The Wi-Fi LED status read
+  `wifi::global_wifi_component`, so a config without the `wifi` component (an
+  external ESP32 with Ethernet, e.g. an Olimex ESP32-POE2) failed to compile
+  with `wifi/wifi_component.h: No such file or directory`. The LED now follows
+  `network::is_connected()`, which covers Wi-Fi and Ethernet; on Wi-Fi nothing
+  changes. The "WiFi component not found" warning is gone with it
+* New compile test `test-ethernet.yaml` covers the wired case in CI
+
 #### ESP Version: 1.6.0 - 2026.10.25
 
 **Core 200S filter life, properly this time.** 1.5.0 shipped a guess that made

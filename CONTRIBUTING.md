@@ -53,7 +53,7 @@ hardware" is a perfectly good PR — silently implying otherwise is not.
 ## CI
 
 [`.github/workflows/compile-tests.yml`](.github/workflows/compile-tests.yml)
-runs on every PR that touches `components/`. It builds three configs from
+runs on every PR that touches `components/`. It builds these configs from
 [`components/levoit/tests`](./components/levoit/tests):
 
 | Config | Covers |
@@ -61,6 +61,7 @@ runs on every PR that touches `components/`. It builds three configs from
 | `test-all-entities.yaml` | Every entity type on every platform |
 | `test-fan-only.yaml` | Only a fan configured — catches unguarded platform includes |
 | `test-foreign-platforms.yaml` | Other components supplying the platforms — catches guards on the generic `USE_*` macros |
+| `test-ethernet.yaml` | Ethernet instead of Wi-Fi — catches code that depends on the `wifi` component (levoit only) |
 
 Run them locally before pushing; they need no `secrets.yaml`:
 

@@ -37,6 +37,11 @@ jobs:
           # the generic USE_SWITCH / USE_SELECT / ... without any entity of that
           # kind from this component, which is the mismatch that broke the build.
           - test-foreign-platforms.yaml
+        # Ethernet instead of Wi-Fi: catches code that needs the wifi component.
+        # levoit only, so it is added as a single job rather than to the config list.
+        include:
+          - component: levoit
+            config: test-ethernet.yaml
     steps:
       - uses: actions/checkout@v4
 

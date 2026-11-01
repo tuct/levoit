@@ -5,6 +5,13 @@
 Project-level changes. Component releases have their own log:
 [levoit](./components/levoit/README.md#change-log).
 
+### Unreleased
+
+* **Levoit component: Ethernet boards build.** A config without the `wifi`
+  component no longer fails on `wifi/wifi_component.h`; the Wi-Fi LED now shows
+  the network state on Wi-Fi and Ethernet alike. See the
+  [component change log](./components/levoit/README.md#change-log)
+
 ### 2026.10.25
 
 * **Levoit component [1.6.0](./components/levoit/README.md#change-log)** — the
