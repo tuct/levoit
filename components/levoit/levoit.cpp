@@ -4,7 +4,7 @@
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
 #include "esphome/core/util.h"
-#include "esphome/components/wifi/wifi_component.h"
+#include "esphome/components/network/util.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -982,12 +982,10 @@ namespace esphome
                         filter_led_on_ = true;
                     }
                 }
-                // Check WiFi status and update LED accordingly
-                auto *wifi = wifi::global_wifi_component;
-                if (wifi != nullptr)
+                // Check network status (Wi-Fi or Ethernet) and update the Wi-Fi LED accordingly
                 {
-                    bool is_connected = wifi->is_connected();
-                    bool is_disabled = wifi->is_disabled();
+                    bool is_connected = network::is_connected();
+                    bool is_disabled = network::is_disabled();
                     // Determine WiFi state: connecting = not connected and not disabled
                     bool is_connecting = !is_connected && !is_disabled;
 
@@ -1034,8 +1032,6 @@ namespace esphome
                         this->sendCommand(CommandType::setWifiLedOff);
                         wifi_led_solid_ = false;
                     }
-                }else {
-                    ESP_LOGW(TAG, "WiFi component not found - cannot update LED status");       
                 }
             }
 
