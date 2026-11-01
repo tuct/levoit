@@ -138,8 +138,8 @@ Four wires, plus one to silence the stock module:
 | Connection | Where |
 |-----------|-------|
 | `3.3V`, `GND` | Debug header pins 3 and 2 |
-| ESP `RX` ← MCU `TX` | Test pad **TP64**, beside R92 |
-| ESP `TX` → MCU `RX` | Test pad **TP57**, next to header pin 6 (`IO0`) |
+| ESP `RX` ← MCU `TX` | Test pad beside R92, at the stock module's corner — **TP64** in the pinout photo, **TP54** on other boards. Same net as module pin 27 (`IO18`) |
+| ESP `TX` → MCU `RX` | Test pad **TP57**, next to header pin 6 (`IO0`). Same net as module pin 28 (`IO19`) |
 | Stock ESP32 `EN` → `GND` | Debug header **pin 1**, tied to pin 2 |
 
 The MCU link is **not** on the debug header. Header pins 4 and 5 are the stock
@@ -148,6 +148,11 @@ module's flashing UART — labelled *UART - Flash FW* in the
 two test pads labelled *UART ESP <> MCU* there (on the stock ESP32-C3 that is
 GPIO18/19, see `levoit-vital100s.yaml`). With the stock module held in reset,
 the header's TX/RX lead nowhere useful.
+
+If a pad label doesn't match, go by the module: the ESP32-C3-SOLO-1 pinout is in
+its FCC user manual (FCC ID 2AC7Z-ESPC3SOLO). With the module text readable,
+pins 25-28 are the bottom four on the right side, counted upwards: `IO9`, `IO10`,
+`IO18`, `IO19`. A beep test from each pad to pins 27 and 28 confirms the pair.
 
 The debug header carries `EN` on pin 1, so the stock module can be held in reset
 straight from the header — no probing needed. Until it is held low, keep your
