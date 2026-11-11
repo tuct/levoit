@@ -44,15 +44,43 @@ Same protocol as the Vital 100S. Tested with original ESP by @dnsefe.
 
 ## Teardown / Disassembly
 
-> TODO: add teardown steps and photos
+* Remove the front filter cover
+* Remove 4 phillips screws
+* Pry the white trim/slide the top black towards you
+  > I broke the clips by prying the white trim pieces out then sliding the black control panel grille forward; but it worked
+* The wires are very short so try to unplug + unclip. 
+
 
 ## Debug Header Pinout
 
-> TODO: add pinout and photos
+| Pin | Signal |
+|-----|--------|
+| 1 | EN (reset) |
+| 2 | GND |
+| 3 | 3.3V |
+| 4 | TX |
+| 5 | RX |
+| 6 | IO0 |
 
 ## Install New ESP32 (Recommended)
 
-> TODO: add wiring photos and pin mapping
+* Bridge EN and GND on debug header to force onboard ESP32 into reset/off state
+* Run power for new ESP32
+  * 5V from lower debug header to V-BUS on ESP32
+  * or, 3.3V from right (ESP32) debug header
+* Run ground cable to GND pin on new ESP32
+
+### RX and TX lines
+> This worked for me; other spots may be better
+
+> [!WARNING]
+> Lower debug headers are 5v; do not use
+
+- Green (upper) pads are RX to the onboard esp32
+    - Solder to TX on standalone esp32
+- Yellow (lower) pads are TX to the onbaord esp32
+    - Solder to RX on standalone esp32
+
 
 ## Flash Original ESP32
 
