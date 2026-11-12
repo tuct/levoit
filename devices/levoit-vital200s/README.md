@@ -46,9 +46,13 @@ Same protocol as the Vital 100S. Tested with original ESP by @dnsefe.
 
 * Remove the front filter cover
 * Remove 4 phillips screws
+  * <img width="2304" height="1118" alt="image" src="https://github.com/user-attachments/assets/ed008acd-d4b0-4e55-b0e3-2e4bc2d6aabe" />
+
 * Pry the white trim/slide the top black towards you
   > I broke the clips by prying the white trim pieces out then sliding the black control panel grille forward; but it worked
-* The wires are very short so try to unplug + unclip. 
+* The wires are very short so try to unplug + unclip.
+  * <img width="500"  alt="image" src="https://github.com/user-attachments/assets/f3fbd137-6c23-4c41-bb4f-2928d6935798" />
+ 
 
 
 ## Debug Header Pinout
@@ -63,6 +67,9 @@ Same protocol as the Vital 100S. Tested with original ESP by @dnsefe.
 | 6 | IO0 |
 
 ## Install New ESP32 (Recommended)
+> Tested by @bcrook on a Seeed Xiao ESP32-C6 + Vital 200S-P
+
+<img width="2304" height="958" alt="image" src="https://github.com/user-attachments/assets/b7235e33-998f-4eea-ae13-3d3470a87ece" />
 
 * Bridge EN and GND on debug header to force onboard ESP32 into reset/off state
 * Run power for new ESP32
@@ -80,6 +87,9 @@ Same protocol as the Vital 100S. Tested with original ESP by @dnsefe.
     - Solder to TX on standalone esp32
 - Yellow (lower) pads are TX to the onbaord esp32
     - Solder to RX on standalone esp32
+
+
+<img width="2304" height="1042" alt="image" src="https://github.com/user-attachments/assets/9d62bf89-923d-42b1-8cf9-a8a2e2b00e47" />
 
 
 ## Flash Original ESP32
@@ -122,9 +132,23 @@ Use the pre-generated builder yaml to flash without a local clone — all config
 |------|-------|
 | `levoit-vital200s-builder.yaml` | original ESP32-C3-SOLO-1 |
 | `levoit-vital200s-builder-c3.yaml` | ESP32-C3 replacement |
+| `levoit-vital200s-builder-c6.yaml` | ESP32-C6 replacement |
 | `levoit-vital200s-builder-s3.yaml` | ESP32-S3 replacement |
 
 Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. Regenerate with `.\make-builder-yaml.ps1` from the `devices/` folder.
+
+### Home Assistant Device Dashboard
+#### Fan
+<img width="601" height="620" alt="image" src="https://github.com/user-attachments/assets/f5a88bef-3bc6-46f4-8645-e4db452c200d" />
+
+#### Sensors
+<img width="411" height="522" alt="image" src="https://github.com/user-attachments/assets/3e8132f2-d138-42f1-a4b3-b448a05de7c1" />
+
+#### Configuration
+<img width="290" height="763" alt="image" src="https://github.com/user-attachments/assets/14f3005e-3241-49c4-827e-9552cf4f7211" />
+
+
+
 
 ### Restore Original Firmware
 
