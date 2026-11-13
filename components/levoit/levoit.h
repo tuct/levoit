@@ -259,8 +259,6 @@ class Levoit : public Component, public uart::UARTDevice {
   uint32_t timer_stop_sent_at_{0};  // millis() when stop was sent, for polling delay
   bool wifi_led_solid_{false};
   bool wifi_led_blink_sent_{false};  // true after first blinking command sent during boot
-  bool filter_led_on_{false};
-  bool filter_blinking_{false};
 
   // Superior 6000S ESP-managed timer state
   bool esp_timer_active_{false};

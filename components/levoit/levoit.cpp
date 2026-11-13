@@ -875,9 +875,6 @@ namespace esphome
             this->set_timeout("wifi_led_init", 2000, [this]() {
                 this->sendCommand(CommandType::setWifiLedBlinking);
             });
-            this->sendCommand(CommandType::setFilterLedOn);
-            filter_led_on_ = true;
-            filter_blinking_ = true;
 
             // EverestAir: push the computed filter % to the MCU panel on boot
             // (delay so the MCU has finished booting), then keep it in sync
@@ -1041,21 +1038,6 @@ namespace esphome
             {
                 // every second
                 last_check_sec = now;
-                // Handle filter LED blinking
-                if (filter_blinking_)
-                {
-                    // toggle filter led
-                    if (filter_led_on_)
-                    {
-                        this->sendCommand(CommandType::setFilterLedOff);
-                        filter_led_on_ = false;
-                    }
-                    else
-                    {
-                        this->sendCommand(CommandType::setFilterLedOn);
-                        filter_led_on_ = true;
-                    }
-                }
                 // Check network status (Wi-Fi or Ethernet) and update the Wi-Fi LED accordingly
                 {
                     bool is_connected = network::is_connected();
@@ -1068,9 +1050,6 @@ namespace esphome
                         ESP_LOGD(TAG, "WiFi connected - setting LED solid");
                         wifi_led_solid_ = true;
                         wifi_led_blink_sent_ = false;
-                        this->sendCommand(CommandType::setFilterLedOff);
-                        filter_led_on_ = false;
-                        filter_blinking_ = false;
                         // Ensure any blinking is cleared before setting solid LED
                         this->sendCommand(CommandType::setWifiLedOff);
                         if (this->model_ == ModelType::CORE200S)
