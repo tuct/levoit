@@ -73,6 +73,16 @@ namespace esphome
             }
         }
 
+        static int option_to_fan_operating_mode_(esphome::StringRef value)
+        {
+            if (value == "Manual") return 0;
+            if (value == "Sleep") return 1;
+            if (value == "Auto") return 2;
+            if (value == "Turbo") return 4;
+            if (value == "Pet") return 5;
+            return -1;
+        }
+
         static bool supports_auto_fan_mode_(ModelType model)
         {
             return model != ModelType::CORE200S;
@@ -173,7 +183,7 @@ namespace esphome
             if (!sl)
                 return;
             const auto &options = sl->traits.get_options();
-            if (type == SelectType::FAN_OPERATING_MODE_SELECT)
+            if (type == SelectType::FAN_OPERATING_MODE_SELECT || type == SelectType::DAYTIME_FAN_MODE)
             {
                 const char *opt = fan_operating_mode_to_option_(value);
                 if (opt == nullptr)
@@ -317,6 +327,14 @@ namespace esphome
             auto *sel = this->selects_[sl_idx_(type)];
             if (sel == nullptr || !sel->has_state())
                 return false;
+            if (type == SelectType::FAN_OPERATING_MODE_SELECT || type == SelectType::DAYTIME_FAN_MODE)
+            {
+                int mode = option_to_fan_operating_mode_(sel->current_option());
+                if (mode < 0)
+                    return false;
+                out = static_cast<size_t>(mode);
+                return true;
+            }
             auto idx = sel->active_index();
             if (!idx.has_value())
                 return false;

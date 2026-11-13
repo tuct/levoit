@@ -42,17 +42,9 @@ namespace esphome
           this->traits.set_options({"Low","Medium","High","Highest","Minimum"});
           break;
         case SelectType::DAYTIME_FAN_MODE:
-          // Vital TLV 0x22: daytime preset fan-mode enum byte. Empirically
-          // observed values: 0x00=Manual, 0x01=Sleep, 0x02=Auto, 0x05=Pet
-          // (parallels the fan-mode byte at TLV 0x03). Bytes 0x03 and 0x04
-          // were not exposed through the VeSync app captures we have; if
-          // the MCU ever pushes those, label them Unknown3/Unknown4 in HA
-          // so the publish_select index lookup doesn't fall outside the
-          // options list (which would leave has_state()=false and the
-          // entity stuck at "unknown" — see fix in 2f5d90b for the
-          // analogous SLEEP_PREFERENCE case).
-          // See docs/MCU_2.0.0_baseline.md TLV inventory.
-          this->traits.set_options({"Manual", "Sleep", "Auto", "Unknown3", "Unknown4", "Pet"});
+          // Vital TLV 0x22: daytime preset fan-mode enum byte:
+          // 0x00=Manual, 0x01=Sleep, 0x02=Auto, 0x05=Pet (parallels TLV 0x03).
+          this->traits.set_options({"Manual", "Sleep", "Auto", "Pet"});
           break;
         case SelectType::NIGHTLIGHT:
           this->traits.set_options({"Off","Mid","Full"});
@@ -115,7 +107,8 @@ namespace esphome
       }
 
       uint32_t index = it - options.begin();
-      if (this->type_ == SelectType::FAN_OPERATING_MODE_SELECT) {
+      if (this->type_ == SelectType::FAN_OPERATING_MODE_SELECT ||
+          this->type_ == SelectType::DAYTIME_FAN_MODE) {
         int mode = fan_operating_mode_to_raw(value);
         if (mode < 0) {
           ESP_LOGW(TAG, "Unknown fan operating mode option: %s", value.c_str());
