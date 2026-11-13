@@ -81,6 +81,20 @@ namespace esphome
       // Cache full → always decode
       return true;
     }
+    static bool is_status_push_(ModelType model, uint8_t msg_type, uint8_t ptype0, uint8_t ptype1)
+    {
+      if (model == ModelType::ELEVA300X && msg_type == 0x02)
+        return ptype0 == 0x00 && ptype1 == 0x55;
+      if (msg_type != 0x22)
+        return false;
+      return (ptype0 == 0x00 && ptype1 == 0x55) || // Vital / Sprout / EverestAir / Eleva
+             (ptype0 == 0x30 && ptype1 == 0x55) || // Superior 6000S
+             (ptype0 == 0x30 && ptype1 == 0x40) || // Core 300S / 400S
+             (ptype0 == 0xB0 && ptype1 == 0x40) || // Core 300S / 400S alt
+             (ptype0 == 0x60 && ptype1 == 0x40) || // Core 200S
+             (ptype0 == 0x40 && ptype1 == 0x41);   // Core 600S
+    }
+
     void dispatch_decoder(Levoit *self,
                           ModelType model,
                           uint8_t msg_type,
@@ -171,8 +185,11 @@ namespace esphome
                (int)model, ptype0, ptype1, (unsigned)payload_len, h,
                payload_len ? payload[payload_len - 1] : 0);
 
-      // only if payload changed
-      if (!payload_changed_(model, ptype0, ptype1, payload, payload_len))
+      // Deduplicate only periodic status pushes; timer responses, button resets,
+      // and async event notifications must always be processed even when two
+      // consecutive frames carry identical payloads.
+      if (is_status_push_(model, msg_type, ptype0, ptype1) &&
+          !payload_changed_(model, ptype0, ptype1, payload, payload_len))
       {
         ESP_LOGV(TAG_DEC,
                  "skip decode (unchanged payload): model=%d ptype=%02X%02X",
