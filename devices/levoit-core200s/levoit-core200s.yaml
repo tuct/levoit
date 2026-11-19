@@ -2,7 +2,7 @@
 substitutions:
   device_name: levoit-core200s
   wifi_ap_ssid: "Levoit-Core200S"
-  rx_pin: GPIO17
+  rx_pin: GPIO17  # Core 200S. On a Core 200S-P (Hardware version 2.0) swap the two: rx GPIO16, tx GPIO17 — see README
   tx_pin: GPIO16
 
 esphome:
