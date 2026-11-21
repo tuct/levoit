@@ -158,6 +158,11 @@ namespace esphome
           // other Vital-protocol models that omit the level in those states.
           if (model == ModelType::ELEVA300X && (t.value_u32 == 0 || t.value_u32 == 0xFF))
             break;
+          // EverestAir reports 0xFF while powered off. Clamped, it read as speed 3,
+          // so "set speed 100%" on an off unit was taken as "no change" and only
+          // the power-on frame was sent.
+          if (model == ModelType::EVERESTAIR && t.value_u32 == 0xFF)
+            break;
           have_speed = true;
           speed = t.value_u32;
           break;
