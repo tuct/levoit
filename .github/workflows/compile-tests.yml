@@ -21,12 +21,17 @@ concurrency:
 
 jobs:
   compile:
-    name: ${{ matrix.component }} · ${{ matrix.config }}
+    name: ${{ matrix.component }} · ${{ matrix.config }} · esphome ${{ matrix.esphome }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         component: [levoit, philips]
+        # "latest" catches breaking changes in new ESPHome releases; the pinned
+        # one is the minimum stated in the component READMEs, so a fix for a new
+        # release cannot silently drop support for older ones. Raise it together
+        # with the READMEs.
+        esphome: ['latest', '2026.5.3']
         config:
           # every platform and every entity type - maximum codegen coverage
           - test-all-entities.yaml
@@ -37,6 +42,14 @@ jobs:
           # the generic USE_SWITCH / USE_SELECT / ... without any entity of that
           # kind from this component, which is the mismatch that broke the build.
           - test-foreign-platforms.yaml
+        # A config that exists for only one component goes in an `include`
+        # list, once per ESPHome version, e.g.
+        #   include:
+        #     - { component: levoit, config: test-ethernet.yaml, esphome: latest }
+        #     - { component: levoit, config: test-ethernet.yaml, esphome: '2026.5.3' }
+        # An entry without `esphome` gets an empty version and fails to install.
+        # The local scripts (components/run-compile-tests.*) pick up every
+        # tests/test-*.yaml by themselves.
     steps:
       - uses: actions/checkout@v4
 
@@ -52,11 +65,18 @@ jobs:
           path: |
             ~/.platformio
             ~/.cache/pip
-          key: pio-${{ runner.os }}-${{ hashFiles('components/*/tests/*.yaml') }}
-          restore-keys: pio-${{ runner.os }}-
+          # per ESPHome version: each release can pin a different toolchain
+          key: pio-${{ runner.os }}-esphome-${{ matrix.esphome }}-${{ hashFiles('components/*/tests/*.yaml') }}
+          restore-keys: pio-${{ runner.os }}-esphome-${{ matrix.esphome }}-
 
-      - name: Install ESPHome
-        run: pip install esphome
+      - name: Install ESPHome ${{ matrix.esphome }}
+        run: |
+          if [ "${{ matrix.esphome }}" = "latest" ]; then
+            pip install esphome
+          else
+            pip install "esphome==${{ matrix.esphome }}"
+          fi
+          esphome version
 
       - name: esphome config
         working-directory: components/${{ matrix.component }}/tests
