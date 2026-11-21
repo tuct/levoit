@@ -5,17 +5,21 @@
 Project-level changes. Component releases have their own log:
 [levoit](./components/levoit/README.md#change-log).
 
-### Unreleased
+### 2026.11.21
 
+* **Levoit component [1.7.0](./components/levoit/README.md#change-log)** — the
+  Eleva 300X, ESPHome 2026.11 support and Ethernet boards
 * **New device: Levoit Eleva 300X** (`model: ELEVA300X`) — Vital protocol on
   the stock ESP32-C3, decoded from 19 Saleae captures of the stock firmware:
   fan levels 1–4, auto/sleep, PM1.0/2.5/10 and AQI, mute, AQI ring brightness,
   the MCU-side quiet period (light or time window, with local-time sync),
   adaptive start, dynamic manual/sleep, timer and filter reset. MCU UART on
-  module pads IO16 / IO17. Compiles, **not tested on
-  hardware yet**. See [devices/levoit-eleva-300x](./devices/levoit-eleva-300x)
+  GPIO18 / GPIO19, the same ESP32-C3-SOLO-1 module and pins as the Vital
+  100S / 200S. Compiles, **not tested on hardware yet**. See
+  [devices/levoit-eleva-300x](./devices/levoit-eleva-300x)
+  ([#95](https://github.com/tuct/levoit/pull/95))
 * **ESPHome 2026.11 compatibility** for both components, still building on the
-  minimum 2026.5.3 ([#93](https://github.com/tuct/levoit/pull/93))
+  minimum 2026.5.3 (@Scags104, [#93](https://github.com/tuct/levoit/pull/93))
   * `format_hex_pretty()` returning a `std::string` was removed in 2026.11; the
     levoit and philips UART logs now use `format_hex_pretty_to()` (available
     since 2026.3)
@@ -30,8 +34,19 @@ Project-level changes. Component releases have their own log:
   [CONTRIBUTING](./CONTRIBUTING.md#ci)
 * **Levoit component: Ethernet boards build.** A config without the `wifi`
   component no longer fails on `wifi/wifi_component.h`; the Wi-Fi LED now shows
-  the network state on Wi-Fi and Ethernet alike. See the
-  [component change log](./components/levoit/README.md#change-log)
+  the network state on Wi-Fi and Ethernet alike, with a new `test-ethernet`
+  compile test (@benedikt-bartscher, [#86](https://github.com/tuct/levoit/pull/86))
+* **Vital 100S:** the MCU UART for an added ESP is on test pads TP57 / TP64,
+  not on the debug header (@benedikt-bartscher,
+  [#87](https://github.com/tuct/levoit/pull/87))
+* **Core 200S-P:** the MCU UART pins are swapped compared with the Core 200S,
+  and the board should be powered from +5V while flashing (@njanik,
+  [#88](https://github.com/tuct/levoit/pull/88))
+* **Vital 200S:** a standalone install guide for an added ESP, tested with a
+  Seeed XIAO ESP32-C6 on a Vital 200S-P (@bcrook,
+  [#90](https://github.com/tuct/levoit/pull/90))
+* **Core 200S / 400S:** the two install routes and their serial pads are now
+  documented separately (@gemivnet, [#94](https://github.com/tuct/levoit/pull/94))
 
 ### 2026.10.25
 

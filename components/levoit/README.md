@@ -526,9 +526,19 @@ Auto mode options per model:
 
 ## Change Log
 
-#### Unreleased
+#### ESP Version: 1.7.0 - 2026.11.21
 
+**A new device, the Levoit Eleva 300X, and ESPHome 2026.11 support.** Thanks to
+@Scags104 for the 2026.11 fix and @benedikt-bartscher for the Ethernet fix.
+
+* **Builds on ESPHome 2026.11**, still on the minimum 2026.5.3
+  ([#93](https://github.com/tuct/levoit/pull/93)). 2026.11 removed the
+  `format_hex_pretty()` overload returning a `std::string`; the UART logs now
+  use `format_hex_pretty_to()` (available since 2026.3). The Sprout light's
+  breathing effect is registered through the new pointer-and-count
+  `add_effects()` on 2026.11 and the initializer list on older releases
 * Add Levoit Eleva 300X support (`model: ELEVA300X`), Vital protocol over the stock ESP32-C3
+  ([#95](https://github.com/tuct/levoit/pull/95))
   * MCU status and sensor frames arrive as REPORT (type `0x02`); they are now ACKed and decoded for this model
   * Sensor reports (`02 23 55`) are echoed back to the MCU like the stock firmware
   * New `mute` and `aqi_ring_dim` switches, new `aqi_index` sensor (numeric AQI 0–500), `ambient_light` sensor
@@ -537,14 +547,18 @@ Auto mode options per model:
   * Timer: countdown REPORTs accepted, set/stop carry the trailing `02 01 00` the stock firmware sends
   * Filter reset in both directions: the button sends the stock `02 05 55` reset pair, a panel reset resets the ESP filter counters
   * Fan level 0 (sleep) and 255 (off) are ignored, so the fan keeps its last manual speed
-* ⚠️ Eleva 300X not verified on hardware yet (MCU UART on module pads IO16 / IO17)
+* ⚠️ Eleva 300X not verified on hardware yet (MCU UART on GPIO18 / GPIO19, same ESP32-C3-SOLO-1 module as the Vital 100S / 200S)
 * **Builds on Ethernet boards.** The Wi-Fi LED status read
   `wifi::global_wifi_component`, so a config without the `wifi` component (an
   external ESP32 with Ethernet, e.g. an Olimex ESP32-POE2) failed to compile
   with `wifi/wifi_component.h: No such file or directory`. The LED now follows
   `network::is_connected()`, which covers Wi-Fi and Ethernet; on Wi-Fi nothing
   changes. The "WiFi component not found" warning is gone with it
+  ([#86](https://github.com/tuct/levoit/pull/86))
 * New compile test `test-ethernet.yaml` covers the wired case in CI
+* CI builds every test config against the newest ESPHome and the minimum
+  2026.5.3; `components/run-compile-tests.sh` / `.ps1` run the same builds
+  locally
 
 #### ESP Version: 1.6.0 - 2026.10.25
 
