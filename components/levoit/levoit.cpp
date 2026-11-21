@@ -429,6 +429,26 @@ namespace esphome
                 this->sendCommand(state ? setAutoDryWaterEmptyOn : setAutoDryWaterEmptyOff);
                 break;
 
+            case SwitchType::MUTE:
+                this->sendCommand(state ? setMuteOn : setMuteOff);
+                break;
+
+            case SwitchType::AQI_RING_DIM:
+                this->sendCommand(state ? setAqiRingDim : setAqiRingBright);
+                break;
+
+            case SwitchType::QUIET_PERIOD:
+                // Builder reads the switch, the trigger select and both window numbers
+                this->sendCommand(setElevaQuietConfig);
+                break;
+
+            case SwitchType::ADAPTIVE_START:
+            case SwitchType::DYNAMIC_MANUAL:
+            case SwitchType::DYNAMIC_SLEEP:
+                // Keys 01..04 are always written as one group
+                this->sendCommand(setElevaAutoFlags);
+                break;
+
             default:
                 break;
             }
@@ -492,6 +512,11 @@ namespace esphome
                 // is selected via the Auto Mode select, not on every edit.
                 break;
 
+            case NumberType::QUIET_START:
+            case NumberType::QUIET_END:
+                this->sendCommand(setElevaQuietConfig);
+                break;
+
             case NumberType::SLEEP_MODE_MIN:
             case NumberType::SLEEP_FAN_LEVEL:
             case NumberType::QUICK_CLEAN_MIN:
@@ -542,6 +567,10 @@ namespace esphome
 
             case SelectType::HUMIDITY_SUBTYPE:
                 this->sendCommand(value == 1 ? setHumiditySubtypeFan : setHumiditySubtypeSmart);
+                break;
+
+            case SelectType::QUIET_TRIGGER:
+                this->sendCommand(setElevaQuietConfig);
                 break;
 
             case SelectType::DRY_LEVEL:
@@ -770,6 +799,8 @@ namespace esphome
                 model_ = ModelType::EVERESTAIR;
             else if (model == "SUPERIOR6000S")
                 model_ = ModelType::SUPERIOR6000S;
+            else if (model == "ELEVA300X")
+                model_ = ModelType::ELEVA300X;
 
             ESP_LOGI(TAG, "Model set to: %s (ModelType=%d)", model.c_str(), (int)model_);
         }
@@ -795,6 +826,8 @@ namespace esphome
                 cadr = 612;
             if (model_ == ModelType::SUPERIOR6000S)
                 cadr = 500;   // humidifier: nominal, only feeds the CADR counters
+            if (model_ == ModelType::ELEVA300X)
+                cadr = 273;   // spec 161 CFM smoke/dust/PM2.5
             
             // Initialize preferences for tracking used_cadr and total_runtime
             pref_used_cadr_ = global_preferences->make_preference<uint32_t>(fnv1_hash("levoit_used_cadr"));
@@ -830,6 +863,24 @@ namespace esphome
                 this->set_timeout("everest_filter_init", 3000, [this]() {
                     this->push_filter_pct_if_changed(this->calculate_filter_life_left_percent());
                 });
+            }
+
+            // Eleva 300X: read the auto-mode config block once so the quiet /
+            // adaptive-start entities have a state (the MCU only pushes it on
+            // change), and hand the MCU the local time whenever the clock syncs.
+            if (this->model_ == ModelType::ELEVA300X) {
+                this->set_timeout("eleva_auto_cfg", 3000, [this]() {
+                    // The stock ESP reports the app's genuine-filter state at
+                    // every boot (02 05 55 + 04 01 <0/1>). ESPHome cannot verify
+                    // a filter, so it states "not genuine", like a stock boot
+                    // with an unlinked filter. No visible effect on the unit.
+                    this->sendCommand(CommandType::setElevaFilterNotGenuine);
+                    this->sendCommand(CommandType::requestElevaAutoConfig);
+                });
+#ifdef USE_LEVOIT_TIME
+                if (this->time_ != nullptr)
+                    this->time_->add_on_time_sync_callback([this]() { this->send_eleva_local_time(); });
+#endif
             }
 
             // Track CADR on initial setup
@@ -1297,7 +1348,7 @@ namespace esphome
             {
                 message = build_core_command(this, commandType);
             }
-            else if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S || this->model_ == ModelType::EVERESTAIR)
+            else if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S || this->model_ == ModelType::EVERESTAIR || this->model_ == ModelType::ELEVA300X)
             {
                 message = build_vital_command(this, commandType);
             }
@@ -1388,11 +1439,137 @@ namespace esphome
             }
         }
 
+        // Eleva 300X: the stock ESP answers every MCU sensor REPORT (CMD 02 23 55:
+        // 01 PM1, 02 PM2.5, 03 PM10, 0B AQI, 0C level) with a SEND of the same
+        // values, filling keys 04..0A (temperature/humidity/VOC/NOx slots this
+        // model has no sensor for) with 0xFFFF. Mirrored here so the MCU keeps
+        // getting the frame it expects.
+        void Levoit::mirror_eleva_sensor_report(const uint8_t *payload, size_t payload_len)
+        {
+            if (payload == nullptr || payload_len == 0)
+                return;
+
+            std::vector<uint8_t> head; // keys 0x01..0x03
+            std::vector<uint8_t> tail; // keys 0x0B and up
+            size_t i = 0;
+            while (i + 2 <= payload_len)
+            {
+                const uint8_t key = payload[i];
+                const uint8_t len = payload[i + 1];
+                if (i + 2 + len > payload_len)
+                    break;
+                auto &dst = (key < 0x04) ? head : tail;
+                if (key < 0x04 || key > 0x0A)
+                    dst.insert(dst.end(), payload + i, payload + i + 2 + len);
+                i += 2 + len;
+            }
+
+            std::vector<uint8_t> out = head;
+            for (uint8_t key = 0x04; key <= 0x0A; key++)
+            {
+                out.insert(out.end(), {key, 0x02, 0xFF, 0xFF});
+            }
+            out.insert(out.end(), tail.begin(), tail.end());
+
+            auto message = build_levoit_message({0x02, 0x23, 0x55}, out, messageUpCounter);
+            ESP_LOGV(TAG, ">>> TX Eleva sensor mirror: %s", format_hex_pretty(message).c_str());
+            this->write_array(message.data(), message.size());
+            this->flush();
+            if (messageUpCounter == 255)
+                messageUpCounter = 16;
+            else
+                messageUpCounter++;
+        }
+
+        // Eleva 300X: the auto-mode config block (CMD 02 21 55) arrives in the
+        // MCU's ACK to our 0C query and as a REPORT after every change. A REPORT
+        // can also carry a lone key 09 (meaning TBD), so only a frame with the
+        // full block (keys 01 and 05) marks the cache as known.
+        void Levoit::apply_eleva_auto_config(const uint8_t *payload, size_t payload_len)
+        {
+            if (payload == nullptr || payload_len == 0)
+                return;
+            ElevaAutoConfig &c = this->eleva_auto_config_;
+            bool saw_01 = false, saw_05 = false;
+            size_t i = 0;
+            while (i + 2 <= payload_len)
+            {
+                const uint8_t key = payload[i];
+                const uint8_t len = payload[i + 1];
+                if (len == 0 || i + 2 + len > payload_len)
+                    break;
+                uint32_t v = 0;
+                for (uint8_t b = 0; b < len && b < 4; b++)
+                    v |= (uint32_t)payload[i + 2 + b] << (8 * b);
+                switch (key)
+                {
+                case 0x01: c.profile = v; saw_01 = true; break;
+                case 0x02: c.adaptive_start = v; break;
+                case 0x03: c.dynamic_manual = v; break;
+                case 0x04: c.dynamic_sleep = v; break;
+                case 0x05: c.quiet_enabled = v; saw_05 = true; break;
+                case 0x06: c.quiet_trigger = v; break;
+                case 0x07: c.quiet_start = v; break;
+                case 0x08: c.quiet_end = v; break;
+                case 0x09:
+                    // Sent alone by the MCU when the quiet period starts (7) or
+                    // ends (8), whether triggered by darkness or the time window.
+                    if (v == 7 || v == 8)
+                        this->publish_binary_sensor(BinarySensorType::QUIET_ACTIVE, v == 7);
+                    else
+                        ESP_LOGD(TAG, "Eleva auto config: event 09 = %u", (unsigned)v);
+                    break;
+                default:
+                    ESP_LOGV(TAG, "Eleva auto config: key 0x%02X = %u", key, (unsigned)v);
+                    break;
+                }
+                i += 2 + len;
+            }
+            if (!(saw_01 && saw_05))
+                return;
+            c.known = true;
+            ESP_LOGD(TAG, "Eleva auto config: profile=%u adaptive=%u dyn_manual=%u dyn_sleep=%u quiet=%u trigger=%s window=%u-%u s",
+                     c.profile, c.adaptive_start, c.dynamic_manual, c.dynamic_sleep, c.quiet_enabled,
+                     c.quiet_trigger == 1 ? "timer" : "light", (unsigned)c.quiet_start, (unsigned)c.quiet_end);
+            this->publish_switch(SwitchType::ADAPTIVE_START, c.adaptive_start == 1);
+            this->publish_switch(SwitchType::DYNAMIC_MANUAL, c.dynamic_manual == 1);
+            this->publish_switch(SwitchType::DYNAMIC_SLEEP, c.dynamic_sleep == 1);
+            this->publish_switch(SwitchType::QUIET_PERIOD, c.quiet_enabled == 1);
+            if (c.quiet_trigger <= 1)
+                this->publish_select(SelectType::QUIET_TRIGGER, c.quiet_trigger);
+            this->publish_number(NumberType::QUIET_START, c.quiet_start / 3600.0f);
+            this->publish_number(NumberType::QUIET_END, c.quiet_end / 3600.0f);
+        }
+
+        // Eleva 300X: the MCU evaluates the quiet window itself and asks for
+        // the time at boot (CMD 02 22 55, empty). The stock ESP answers once it
+        // has network time with 02 22 55 + 01 04 <epoch LE32>, where the epoch
+        // is LOCAL time (UTC + zone offset), not UTC.
+        void Levoit::send_eleva_local_time()
+        {
+#ifdef USE_LEVOIT_TIME
+            if (this->time_ == nullptr)
+                return;
+            ESPTime now = this->time_->now();
+            if (!now.is_valid())
+            {
+                ESP_LOGD(TAG, "Eleva time request: clock not synced yet, will send on sync");
+                return;
+            }
+            this->pending_local_time_ = static_cast<uint32_t>(now.timestamp + ESPTime::timezone_offset());
+            ESP_LOGI(TAG, "Sending local time to MCU: %04u-%02u-%02u %02u:%02u:%02u",
+                     now.year, now.month, now.day_of_month, now.hour, now.minute, now.second);
+            this->sendCommand(CommandType::setElevaLocalTime);
+#else
+            ESP_LOGW(TAG, "MCU asked for the time, but no time_id is configured; the quiet timer cannot work");
+#endif
+        }
+
         void Levoit::ackMessage(uint8_t ptype0, uint8_t ptype1)
         {
 
             uint8_t pv = 0x01;
-            if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S || this->model_ == ModelType::SPROUT || this->model_ == ModelType::EVERESTAIR)
+            if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S || this->model_ == ModelType::SPROUT || this->model_ == ModelType::EVERESTAIR || this->model_ == ModelType::ELEVA300X)
             {
                 pv = 0x02;
                 ESP_LOGI("TAG", ">>> Sending VITAL ack for: 0x%02X 0x%02X", ptype0, ptype1);

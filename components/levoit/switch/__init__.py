@@ -21,6 +21,13 @@ TYPE_MAP = {
     # Superior 6000S (humidifier) only below
     "auto_dry_power_off": SwitchType.AUTO_DRY_POWER_OFF,
     "auto_dry_water_empty": SwitchType.AUTO_DRY_WATER_EMPTY,
+    # Eleva 300X only below
+    "mute": SwitchType.MUTE,
+    "aqi_ring_dim": SwitchType.AQI_RING_DIM,
+    "quiet_period": SwitchType.QUIET_PERIOD,
+    "adaptive_start": SwitchType.ADAPTIVE_START,
+    "dynamic_manual": SwitchType.DYNAMIC_MANUAL,
+    "dynamic_sleep": SwitchType.DYNAMIC_SLEEP,
 }
 
 CONFIG_SCHEMA = switch.switch_schema(LevoitSwitch).extend(

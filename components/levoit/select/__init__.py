@@ -30,6 +30,8 @@ TYPE_MAP = {
     "auto_profile": SelectType.AUTO_PROFILE,
     "humidity_subtype": SelectType.HUMIDITY_SUBTYPE,
     "dry_level": SelectType.DRY_LEVEL,
+    # Eleva 300X only below
+    "quiet_trigger": SelectType.QUIET_TRIGGER,
 }
 
 CONFIG_SCHEMA = select.select_schema(LevoitSelect).extend(

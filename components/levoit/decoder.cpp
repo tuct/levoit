@@ -99,12 +99,49 @@ namespace esphome
                (int)model, ptype0, ptype1, (unsigned)payload_len);
       // ack all messages!
       //only if (0x22)
-      if (msg_type == 0x22)
+      // Eleva 300X: the MCU pushes status (02 00 55), sensor (02 23 55) and
+      // auto-config (02 21 55) frames as REPORT (0x02); the stock ESP ACKs those too.
+      if (msg_type == 0x22 || (model == ModelType::ELEVA300X && msg_type == 0x02))
       {
         if (model == ModelType::SUPERIOR6000S && ptype0 == 0x44 && ptype1 == 0x55)
           self->ackFilterReset(ptype0, ptype1);
         else
           self->ackMessage(ptype0, ptype1);
+      }
+
+      // Eleva 300X: echo every sensor REPORT back, like the stock firmware.
+      // Ahead of the dedup gate: identical readings must still be mirrored.
+      if (model == ModelType::ELEVA300X && msg_type == 0x02 && ptype0 == 0x23 && ptype1 == 0x55)
+      {
+        self->mirror_eleva_sensor_report(payload, payload_len);
+      }
+
+      // Eleva 300X: filter reset on the panel. The MCU sends SEND 02 05 55 with
+      // key 03 (captured: 03 01 00); filter life lives on the ESP, so reset
+      // our counters. Ahead of the dedup gate: two panel resets in a row carry
+      // the same payload.
+      if (model == ModelType::ELEVA300X && msg_type == 0x22 && ptype0 == 0x05 && ptype1 == 0x55 &&
+          payload_len >= 2 && payload[0] == 0x03)
+      {
+        ESP_LOGI(TAG_DEC, "Filter reset from the unit's panel (Eleva 300X)");
+        self->set_used_cadr(0);
+        self->set_total_runtime(0);
+        self->publish_filter_stats_now();
+      }
+
+      // Eleva 300X auto-mode config block: in the MCU's ACK to our 0C query
+      // and as a REPORT after every change (app, panel or our own write).
+      if (model == ModelType::ELEVA300X && (msg_type == 0x02 || msg_type == 0x12) &&
+          ptype0 == 0x21 && ptype1 == 0x55)
+      {
+        self->apply_eleva_auto_config(payload, payload_len);
+      }
+
+      // Eleva 300X: MCU asks for the local time at boot (SEND 02 22 55, no
+      // payload). Already ACKed above; answer with the time if we have it.
+      if (model == ModelType::ELEVA300X && msg_type == 0x22 && ptype0 == 0x22 && ptype1 == 0x55)
+      {
+        self->send_eleva_local_time();
       }
 
       // Core200S: the MCU pushes 01 E4 A5 when the filter is reset with the
@@ -199,10 +236,12 @@ namespace esphome
             decode_core_timer(self, model, payload, payload_len);
           }
         }
-        if (model == ModelType::VITAL100S || model == ModelType::VITAL200S || model == ModelType::SPROUT || model == ModelType::EVERESTAIR)
+        if (model == ModelType::VITAL100S || model == ModelType::VITAL200S || model == ModelType::SPROUT || model == ModelType::EVERESTAIR || model == ModelType::ELEVA300X)
         {
-          // Vital/Sprout/EverestAir models: status payload is flat TLV, CMD=02 00 55
-          if (msg_type == 0x22 && ptype0 == 0x00 && ptype1 == 0x55)
+          // Vital/Sprout/EverestAir/Eleva models: status payload is flat TLV, CMD=02 00 55.
+          // The Eleva 300X sends it as REPORT (0x02) instead of SEND (0x22).
+          const bool status_type_ok = msg_type == 0x22 || (model == ModelType::ELEVA300X && msg_type == 0x02);
+          if (status_type_ok && ptype0 == 0x00 && ptype1 == 0x55)
           {
             decode_vital_status(self, model, payload, payload_len);
           }
@@ -211,8 +250,8 @@ namespace esphome
           {
             decode_vital_timer(self, model, payload, payload_len);
           }
-          // Timer update pushed from device
-          if (msg_type == 0x22 && ptype0 == 0x1B && ptype1 == 0x50)
+          // Timer update pushed from device (Eleva 300X: as REPORT, every second)
+          if (status_type_ok && ptype0 == 0x1B && ptype1 == 0x50)
           {
             decode_vital_timer(self, model, payload, payload_len);
           }

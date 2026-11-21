@@ -145,6 +145,9 @@ namespace esphome
       case CommandType::setTimerStop:
         msg_type = {0x02, 0x19, 0x50};
         payload = {0x01, 0x04, 0x00, 0x00, 0x00, 0x00};
+        // Eleva 300X: the stock ESP always appends key 02 = 0 (meaning TBD)
+        if (self->get_model() == ModelType::ELEVA300X)
+          payload.insert(payload.end(), {0x02, 0x01, 0x00});
         self->stop_timer();
         break;
 
@@ -164,6 +167,9 @@ namespace esphome
                    (unsigned)secs, b0, b1, b2, b3);
 
           payload = {0x01, 0x04, b0, b1, b2, b3};
+          // Eleva 300X: the stock ESP always appends key 02 = 0 (meaning TBD)
+          if (self->get_model() == ModelType::ELEVA300X)
+            payload.insert(payload.end(), {0x02, 0x01, 0x00});
 
           if (secs > 0)
             self->start_timer();
@@ -324,6 +330,126 @@ namespace esphome
         if (angle > 90) angle = 90;
         ESP_LOGD(TAG_VITAL_CMD, "setVentAngle: %u deg", angle);
         payload = {0x01, 0x01, angle};
+        break;
+      }
+
+      // Eleva 300X: panel beeps. The value is a 4-byte LE field even though
+      // only 0/1 is used (status echoes it in TLV 0x2D).
+      case CommandType::setMuteOn:
+        msg_type = {0x02, 0x17, 0x55};
+        payload = {0x01, 0x04, 0x01, 0x00, 0x00, 0x00};
+        break;
+
+      case CommandType::setMuteOff:
+        msg_type = {0x02, 0x17, 0x55};
+        payload = {0x01, 0x04, 0x00, 0x00, 0x00, 0x00};
+        break;
+
+      // Eleva 300X: AQI light ring brightness. Same CMD as the display
+      // (02 04 55) but key 0x02; 0 = bright, 1 = dim (status TLV 0x32).
+      case CommandType::setAqiRingBright:
+        msg_type = {0x02, 0x04, 0x55};
+        payload = {0x02, 0x01, 0x00};
+        break;
+
+      case CommandType::setAqiRingDim:
+        msg_type = {0x02, 0x04, 0x55};
+        payload = {0x02, 0x01, 0x01};
+        break;
+
+      // Eleva 300X auto-mode config (02 21 55). The stock ESP writes the quiet
+      // settings as one group 05 06 07 08 and adaptive start as 01 02 03 04,
+      // so both builders send their whole group: current entity state where
+      // there is one, otherwise the value last read from the MCU.
+      case CommandType::setElevaQuietConfig:
+      {
+        const ElevaAutoConfig &c = self->eleva_auto_config();
+        bool quiet_on = c.quiet_enabled == 1;
+        self->try_get_switch_state(SwitchType::QUIET_PERIOD, quiet_on);
+        size_t trigger = c.quiet_trigger;  // 0 = light, 1 = timer
+        self->try_get_select_index(SelectType::QUIET_TRIGGER, trigger);
+        if (trigger > 1) trigger = 0;
+        uint32_t start_s = c.quiet_start, end_s = c.quiet_end;
+        float h;
+        if (self->try_get_number_state(NumberType::QUIET_START, h))
+          start_s = static_cast<uint32_t>(h * 3600.0f + 0.5f);
+        if (self->try_get_number_state(NumberType::QUIET_END, h))
+          end_s = static_cast<uint32_t>(h * 3600.0f + 0.5f);
+        if (start_s > 86399) start_s = 86399;
+        if (end_s > 86399) end_s = 86399;
+        ESP_LOGD(TAG_VITAL_CMD, "setElevaQuietConfig: quiet=%u trigger=%s window=%u-%u s",
+                 quiet_on ? 1u : 0u, trigger == 1 ? "timer" : "light", (unsigned)start_s, (unsigned)end_s);
+        msg_type = {0x02, 0x21, 0x55};
+        payload = {0x05, 0x01, static_cast<uint8_t>(quiet_on ? 1 : 0),
+                   0x06, 0x01, static_cast<uint8_t>(trigger),
+                   0x07, 0x04, (uint8_t)(start_s & 0xFF), (uint8_t)((start_s >> 8) & 0xFF),
+                               (uint8_t)((start_s >> 16) & 0xFF), (uint8_t)((start_s >> 24) & 0xFF),
+                   0x08, 0x04, (uint8_t)(end_s & 0xFF), (uint8_t)((end_s >> 8) & 0xFF),
+                               (uint8_t)((end_s >> 16) & 0xFF), (uint8_t)((end_s >> 24) & 0xFF)};
+        break;
+      }
+
+      case CommandType::setElevaAutoFlags:
+      {
+        const ElevaAutoConfig &c = self->eleva_auto_config();
+        if (!c.known)
+        {
+          // Key 01 (meaning TBD) is echoed from the MCU's block; guessing it
+          // could change behaviour, so wait for the block and ask for it.
+          ESP_LOGW(TAG_VITAL_CMD, "setElevaAutoFlags: auto config not read yet, requesting it first");
+          msg_type = {0x02, 0x21, 0x55};
+          payload = {0x0C, 0x01, 0x00};
+          break;
+        }
+        bool adaptive = c.adaptive_start == 1;
+        bool dyn_manual = c.dynamic_manual == 1;
+        bool dyn_sleep = c.dynamic_sleep == 1;
+        self->try_get_switch_state(SwitchType::ADAPTIVE_START, adaptive);
+        self->try_get_switch_state(SwitchType::DYNAMIC_MANUAL, dyn_manual);
+        self->try_get_switch_state(SwitchType::DYNAMIC_SLEEP, dyn_sleep);
+        ESP_LOGD(TAG_VITAL_CMD, "setElevaAutoFlags: adaptive=%u dyn_manual=%u dyn_sleep=%u",
+                 adaptive ? 1u : 0u, dyn_manual ? 1u : 0u, dyn_sleep ? 1u : 0u);
+        msg_type = {0x02, 0x21, 0x55};
+        payload = {0x01, 0x01, c.profile,
+                   0x02, 0x01, static_cast<uint8_t>(adaptive ? 1 : 0),
+                   0x03, 0x01, static_cast<uint8_t>(dyn_manual ? 1 : 0),
+                   0x04, 0x01, static_cast<uint8_t>(dyn_sleep ? 1 : 0)};
+        break;
+      }
+
+      case CommandType::resetFilter:
+        // Eleva 300X filter reset, as the stock app sends it: CMD 02 05 55,
+        // key 03 with an empty value, followed by setElevaFilterNotGenuine
+        // (04 01 00) - the app only resets non-genuine filters, so that pair is
+        // the only reset sequence captured. The panel reset arrives the other
+        // way as 02 05 55 + 03 01 00 (see decoder).
+        if (self->get_model() != ModelType::ELEVA300X)
+        {
+          ESP_LOGW(TAG_VITAL_CMD, "resetFilter: no MCU filter reset known for this model");
+          return {};
+        }
+        msg_type = {0x02, 0x05, 0x55};
+        payload = {0x03, 0x00};
+        break;
+
+      case CommandType::setElevaFilterNotGenuine:
+        // Key 04 = genuine filter linked in the VeSync app. ESPHome cannot
+        // verify that, and the flag has no visible effect on the unit.
+        msg_type = {0x02, 0x05, 0x55};
+        payload = {0x04, 0x01, 0x00};
+        break;
+
+      case CommandType::requestElevaAutoConfig:
+        msg_type = {0x02, 0x21, 0x55};
+        payload = {0x0C, 0x01, 0x00};
+        break;
+
+      case CommandType::setElevaLocalTime:
+      {
+        const uint32_t t = self->get_pending_local_time();
+        msg_type = {0x02, 0x22, 0x55};
+        payload = {0x01, 0x04, (uint8_t)(t & 0xFF), (uint8_t)((t >> 8) & 0xFF),
+                   (uint8_t)((t >> 16) & 0xFF), (uint8_t)((t >> 24) & 0xFF)};
         break;
       }
 

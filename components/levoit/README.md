@@ -116,7 +116,7 @@ Specify your model (must match device):
 levoit:
   id: air_purifier
   model: CORE300S  # Options: VITAL100S, VITAL200S, CORE200S, CORE300S, CORE400S,
-                   #          CORE600S, SPROUT, EVERESTAIR, SUPERIOR6000S
+                   #          CORE600S, SPROUT, EVERESTAIR, SUPERIOR6000S, ELEVA300X
 ```
 
 #### Step 5: Compile and Flash
@@ -207,7 +207,7 @@ uart:
 levoit:
   id: air_purifier
   model: CORE300S  # or VITAL100S, VITAL200S, CORE200S, CORE400S, CORE600S,
-                   #    SPROUT, EVERESTAIR, SUPERIOR6000S (humidifier)
+                   #    SPROUT, EVERESTAIR, ELEVA300X, SUPERIOR6000S (humidifier)
 
 fan:
   - platform: levoit
@@ -410,6 +410,7 @@ Available speed levels and presets are based on model.
 | V200S | 1–4 | Auto, Manual, Sleep, Pet |
 | Sprout | 1–4 | Auto, Manual |
 | EverestAir | 1–3 | Auto, Turbo, Manual |
+| Eleva 300X | 1–4 (4 = Turbo) | Auto, Manual, Sleep |
 
 The `fan_operating_mode` select exposes the active fan mode as a normal ESPHome select for dashboards that do not render fan presets directly. It stays synchronized with MCU fan-mode status and uses the same Manual / Sleep / Auto / Pet / Turbo model-specific modes as the fan preset path.
 
@@ -426,13 +427,34 @@ The Everest Air adds a **motorized vent louver** and a **cover/door sensor** not
 The vent angle is set as a number entity (45° = nearly closed/upward, 90° = fully open/forward). The MCU echoes the current angle back in status tag `0x14`, and it reads `0` while the unit is powered off.
 
 
+#### Mute, AQI Ring & AQI (Eleva 300X)
+
+The Eleva 300X speaks the Vital protocol, with a few additions. Its MCU pushes status (`02 00 55`) as a REPORT frame (type `0x02`) instead of SEND (`0x22`), and every sensor report (`02 23 55`) is echoed back to the MCU, as the stock firmware does. Turbo is fan level 4, not a fan mode as on the EverestAir.
+
+| Feature | Type | Config Key | Description |
+|---------|----|------------|-------------|
+| Mute | switch | `mute` | Panel beeps off (CMD `02 17 55`, 4-byte value, status TLV `0x2D`) **Eleva 300X only** |
+| AQI Ring Dim | switch | `aqi_ring_dim` | Dim the AQI light ring (CMD `02 04 55` key `0x02`, status TLV `0x32`) **Eleva 300X only** |
+| AQI | sensor | `aqi_index` | Numeric AQI 0–500 (status TLV `0x2C`); `aqi` carries the 1–4 air-quality level **Eleva 300X only** |
+| Ambient Light | sensor | `ambient_light` | Raw light sensor reading (status TLV `0x34`) **Eleva 300X only** |
+| Quiet Period | switch | `quiet_period` | Quiet period on/off; lowers the fan one level while active (CMD `02 21 55` key `0x05`) **Eleva 300X only** |
+| Quiet Trigger | select | `quiet_trigger` | Light (darkness) / Timer (`quiet_start`–`quiet_end`) (key `0x06`) **Eleva 300X only** |
+| Quiet Start / End | number | `quiet_start`, `quiet_end` | Quiet window in hours after midnight, 22.5 = 22:30 (keys `0x07`/`0x08`) **Eleva 300X only** |
+| Quiet Active | binary_sensor | `quiet_active` | Quiet period currently active (MCU event key `0x09`: 7 start, 8 end) **Eleva 300X only** |
+| Adaptive Start | switch | `adaptive_start` | Adaptive start flag (key `0x02`); VeSync runs the on/off logic in the cloud **Eleva 300X only** |
+| Dynamic Manual | switch | `dynamic_manual` | Manual speed jumps to turbo on pollution (key `0x03`) **Eleva 300X only** |
+| Dynamic Sleep | switch | `dynamic_sleep` | Dynamic sleep (key `0x04`) **Eleva 300X only** |
+
+The MCU runs the quiet period itself. For the Timer trigger it needs the local time, which it asks for at boot (`02 22 55`): give the `levoit:` block a `time_id` (e.g. Home Assistant or SNTP time) and the component answers that request and re-sends the time after every clock sync. The timer uses the Vital `timer` number; the MCU pushes its countdown as a REPORT every second. Filter life is estimated on the ESP as for the other models: the `reset_filter_stats` button also sends the stock reset pair to the MCU (`02 05 55` + `03 00`, then `04 01 00` = not a genuine filter), and a filter reset on the unit's panel (`02 05 55` + `03 01 00` from the MCU) resets the ESP counters. At boot the component reports "not a genuine filter" (`04 01 00`), as a stock unit with an unlinked filter does. See [the device README](../../devices/levoit-eleva-300x) for the protocol notes.
+
+
 #### Display / Light
 
 | Feature | Type | Config Key | Description |
 |---------|----|------------|-------------|
 | Display | switch | `display` | Toggle the LED display on/off |
 | Child Lock | switch | `child_lock` | Disable physical buttons on the device |
-| Light Detect | switch | `light_detect` | Auto-dim display when ambient light is low **Vital Series + Core 600S + EverestAir** |
+| Light Detect | switch | `light_detect` | Auto-dim display when ambient light is low **Vital Series + Core 600S + EverestAir + Eleva 300X** |
 | Night Light | select | `nightlight` | Night light brightness: Off / Mid / Full **Only Core200S** |
 
 #### Timer
@@ -490,8 +512,8 @@ Auto mode options per model:
 | Feature | Type | Config Key | Description |
 |---------|----|------------|-------------|
 | PM2.5 | sensor | `pm25` | Particulate matter concentration in µg/m³ from built-in sensor **Not for Core200S** |
-| PM1.0 | sensor | `pm1_0` | Particulate matter concentration in µg/m³ from built-in sensor **only Sprout and EverestAir** |
-| PM10 | sensor | `pm10` | Particulate matter concentration in µg/m³ from built-in sensor **only Sprout and EverestAir** |
+| PM1.0 | sensor | `pm1_0` | Particulate matter concentration in µg/m³ from built-in sensor **only Sprout, EverestAir and Eleva 300X** |
+| PM10 | sensor | `pm10` | Particulate matter concentration in µg/m³ from built-in sensor **only Sprout, EverestAir and Eleva 300X** |
 | AQI | sensor | `aqi` | Air Quality Index as reported by the MCU **Not for Core200S** |
 
 #### Info and Debug
@@ -506,6 +528,16 @@ Auto mode options per model:
 
 #### Unreleased
 
+* Add Levoit Eleva 300X support (`model: ELEVA300X`), Vital protocol over the stock ESP32-C3
+  * MCU status and sensor frames arrive as REPORT (type `0x02`); they are now ACKed and decoded for this model
+  * Sensor reports (`02 23 55`) are echoed back to the MCU like the stock firmware
+  * New `mute` and `aqi_ring_dim` switches, new `aqi_index` sensor (numeric AQI 0–500), `ambient_light` sensor
+  * Quiet period (`quiet_period` switch, `quiet_trigger` select, `quiet_start` / `quiet_end` numbers, `quiet_active` binary sensor), `adaptive_start`, `dynamic_manual` and `dynamic_sleep` switches, all via the MCU's auto-mode config block `02 21 55`
+  * New optional `time_id` on `levoit:`: answers the Eleva MCU's time request (`02 22 55`) with local time and re-sends it on every clock sync
+  * Timer: countdown REPORTs accepted, set/stop carry the trailing `02 01 00` the stock firmware sends
+  * Filter reset in both directions: the button sends the stock `02 05 55` reset pair, a panel reset resets the ESP filter counters
+  * Fan level 0 (sleep) and 255 (off) are ignored, so the fan keeps its last manual speed
+* ⚠️ Eleva 300X not verified on hardware yet; the UART pins in the device YAML are placeholders
 * **Builds on Ethernet boards.** The Wi-Fi LED status read
   `wifi::global_wifi_component`, so a config without the `wifi` component (an
   external ESP32 with Ethernet, e.g. an Olimex ESP32-POE2) failed to compile

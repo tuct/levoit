@@ -45,6 +45,9 @@ TYPE_MAP = {
     "auto_profile_room_size_input": NumberType.AUTO_PROFILE_ROOM_SIZE_INPUT,
     # Superior 6000S (humidifier) only below
     "humidity_target": NumberType.HUMIDITY_TARGET,
+    # Eleva 300X only below: quiet window, hours after midnight (21.5 = 21:30)
+    "quiet_start": NumberType.QUIET_START,
+    "quiet_end": NumberType.QUIET_END,
 }
 
 # (min_value, max_value, step, extra_props)
@@ -114,6 +117,16 @@ TYPE_RANGE = {
     "vent_angle": (45.0, 90.0, 1.0, {
         CONF_ICON: "mdi:angle-acute",
         CONF_UNIT_OF_MEASUREMENT: "°",
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
+    }),
+    "quiet_start": (0.0, 23.75, 0.25, {
+        CONF_ICON: "mdi:weather-night",
+        CONF_UNIT_OF_MEASUREMENT: "h",
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
+    }),
+    "quiet_end": (0.0, 23.75, 0.25, {
+        CONF_ICON: "mdi:weather-sunny",
+        CONF_UNIT_OF_MEASUREMENT: "h",
         CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_CONFIG,
     }),
 }

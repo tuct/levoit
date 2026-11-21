@@ -46,6 +46,7 @@ namespace esphome
             bool isCoreModel = model == ModelType::CORE200S || model == ModelType::CORE300S || model == ModelType::CORE400S || model == ModelType::CORE600S;
             bool isSprout = model == ModelType::SPROUT;
             bool isEverest = model == ModelType::EVERESTAIR;
+            bool isEleva = model == ModelType::ELEVA300X;
             auto restore = this->restore_state_();
             if (restore.has_value())
             {
@@ -61,6 +62,8 @@ namespace esphome
                     continue; // EverestAir has no Pet mode
                 if (isCoreModel && std::strcmp(m.preset, "Pet") == 0)
                     continue; // Core models do not have Pet mode
+                if (isEleva && std::strcmp(m.preset, "Pet") == 0)
+                    continue; // Eleva 300X: Manual/Sleep/Auto; turbo is fan level 4
                 if (isCore200s && std::strcmp(m.preset, "Auto") == 0)
                     continue; // Core200S has no Auto mode (no PM2.5 sensor)
                 if (isSprout && (std::strcmp(m.preset, "Sleep") == 0 || std::strcmp(m.preset, "Pet") == 0))

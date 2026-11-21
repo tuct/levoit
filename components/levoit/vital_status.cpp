@@ -153,6 +153,11 @@ namespace esphome
           break;
         case 0x04:
           ESP_LOGV(TAG_VITAL, "FanLevel=%u", (unsigned)t.value_u32);
+          // Eleva 300X reports 0 in sleep and 255 while powered off; treat those
+          // as "no level" so the fan keeps its last manual speed, like the
+          // other Vital-protocol models that omit the level in those states.
+          if (model == ModelType::ELEVA300X && (t.value_u32 == 0 || t.value_u32 == 0xFF))
+            break;
           have_speed = true;
           speed = t.value_u32;
           break;
@@ -373,12 +378,12 @@ namespace esphome
         // PM monitor). Same flat-TLV format as PM2.5 (tag 0x0B).
         case 0x0C:
           ESP_LOGV(TAG_VITAL, "PM1.0=%u", (unsigned)t.value_u32);
-          if (self != nullptr && (model == ModelType::SPROUT || model == ModelType::EVERESTAIR))
+          if (self != nullptr && (model == ModelType::SPROUT || model == ModelType::EVERESTAIR || model == ModelType::ELEVA300X))
             self->publish_sensor(SensorType::PM1_0, (unsigned)t.value_u32);
           break;
         case 0x0D:
           ESP_LOGV(TAG_VITAL, "PM10=%u", (unsigned)t.value_u32);
-          if (self != nullptr && (model == ModelType::SPROUT || model == ModelType::EVERESTAIR))
+          if (self != nullptr && (model == ModelType::SPROUT || model == ModelType::EVERESTAIR || model == ModelType::ELEVA300X))
             self->publish_sensor(SensorType::PM10, (unsigned)t.value_u32);
           break;
         case 0x24:
@@ -427,6 +432,31 @@ namespace esphome
           ESP_LOGV(TAG_VITAL, "FanRPM=%u", (unsigned)t.value_u32);
           if (self != nullptr && model == ModelType::SPROUT)
             self->publish_sensor(SensorType::FAN_RPM, (unsigned)t.value_u32);
+          break;
+
+        // Eleva 300X only. 0x2A/0x2B/0x2E–0x31 are sensor slots this model
+        // lacks (always 0xFFFF) and fall through to default.
+        case 0x2C:
+          ESP_LOGV(TAG_VITAL, "AQI index=%u", (unsigned)t.value_u32);
+          if (self != nullptr && model == ModelType::ELEVA300X && t.value_u32 != 0xFFFF)
+            self->publish_sensor(SensorType::AQI_INDEX, (unsigned)t.value_u32);
+          break;
+        case 0x2D:
+          ESP_LOGV(TAG_VITAL, "Mute=%u", (unsigned)t.value_u32);
+          if (self != nullptr && model == ModelType::ELEVA300X)
+            self->publish_switch(SwitchType::MUTE, t.value_u32 == 1);
+          break;
+        case 0x34:
+          // Eleva 300X: raw ambient light reading (falls with the sensor covered;
+          // the MCU derives dark-detected 0x17 from it)
+          ESP_LOGV(TAG_VITAL, "AmbientLight=%u", (unsigned)t.value_u32);
+          if (self != nullptr && model == ModelType::ELEVA300X)
+            self->publish_sensor(SensorType::AMBIENT_LIGHT, (unsigned)t.value_u32);
+          break;
+        case 0x32:
+          ESP_LOGV(TAG_VITAL, "AqiRingDim=%u", (unsigned)t.value_u32);
+          if (self != nullptr && model == ModelType::ELEVA300X)
+            self->publish_switch(SwitchType::AQI_RING_DIM, t.value_u32 == 1);
           break;
 
         default:

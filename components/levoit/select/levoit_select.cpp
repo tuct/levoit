@@ -77,6 +77,10 @@ namespace esphome
           // WN / DT bulk write") for the full protocol.
           this->traits.set_options({"Default", "Custom1", "Custom2"});
           break;
+        case SelectType::QUIET_TRIGGER:
+          // Eleva 300X CMD 02 21 55 key 06: index = byte (0 = light sensor, 1 = time window)
+          this->traits.set_options({"Light", "Timer"});
+          break;
         case SelectType::FAN_OPERATING_MODE_SELECT:
           if (parent_ && parent_->get_model() == ModelType::CORE200S)
             this->traits.set_options({"Manual", "Sleep"});
@@ -88,6 +92,8 @@ namespace esphome
             this->traits.set_options({"Manual", "Auto"});
           else if (parent_ && parent_->get_model() == ModelType::EVERESTAIR)
             this->traits.set_options({"Manual", "Sleep", "Auto", "Turbo"});
+          else if (parent_ && parent_->get_model() == ModelType::ELEVA300X)
+            this->traits.set_options({"Manual", "Sleep", "Auto"});
           else
             this->traits.set_options({"Manual"});
           break;

@@ -72,7 +72,10 @@ namespace esphome
 
     void LevoitNumber::control(float value)
     {
-      uint32_t state = static_cast<uint32_t>(value);
+      // Whole-number entities are truncated; the Eleva quiet window is in
+      // fractional hours (21.5 = 21:30) and must keep its fraction.
+      const bool fractional = this->type_ == NumberType::QUIET_START || this->type_ == NumberType::QUIET_END;
+      float state = fractional ? value : static_cast<float>(static_cast<uint32_t>(value));
       // Optimistic update for HA UI
       this->publish_state(state);
       
