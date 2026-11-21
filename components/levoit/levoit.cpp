@@ -1312,7 +1312,8 @@ namespace esphome
             if (message.size() > 0)
             {
                 ESP_LOGI(TAG, ">>> Sending command %s", command_type_to_string(commandType));
-                ESP_LOGD(TAG, ">>> TX: %s", format_hex_pretty(message).c_str());
+                char hex_buf[format_hex_pretty_size(64)];
+                ESP_LOGD(TAG, ">>> TX: %s", format_hex_pretty_to(hex_buf, message.data(), message.size()));
                 this->write_array(message.data(), message.size());
                 this->flush();
                 // update the message counter

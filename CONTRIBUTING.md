@@ -54,7 +54,9 @@ hardware" is a perfectly good PR — silently implying otherwise is not.
 
 [`.github/workflows/compile-tests.yml`](.github/workflows/compile-tests.yml)
 runs on every PR that touches `components/`. It builds these configs from
-[`components/levoit/tests`](./components/levoit/tests):
+[`components/levoit/tests`](./components/levoit/tests) and
+[`components/philips/tests`](./components/philips/tests) (the Ethernet config
+exists for levoit only):
 
 | Config | Covers |
 |--------|--------|
@@ -63,11 +65,57 @@ runs on every PR that touches `components/`. It builds these configs from
 | `test-foreign-platforms.yaml` | Other components supplying the platforms — catches guards on the generic `USE_*` macros |
 | `test-ethernet.yaml` | Ethernet instead of Wi-Fi — catches code that depends on the `wifi` component (levoit only) |
 
-Run them locally before pushing; they need no `secrets.yaml`:
+Run them locally before pushing; they need no `secrets.yaml`. One script per
+platform builds every `components/<component>/tests/test-*.yaml` and prints a
+PASS/FAIL summary (exit code = number of failures). A new test config is picked
+up automatically; in the workflow, one that exists for only one component goes
+in the matrix `include`, once per ESPHome version (see the comment there).
+
+| | Newest / your installed ESPHome | Minimum supported ESPHome |
+|---|---|---|
+| macOS / Linux | `components/run-compile-tests.sh` | `components/run-compile-tests.sh min` |
+| Windows (PowerShell) | `.\components\run-compile-tests.ps1` | `.\components\run-compile-tests.ps1 min` |
+
+- `min` reads the pinned version from the workflow and installs it once into
+  `.venv-esphome-<version>/` at the repo root (git-ignored); your normal ESPHome
+  install is not touched. Any other version works the same way, e.g. `2026.10.0`.
+- Limit to one component: `run-compile-tests.sh min levoit` /
+  `run-compile-tests.ps1 min -Component levoit`.
+- Full build logs land in `components/<component>/tests/.esphome/<config>.log`.
+- When the ESPHome version differs from the last run, the scripts delete the
+  generated `components/<component>/tests/.esphome/build` first: files left by
+  another version break the link (e.g. `undefined reference to
+  __wrap___cxa_atexit` going from 2026.11 back to 2026.5.3), and
+  `esphome clean` does not remove them.
+- Windows: use PowerShell, not Git Bash — under MSYS the ESP-IDF build is
+  skipped while ESPHome still reports success. If scripts are blocked:
+  `powershell -ExecutionPolicy Bypass -File components\run-compile-tests.ps1 min`.
+
+A single config by hand:
 
 ```bash
 cd components/levoit/tests
 esphome compile test-all-entities.yaml
+```
+
+### ESPHome versions
+
+CI builds every config twice: with the **newest** ESPHome (unpinned, so a new
+ESPHome release can turn the checks red without any change in this repo) and
+with the **minimum** stated in the component READMEs (currently **2026.5.3**,
+the `esphome` matrix in the workflow; raise both together). Reproduce the
+minimum build locally with the `min` argument of the scripts above.
+
+If an API changed between the two, keep both working with a version check
+rather than raising the minimum:
+
+```cpp
+#include "esphome/core/version.h"
+#if ESPHOME_VERSION_CODE >= VERSION_CODE(2026, 11, 0)
+  // new API
+#else
+  // old API
+#endif
 ```
 
 **If you add an entity type**, add it to `test-all-entities.yaml` in the same

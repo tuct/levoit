@@ -13,3 +13,4 @@ components/levoit_audio/vendor/
 devices/levoit-sprout/data/*.mp3
 devices/levoit-sprout/data/*.ogg
 devices/levoit-sprout/assets_extracted/
+.venv*/

@@ -7,6 +7,20 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
+* **ESPHome 2026.11 compatibility** for both components, still building on the
+  minimum 2026.5.3 ([#93](https://github.com/tuct/levoit/pull/93))
+  * `format_hex_pretty()` returning a `std::string` was removed in 2026.11; the
+    levoit and philips UART logs now use `format_hex_pretty_to()` (available
+    since 2026.3)
+  * Sprout light: `add_effects()` takes a pointer and a count since 2026.11 and
+    keeps the pointer, so the breathing effect table is now a member; older
+    releases still get the initializer-list call
+* **CI builds every config against the newest ESPHome and the minimum
+  (2026.5.3)**, so a fix for a new release cannot silently break older ones
+* **Run the CI compile tests locally** with `components/run-compile-tests.sh`
+  (macOS / Linux) or `components\run-compile-tests.ps1` (Windows); `min` builds
+  against the minimum version in its own venv. See
+  [CONTRIBUTING](./CONTRIBUTING.md#ci)
 * **Levoit component: Ethernet boards build.** A config without the `wifi`
   component no longer fails on `wifi/wifi_component.h`; the Wi-Fi LED now shows
   the network state on Wi-Fi and Ethernet alike. See the
