@@ -279,6 +279,42 @@ For the DNS route, the ESPHome image has to keep the stock partition table
 (two 1.5 MB slots) rather than bring its own, so the stock slot and `fac_data`
 stay untouched.
 
+### Help wanted: stock firmware URLs per model
+
+Both the DNS route and "back to stock" need the stock firmware's download URL
+for each model. The VeSync cloud only answers for devices that are in the
+asking account — the request also has a `configModelList` parameter, but its
+format is unknown (every shape tried is rejected as `illegal argument`) — so
+this needs owners.
+
+**If a Levoit unit is still in your VeSync app**, run
+[`tools/vesync_firmware_info.py`](../tools/vesync_firmware_info.py) and post
+the output in an issue:
+
+```
+pip install pyvesync
+python tools/vesync_firmware_info.py
+```
+
+It asks for your VeSync e-mail, password and the account's country code
+(`DE`, `AT`, `US`, …; try `US` if the login fails), lists your devices with
+`deviceType`, `configModule` and the installed / latest firmware, and checks
+the file server for the matching downloads. The output contains no e-mail,
+device ID or MAC address. It is read-only: login, device list, firmware info,
+and `HEAD` requests to `fw.vesync.com`.
+
+Known so far:
+
+| Model | Part | Version | URL |
+|-------|------|---------|-----|
+| Eleva 300X EU (`LAP-C341S-WEU`) | ESP | 1.0.08 | `http://fw.vesync.com/firmwareUpload/VS_WFON_APR_LAP-C341S-WEU_EU/mainFw/v1/LAP-C341S-WEU_WIFI_C1_ota_v1.0.08.rel.bin` |
+| Eleva 300X EU (`LAP-C341S-WEU`) | MCU | 1.0.13 | `http://fw.vesync.com/firmwareUpload/VS_WFON_APR_LAP-C341S-WEU_EU/mcuFw/v1/LAP-C341S-WEU_MCU_C1_ota_v1.0.13.bin` |
+| Core 300S EU | ESP | 2.0.00 | `http://fw.vesync.com/WiFiBTOnboardingNotify_AirPurifier_Core300S_EU/mainFirmware/v2.0.00/Core300s_EU_ota_v2.0.00.rel.bin` (from nico202) |
+| Core 400S EU | ESP | 2.0.00 | `http://fw.vesync.com/WiFiBTOnboardingNotify_AirPurifier_Core400S_EU/mainFirmware/v2.0.00/Core400s_EU_ota_v2.0.00.rel.bin` (from nico202 #1) |
+
+Only the current version of each file stays on the server; older ones answer
+`403`.
+
 ## Order
 
 | Phase | Deliverable | Depends on |
