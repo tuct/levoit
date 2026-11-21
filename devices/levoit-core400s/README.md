@@ -102,9 +102,28 @@ I had to use extended wires for re-assembly, did not find another way!
 | 5 | IO0 |
 | 6 | EN |
 
+## Two routes, two sets of pads
+
+There are two ways to put ESPHome on this unit, and they use **different serial
+pads**. Pick one before you solder anything.
+
+| Route | Serial pads | Original firmware |
+|-------|-------------|-------------------|
+| [Install a new ESP32](#install-new-esp32-recommended) | `RX` / `TX` test pads near the original ESP32: the link between the ESP32 and the MCU | Kept, the stock module is only disabled (`EN` to GND) |
+| [Flash the original ESP32](#flash-original-esp32) | [J1 debug header](#j1-debug-header-pinout) pins 1 (`TX`) and 2 (`RX`): the ESP32's own UART0 | Overwritten, so back it up first |
+
+> **Don't flash through the `RX` / `TX` test pads.** They are the ESP32-to-MCU
+> link, so esptool can't reach the bootloader through them (`No serial data
+> received`, `Invalid head of packet (0xFF)`). A lifted `RX` pad also breaks the
+> MCU's replies to ESPHome later: commands still work, but no frame ever arrives
+> and `MCU Version` stays unknown. Remove flashing wires with heat, never by
+> pulling. This is what happened on a Core 200S-P; see that guide.
+
 ## Install New ESP32 (Recommended)
 
 Replacing the original ESP32 lets you keep the original firmware intact and switch back easily.
+This route uses the `RX` / `TX` test pads near the original ESP32 (the
+ESP32-to-MCU link), not J1.
 
 **Recommended modules:**
 - Seeed XIAO ESP32-C3
@@ -124,9 +143,15 @@ Replacing the original ESP32 lets you keep the original firmware intact and swit
 
 ### Prerequisites
 
-Connect to the J1 debug header (or solder to TXD0/RXD0/IO0/+3V3/GND) with a USB-UART converter (3.3V TTL).
+Connect a USB-UART converter (3.3V TTL) to the **J1 debug header**: converter
+RX to J1 pin 1 (`TX`), converter TX to pin 2 (`RX`), GND to pin 3 and 3.3 V to
+pin 4. J1's `TX` / `RX` are the ESP32's own UART0. The `RX` / `TX` test pads
+near the module are the MCU link and won't work for flashing; see
+[Two routes, two sets of pads](#two-routes-two-sets-of-pads). If you can't use
+J1, the same signals are the module's own TXD0 / RXD0 / IO0 / +3V3 / GND pins.
 
-Connect **IO0 to GND before powering on** to enter bootloader mode.
+Connect **IO0 (J1 pin 5) to GND before powering on** to enter bootloader mode.
+Leave `EN` (pin 6) unconnected: pulling it to GND holds the ESP32 off.
 
 ### Backup Existing Firmware
 

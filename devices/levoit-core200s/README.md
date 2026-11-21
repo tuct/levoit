@@ -254,9 +254,33 @@ no percentage — just the fact that a reset happened.
   `filter_from_device.txt` around the button presses, which is consistent with
   it reflecting the actual display state rather than a stored setting.
 
+## Two routes, two sets of pads
+
+There are two ways to put ESPHome on this unit, and they use **different serial
+pads** on the logic board. Pick one before you solder anything.
+
+| Route | Serial pads | Original firmware |
+|-------|-------------|-------------------|
+| [Install a new ESP32](#install-new-esp32-recommended) | `RX` / `TX` test pads in the middle of the board: the link between the ESP32 and the MCU | Kept, the stock module is only disabled (`EN` to GND) |
+| [Flash the original ESP32](#flash-original-esp32) | `TXD` / `RXD` on the ISP1 header next to the module: the ESP32's own UART0 | Overwritten, so back it up first |
+
+> **Don't flash through the `RX` / `TX` test pads.** They carry the traffic
+> between the ESP32 and the MCU, so a USB-UART adapter wired there never reaches
+> the ESP32's bootloader: esptool fails with `No serial data received` or
+> `Invalid head of packet (0xFF)`, because it is hearing MCU traffic.
+>
+> The `RX` test pad is also the MCU-to-ESP32 line. If it lifts when that wire
+> comes off, ESPHome later sends commands but never receives a frame: only
+> `>>> TX:` in the log and `MCU Version` unknown, which looks exactly like the
+> pin swap above. Before blaming the YAML, check continuity from the `RX` test
+> pad to the module pin your `rx_pin` uses (GPIO16 on the 200S-P). Remove
+> flashing wires with heat, never by pulling.
+
 ## Install New ESP32 (Recommended)
 
 Replacing the original ESP32 lets you keep the original firmware intact and switch back easily.
+This route uses the `RX` / `TX` test pads (the ESP32-to-MCU link), not the
+`TXD` / `RXD` flashing pads on ISP1.
 
 **Wiring (ESP32-S3 example):**
 
@@ -298,7 +322,12 @@ No room to fit the esp32! i placed mine outside in the airstream. I had to break
 
 ### Prerequisites
 
-Solder wires to **TXD0, RXD0, IO0, GND** near the ESP32 on the logic board and connect to a USB-UART converter (3.3V TTL).
+Solder wires to **TXD0, RXD0, IO0, GND** and connect them to a USB-UART converter (3.3V TTL).
+On this board TXD0 and RXD0 are broken out on the **ISP1** header next to the
+module, labelled `+5V`, `GND`, `TXD`, `RXD` (`ISP1` is printed on the other
+side). Wire converter RX to `TXD` and converter TX to `RXD`. Use **ISP1**, not
+the `RX` / `TX` test pads in the middle of the board; see
+[Two routes, two sets of pads](#two-routes-two-sets-of-pads).
 
 **Power the board from its own +5V pad, not from the 3V3 of the USB-UART
 converter.** The 3V3 output of a CP2102/CH340 adapter is too weak for the
