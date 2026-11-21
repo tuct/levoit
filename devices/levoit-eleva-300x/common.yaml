@@ -23,16 +23,12 @@ captive_portal:
 
 uart:
   - id: uart_mcu2esp
-    # Module pads 27 (IO16) / 28 (IO17). ESPHome flags GPIO16/17 as flash pins on
-    # the C3, so the check is overridden here.
     tx_pin:
       number: ${tx_pin}
       inverted: false
-      ignore_pin_validation_error: true
     rx_pin:
       number: ${rx_pin}
       inverted: false
-      ignore_pin_validation_error: true
     baud_rate: 115200
 
 # The MCU runs the quiet window itself and asks for the local time at boot;

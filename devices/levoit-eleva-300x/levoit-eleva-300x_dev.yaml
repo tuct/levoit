@@ -1,20 +1,26 @@
-# Dev variant for the stock ESP32-C3 module of the Eleva 300X — builds against
+# Dev variant for the stock ESP32-C3-SOLO-1 module of the Eleva 300X — builds against
 # the LOCAL component (../../components) instead of the published GitHub source.
 #
-# The ESP ↔ MCU link (115200 8N1) is on module pads 27 (IO16, ESP RX) and
-# 28 (IO17, ESP TX), measured with a logic analyzer on the pads. The log stays
-# on J3 (UART0).
+# The ESP ↔ MCU link (115200 8N1) is on module pins 27 (IO18, ESP RX) and
+# 28 (IO19, ESP TX) — same module and pins as the Vital 100S / 200S. The log
+# stays on J3 (UART0). GPIO18/19 are the C3's USB pins, so ESPHome warns that
+# they are used by USB-Serial-JTAG; that is expected here.
 substitutions:
   device_name: levoit-eleva-300x
   wifi_ap_ssid: "Levoit-Eleva300X"
-  rx_pin: GPIO16 # ESP RX <- MCU TX (module pad 27)
-  tx_pin: GPIO17 # ESP TX -> MCU RX (module pad 28)
+  rx_pin: GPIO18 # ESP RX <- MCU TX (module pin 27)
+  tx_pin: GPIO19 # ESP TX -> MCU RX (module pin 28)
 
 esphome:
   name: ${device_name}
+  # Flash settings as on the Vital 100S (same ESP32-C3-SOLO-1 module)
+  platformio_options:
+    board_build.flash_mode: dio
+    board_build.f_flash: 40000000L
 
 esp32:
   board: esp32-c3-devkitm-1
+  flash_size: 4MB
   framework:
     type: esp-idf
 
