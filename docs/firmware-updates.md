@@ -207,8 +207,20 @@ What is known from the Eleva 300X:
 * the stock OTA downloads from **`fw.vesync.com`**, looked up by hostname
   (`failed to resolve host=fw.vesync.com` in the UART log when DNS fails)
 * the full download URL is **not** in the firmware or the UART log; the cloud
-  sends it with the update command. The firmware has both `http://` and
+  sends it with the update command (MQTT). The firmware has both `http://` and
   `https://` handling and a certificate for `*.vesync.com`
+* the downloads are **public, plain HTTP, no credentials**. URLs seen in other
+  projects' issues all answer `200` without login, for example
+  `http://fw.vesync.com/WiFiBTOnboardingNotify_AirPurifier_Core300S_EU/mainFirmware/v2.0.00/Core300s_EU_ota_v2.0.00.rel.bin`
+  and
+  `http://fw.vesync.com/WFON_AHM_LUH-D301S-WUSR_US/v1.0.03/LUH-D301S-WUSR_WIFI_C1_ota_v1.0.03.rel.bin`.
+  The pattern is `<configModule>/[mainFirmware|mcuFirmware/]v<version>/<file>`;
+  a missing file answers `403`, so file names cannot be told apart from
+  forbidden ones by probing
+* the Eleva 300X (EU) is model **`LAP-C341S-WEU`**, configModule
+  **`WFON_APR_LAP-C341S-WEU_EU`** (both in its flash). Its file name does not
+  follow the LUH-D301S pattern; the exact URL comes from the cloud's firmware
+  info, as fetched by nico202's `scripts/fetch_ota_info.py` with a VeSync login
 * the stock partition table has two 1.5 MB app slots (`ota_0` / `ota_1`); the
   Eleva's ESPHome build is about 0.95 MB, so it fits
 
@@ -216,12 +228,11 @@ What is known from the Eleva 300X:
   (`vesync_ota_check_md5`, `invalid md5:%s`); no signature check shows up in
   the strings, and Secure Boot is off
 * the cloud connection is MQTT over TLS with username / password and a client
-  certificate; whether the firmware download itself needs credentials is
-  unknown until the URL is captured
+  certificate; the firmware download itself needs none (see above)
 
 To research before building: what triggers the update (only the cloud?),
-HTTP vs HTTPS and whether the certificate is checked, and how to avoid the MCU
-pass-through update path.
+whether newer firmwares switch the download to HTTPS with a checked
+certificate, and how to avoid the MCU pass-through update path.
 
 ### 7. Back to stock
 
