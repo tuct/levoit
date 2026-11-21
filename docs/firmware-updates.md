@@ -282,10 +282,14 @@ stay untouched.
 ### Help wanted: stock firmware URLs per model
 
 Both the DNS route and "back to stock" need the stock firmware's download URL
-for each model. The VeSync cloud only answers for devices that are in the
-asking account — the request also has a `configModelList` parameter, but its
-format is unknown (every shape tried is rejected as `illegal argument`) — so
-this needs owners.
+for each model. The VeSync cloud only answers for Wi-Fi devices that are in the
+asking account, so this needs owners. The request also takes a
+`configModelList` of plain configModule strings (that is how the VeSync app
+6.0.10 builds it, in `com.vesync.firmware.cloud.UpgradeCheckRequest`), but the
+cloud only answers it for Bluetooth devices, which have no cid — the app's own
+value `VS_BT_MTM_R161SB_ONL_US` works, the Eleva's
+`VS_WFON_APR_LAP-C341S-WEU_EU` is rejected as `illegal argument`. Repeated
+queries are rate-limited (`device or ip request is too frequent`).
 
 **If a Levoit unit is still in your VeSync app**, run
 [`tools/vesync_firmware_info.py`](../tools/vesync_firmware_info.py) and post
