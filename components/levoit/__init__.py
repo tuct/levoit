@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import uart, switch
@@ -6,6 +8,10 @@ from esphome.const import CONF_ID
 
 DEPENDENCIES = ["uart"]
 CODEOWNERS = ["@tuct"]
+
+# The component version has one source: the VERSION file next to this one.
+# It is compiled in as LEVOIT_VERSION and reported by the esp_version sensor.
+LEVOIT_VERSION = (Path(__file__).parent / "VERSION").read_text(encoding="utf-8").strip()
 
 CONF_LEVOIT_MODEL = "model"
 VALID_MODELS = ["VITAL100S", "VITAL200S", "CORE200S", "CORE300S", "CORE400S", "CORE600S", "SPROUT", "EVERESTAIR", "SUPERIOR6000S", "ELEVA300X"] # same name: VITAL200S PRO == VITAL200S
@@ -40,6 +46,7 @@ async def to_code(config):
     await uart.register_uart_device(var, config)
 
     cg.add(var.set_device_model(config[CONF_LEVOIT_MODEL]))
+    cg.add_define("LEVOIT_VERSION", LEVOIT_VERSION)
 
     if CONF_TIME_ID in config:
         cg.add_define("USE_LEVOIT_TIME")
