@@ -28,6 +28,11 @@
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
 
+// Frames logged as hex are cut off after this many bytes. ESPHome 2026.11
+// removed the std::string format_hex_pretty(); format_hex_pretty_to() writes
+// into a caller buffer and exists since 2026.3 (min supported is 2026.5.3).
+static constexpr size_t PHILIPS_HEX_LOG_MAX = 128;
+
 namespace esphome {
 namespace philips {
 
@@ -138,7 +143,8 @@ void Philips::loop() {
     this->tx_queue_.erase(this->tx_queue_.begin());
     this->write_array(frame.data(), frame.size());
     this->flush();
-    ESP_LOGV(TAG, "TX -> %s", format_hex_pretty(frame).c_str());
+    char hex_buf[format_hex_pretty_size(PHILIPS_HEX_LOG_MAX)];
+    ESP_LOGV(TAG, "TX -> %s", format_hex_pretty_to(hex_buf, frame));
     this->waiting_ = true;
     this->last_tx_ = now;
   }
@@ -262,7 +268,8 @@ void Philips::set_wifi_led(uint8_t state) {
 }
 
 void Philips::handle_frame_(const std::vector<uint8_t> &f) {
-  ESP_LOGV(TAG, "RX <- %s", format_hex_pretty(f).c_str());
+  char hex_buf[format_hex_pretty_size(PHILIPS_HEX_LOG_MAX)];
+  ESP_LOGV(TAG, "RX <- %s", format_hex_pretty_to(hex_buf, f));
   if (f.size() < 7) return;
   uint16_t cmd = f[2] | (f[3] << 8);
   uint8_t len = f[4];
@@ -270,7 +277,7 @@ void Philips::handle_frame_(const std::vector<uint8_t> &f) {
   uint16_t calc = crc16_(&f[5], len);
   uint16_t wire = (f[5 + len] << 8) | f[5 + len + 1];
   if (calc != wire) {
-    ESP_LOGW(TAG, "bad CRC (calc=%04X wire=%04X) %s", calc, wire, format_hex_pretty(f).c_str());
+    ESP_LOGW(TAG, "bad CRC (calc=%04X wire=%04X) %s", calc, wire, format_hex_pretty_to(hex_buf, f));
     return;
   }
   // A valid frame is the reply to whatever we last sent → bus is free again.

@@ -40,6 +40,9 @@ class LevoitSproutLight : public light::LightOutput {
  private:
   Levoit *parent_{nullptr};
   light::LightState *state_{nullptr};
+  // ESPHome 2026.11+ stores a pointer to the effects table instead of copying
+  // it, so the table must live as long as the light: keep it as a member.
+  light::LightEffect *effects_[1]{nullptr};
   bool breathing_active_{false};
   bool publishing_{false};
 };

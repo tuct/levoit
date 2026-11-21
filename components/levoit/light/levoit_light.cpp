@@ -2,6 +2,7 @@
 #include "../levoit.h"
 #include "../types.h"
 #include "esphome/core/log.h"
+#include "esphome/core/version.h"
 
 namespace esphome {
 namespace levoit {
@@ -10,7 +11,13 @@ static const char *const TAG = "levoit.light";
 
 void LevoitSproutLight::setup_state(light::LightState *state) {
   state_ = state;
-  state->add_effects({new LevoitSproutBreathingEffect("Breathing", &breathing_active_)});
+  effects_[0] = new LevoitSproutBreathingEffect("Breathing", &breathing_active_);
+#if ESPHOME_VERSION_CODE >= VERSION_CODE(2026, 11, 0)
+  // 2026.11 replaced add_effects(std::initializer_list) with (pointer, count)
+  state->add_effects(effects_, 1);
+#else
+  state->add_effects({effects_[0]});
+#endif
 }
 
 light::LightTraits LevoitSproutLight::get_traits() {
