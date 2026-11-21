@@ -1,0 +1,27 @@
+# Dev variant for the stock ESP32-C3 module of the Eleva 300X — builds against
+# the LOCAL component (../../components) instead of the published GitHub source.
+#
+# !! UART pins below are PLACEHOLDERS. The ESP ↔ MCU link (115200 8N1) is not on
+# !! J3 (that is UART0 = debug log / flashing). Find the two ESP32-C3 GPIOs that
+# !! connect to the MCU before flashing, see this device's README.
+substitutions:
+  device_name: levoit-eleva-300x
+  wifi_ap_ssid: "Levoit-Eleva300X"
+  rx_pin: GPIO4 # TBD: ESP RX  <- MCU TX
+  tx_pin: GPIO5 # TBD: ESP TX  -> MCU RX
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+
+# Keep the log on J3 (TXD0/RXD0), like the stock firmware
+logger:
+  hardware_uart: UART0
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_local.yaml
