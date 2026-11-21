@@ -1472,7 +1472,9 @@ namespace esphome
             out.insert(out.end(), tail.begin(), tail.end());
 
             auto message = build_levoit_message({0x02, 0x23, 0x55}, out, messageUpCounter);
-            ESP_LOGV(TAG, ">>> TX Eleva sensor mirror: %s", format_hex_pretty(message).c_str());
+            // The mirrored frame is 62 bytes (10 header + 52 TLV)
+            char hex_buf[format_hex_pretty_size(64)];
+            ESP_LOGV(TAG, ">>> TX Eleva sensor mirror: %s", format_hex_pretty_to(hex_buf, message.data(), message.size()));
             this->write_array(message.data(), message.size());
             this->flush();
             if (messageUpCounter == 255)
