@@ -11,9 +11,9 @@ Project-level changes. Component releases have their own log:
   the stock ESP32-C3, decoded from 19 Saleae captures of the stock firmware:
   fan levels 1–4, auto/sleep, PM1.0/2.5/10 and AQI, mute, AQI ring brightness,
   the MCU-side quiet period (light or time window, with local-time sync),
-  adaptive start, dynamic manual/sleep, timer and filter reset. Compiles, **not
-  tested on hardware yet**; the UART pins in the example config are
-  placeholders. See [devices/levoit-eleva-300x](./devices/levoit-eleva-300x)
+  adaptive start, dynamic manual/sleep, timer and filter reset. MCU UART on
+  GPIO18 / GPIO19, read from the stock firmware. Compiles, **not tested on
+  hardware yet**. See [devices/levoit-eleva-300x](./devices/levoit-eleva-300x)
 * **ESPHome 2026.11 compatibility** for both components, still building on the
   minimum 2026.5.3 ([#93](https://github.com/tuct/levoit/pull/93))
   * `format_hex_pretty()` returning a `std::string` was removed in 2026.11; the

@@ -62,7 +62,7 @@ Measured CADR: 165 CFM (PM1) at Turbo, 115 CFM (PM1) below 45 dBA.
 
 | Ref | Part / Pins (from silkscreen) | Notes |
 |-----|------------------------------|-------|
-| WIFI1 | ESP32-C3 (SOLO-1) module | |
+| WIFI1 | Espressif ESP32-C3-SOLO-1 module | ESP32-C3 in the classic ESP32-SOLO-1 footprint; MCU UART on pads 27 / 28 = **GPIO18 (RX) / GPIO19 (TX)** |
 | J3 | EN, GND, +3V3, TXD0, RXD0, IO0 | ESP programming / UART header |
 | MCU1 | 44-pin QFP, part TBD | Main MCU, talks to the ESP over UART |
 | J5 | +5V, DIO, GND, CLK | MCU debug header (SWD-style) |
@@ -89,6 +89,19 @@ Read with `esptool read-flash 0 ALL`. Secure Boot and flash encryption are **dis
 | storage | data/0x0f | 0x340000 | 128 KiB |
 | historydata | data/nvs | 0x360000 | 128 KiB |
 | log | data/nvs | 0x380000 | 64 KiB |
+
+### ESP ↔ MCU UART pins
+
+UART1, 115200 8N1, on **GPIO18 = RX** (← MCU TX) and **GPIO19 = TX** (→ MCU RX).
+
+| Signal | Module pad | Pad label (SOLO-1 footprint) | ESP32-C3 GPIO (ESPHome) | Saleae |
+|--------|-----------|------------------------------|-------------------------|--------|
+| MCU TX → ESP RX | 27 | IO16 | **GPIO18** | ch 0 |
+| ESP TX → MCU RX | 28 | IO17 | **GPIO19** | ch 1 |
+
+The module keeps the pad layout of the classic ESP32-SOLO-1: the MCU lines sit on pads 27 / 28, which are IO16 / IO17 on the SOLO-1 (and on the Core 200S/300S/400S), but this C3 module routes them to GPIO18 / GPIO19, the C3's USB D− / D+. On the C3 itself GPIO16 / GPIO17 are internal flash pins.
+
+Read from the stock firmware: `vesync_uart_init` passes three globals (`19`, `18`, `115200`) through the VeSync UART HAL into `uart_set_pin(port, tx = 19, rx = 18)`; nothing else writes them. Matches the Saleae wiring (channel 0 on pad 27 = MCU TX, channel 1 on pad 28 = ESP TX).
 
 The stock firmware updates the MCU in pass-through mode: the image is streamed from the cloud over UART to the MCU and is not stored on the ESP flash first.
 
@@ -201,7 +214,7 @@ Key `04` = genuine filter linked (no visible effect on the unit either way), `03
 
 Standard Vital timer: set `02 19 50` + `01 04 <seconds> 02 01 00` (0 = cancel); query `02 1A 50` (ACK carries `01` total, `02` remaining); while running, the MCU pushes `02 1B 50` every second **as a REPORT** with `02` remaining, `01` total. Seen: 1800, 3600, 28800 s.
 
-Saleae captures (`.sal` + raw CSV) are kept in the git-ignored `firmwaredumps/saleae/` folder.
+The Saleae Logic 2 captures behind this section are in [uart/saleae/](uart/saleae/), with an index of what each one shows.
 
 ## ESPHome (WIP, not tested on hardware)
 
@@ -210,7 +223,7 @@ Saleae captures (`.sal` + raw CSV) are kept in the git-ignored `firmwaredumps/sa
 Before flashing:
 
 1. Back up the stock flash (`esptool --chip esp32c3 read-flash 0 ALL backup.bin`, IO0 held low during reset).
-2. Find the two ESP32-C3 GPIOs wired to the MCU (115200 8N1) and set `rx_pin` / `tx_pin`. The values in the YAML are **placeholders**.
+2. Flash over J3 (TXD0 / RXD0 / IO0). The configs already use the MCU pins `rx_pin: GPIO18` / `tx_pin: GPIO19` (see [ESP ↔ MCU UART pins](#esp--mcu-uart-pins)).
 
 Implemented: everything in the tables above. Filter reset: the `reset_filter_stats` button sends `03 00` + `04 01 00` like the stock app; a panel reset resets the ESP-side filter estimate. At boot ESPHome sends `04 01 00` (not genuine), like a stock boot with an unlinked filter; it cannot verify a filter, and the flag has no visible effect. The quiet period with trigger = timer needs `time_id` on the `levoit:` block (the configs use Home Assistant time) so the MCU gets the local time.
 
