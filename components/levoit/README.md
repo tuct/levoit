@@ -537,7 +537,7 @@ Auto mode options per model:
   * Timer: countdown REPORTs accepted, set/stop carry the trailing `02 01 00` the stock firmware sends
   * Filter reset in both directions: the button sends the stock `02 05 55` reset pair, a panel reset resets the ESP filter counters
   * Fan level 0 (sleep) and 255 (off) are ignored, so the fan keeps its last manual speed
-* ⚠️ Eleva 300X not verified on hardware yet (MCU UART on module pads IO16 / IO17)
+* ⚠️ Eleva 300X not verified on hardware yet (MCU UART on GPIO18 / GPIO19, same ESP32-C3-SOLO-1 module as the Vital 100S / 200S)
 * **Builds on Ethernet boards.** The Wi-Fi LED status read
   `wifi::global_wifi_component`, so a config without the `wifi` component (an
   external ESP32 with Ethernet, e.g. an Olimex ESP32-POE2) failed to compile

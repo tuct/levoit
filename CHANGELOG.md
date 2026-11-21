@@ -12,7 +12,8 @@ Project-level changes. Component releases have their own log:
   fan levels 1–4, auto/sleep, PM1.0/2.5/10 and AQI, mute, AQI ring brightness,
   the MCU-side quiet period (light or time window, with local-time sync),
   adaptive start, dynamic manual/sleep, timer and filter reset. MCU UART on
-  module pads IO16 / IO17. Compiles, **not tested on
+  GPIO18 / GPIO19, the same ESP32-C3-SOLO-1 module and pins as the Vital
+  100S / 200S. Compiles, **not tested on
   hardware yet**. See [devices/levoit-eleva-300x](./devices/levoit-eleva-300x)
 * **ESPHome 2026.11 compatibility** for both components, still building on the
   minimum 2026.5.3 ([#93](https://github.com/tuct/levoit/pull/93))
