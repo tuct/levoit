@@ -1,0 +1,29 @@
+# Example levoit-eleva-300x.yaml for flashing the stock ESP32-C3 module of the Eleva 300X.
+#
+# The ESP ↔ MCU link (115200 8N1) is on module pads 27 (IO16, ESP RX) and
+# 28 (IO17, ESP TX), measured with a logic analyzer on the pads. The log stays
+# on J3 (UART0).
+#
+# Back up the stock firmware first (esptool read-flash 0 ALL); flash encryption
+# and secure boot are disabled on this model, so the backup can be restored.
+substitutions:
+  device_name: levoit-eleva-300x
+  wifi_ap_ssid: "Levoit-Eleva300X"
+  rx_pin: GPIO16 # ESP RX <- MCU TX (module pad 27)
+  tx_pin: GPIO17 # ESP TX -> MCU RX (module pad 28)
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+
+# Keep the log on J3 (TXD0/RXD0), like the stock firmware
+logger:
+  hardware_uart: UART0
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_git.yaml

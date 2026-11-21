@@ -7,9 +7,26 @@
 #include "esphome/components/uart/uart.h"
 #include "esphome/core/application.h"
 #include "types.h"
+#ifdef USE_LEVOIT_TIME
+#include "esphome/components/time/real_time_clock.h"
+#endif
 
 namespace esphome {
 namespace levoit {
+
+// Eleva 300X auto-mode configuration block (CMD 02 21 55), cached from the
+// MCU's REPORT/ACK so partial writes can echo the keys they do not change.
+struct ElevaAutoConfig {
+  bool known{false};
+  uint8_t profile{0};          // key 01 (meaning TBD, seen 1..3)
+  uint8_t adaptive_start{0};   // key 02
+  uint8_t dynamic_manual{0};   // key 03
+  uint8_t dynamic_sleep{0};    // key 04
+  uint8_t quiet_enabled{0};    // key 05
+  uint8_t quiet_trigger{0};    // key 06: 0 = light sensor, 1 = time window
+  uint32_t quiet_start{79200}; // key 07, seconds after midnight
+  uint32_t quiet_end{21600};   // key 08, seconds after midnight
+};
 
 // forward declaration
 class LevoitSwitch;
@@ -92,11 +109,21 @@ class Levoit : public Component, public uart::UARTDevice {
   // True where the MCU accepts a filter-counter reset of its own, in addition
   // to the ESP-side CADR counters. The Core200S does (01 E4 A5, captured from
   // the stock firmware); it does not report filter life back, so the ESP
-  // estimate stays authoritative for the sensor.
-  bool has_mcu_filter_reset() const { return this->model_ == ModelType::CORE200S; }
+  // estimate stays authoritative for the sensor. The Eleva 300X takes
+  // 02 05 55 + 03 00, the frame its stock app sends.
+  bool has_mcu_filter_reset() const { return this->model_ == ModelType::CORE200S || this->model_ == ModelType::ELEVA300X; }
   void sendCommand(CommandType commandType);   // if CommandType exists in your project
   void ackMessage(uint8_t ptype0, uint8_t ptype1);
   void ackFilterReset(uint8_t ptype0, uint8_t ptype1);   // Superior 6000S: filter reset pressed on the panel
+  void mirror_eleva_sensor_report(const uint8_t *payload, size_t payload_len);   // Eleva 300X: echo CMD 02 23 55 back to the MCU
+  // Eleva 300X auto-mode config (02 21 55) and local time (02 22 55)
+  ElevaAutoConfig &eleva_auto_config() { return eleva_auto_config_; }
+  void apply_eleva_auto_config(const uint8_t *payload, size_t payload_len);
+  void send_eleva_local_time();
+  uint32_t get_pending_local_time() const { return pending_local_time_; }
+#ifdef USE_LEVOIT_TIME
+  void set_time(time::RealTimeClock *clock) { this->time_ = clock; }
+#endif
   void set_fan(LevoitFan *fan) { this->fan_ = fan; }
   LevoitFan *get_fan() const { return this->fan_; }
   LevoitNumber *get_number(NumberType type) const { return numbers_[nt_idx_(type)]; }
@@ -206,6 +233,12 @@ class Levoit : public Component, public uart::UARTDevice {
   // set from calculate_filter_life_left_percent() via push_filter_pct_if_changed().
   uint8_t pending_filter_pct_{100};
   int last_sent_filter_pct_{-1};  // last % sent to MCU; -1 = none yet (dedup)
+  // Eleva 300X
+  ElevaAutoConfig eleva_auto_config_{};
+  uint32_t pending_local_time_{0};   // local epoch for setElevaLocalTime
+#ifdef USE_LEVOIT_TIME
+  time::RealTimeClock *time_{nullptr};
+#endif
   bool display_on_{false};
 
   uint16_t cadr = 235;

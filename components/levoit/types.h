@@ -16,7 +16,8 @@ namespace esphome
             CORE600S = 5,
             SPROUT = 6,
             EVERESTAIR = 7,
-            SUPERIOR6000S = 8   // humidifier (not an air purifier)
+            SUPERIOR6000S = 8,  // humidifier (not an air purifier)
+            ELEVA300X = 9       // Vital protocol; MCU status arrives as REPORT (0x02), not SEND (0x22)
         };
 
         enum class SwitchType : uint8_t
@@ -29,7 +30,14 @@ namespace esphome
             DAYTIME_ENABLED = 5,
             LED_RING = 6,       // Sprout: decorative LED ring on/off
             AUTO_DRY_POWER_OFF = 7,   // Superior 6000S: auto-dry after power off
-            AUTO_DRY_WATER_EMPTY = 8  // Superior 6000S: auto-dry when tank runs dry
+            AUTO_DRY_WATER_EMPTY = 8, // Superior 6000S: auto-dry when tank runs dry
+            MUTE = 9,                 // Eleva 300X: panel beeps off (CMD 02 17 55, status TLV 0x2D)
+            AQI_RING_DIM = 10,        // Eleva 300X: AQI light ring dimmed (CMD 02 04 55 key 02, status TLV 0x32)
+            QUIET_PERIOD = 11,        // Eleva 300X: quiet period on/off (CMD 02 21 55 key 05); trigger is SelectType::QUIET_TRIGGER
+            // = 12 unused
+            ADAPTIVE_START = 13,      // Eleva 300X: adaptive start flag (CMD 02 21 55 key 02)
+            DYNAMIC_MANUAL = 14,      // Eleva 300X: manual speed jumps to turbo on pollution (CMD 02 21 55 key 03)
+            DYNAMIC_SLEEP = 15        // Eleva 300X: dynamic sleep (CMD 02 21 55 key 04)
         };
         // SwitchType aliases (flat namespace)
         static constexpr SwitchType DISPLAY = SwitchType::DISPLAY;
@@ -41,6 +49,12 @@ namespace esphome
         static constexpr SwitchType LED_RING = SwitchType::LED_RING;
         static constexpr SwitchType AUTO_DRY_POWER_OFF = SwitchType::AUTO_DRY_POWER_OFF;
         static constexpr SwitchType AUTO_DRY_WATER_EMPTY = SwitchType::AUTO_DRY_WATER_EMPTY;
+        static constexpr SwitchType MUTE = SwitchType::MUTE;
+        static constexpr SwitchType AQI_RING_DIM = SwitchType::AQI_RING_DIM;
+        static constexpr SwitchType QUIET_PERIOD = SwitchType::QUIET_PERIOD;
+        static constexpr SwitchType ADAPTIVE_START = SwitchType::ADAPTIVE_START;
+        static constexpr SwitchType DYNAMIC_MANUAL = SwitchType::DYNAMIC_MANUAL;
+        static constexpr SwitchType DYNAMIC_SLEEP = SwitchType::DYNAMIC_SLEEP;
 
         enum class NumberType : uint8_t
         {
@@ -64,6 +78,8 @@ namespace esphome
             VENT_ANGLE = 17,            // EverestAir: vent louver angle 45–90° (CMD 02 12 55, status TLV 0x14)
             AUTO_PROFILE_ROOM_SIZE_INPUT = 18, // Persisted user Room Size target for Room Size/Efficient auto profile
             HUMIDITY_TARGET = 19,       // Superior 6000S: target relative humidity (%)
+            QUIET_START = 20,           // Eleva 300X: quiet window start, hours (CMD 02 21 55 key 07, seconds after midnight)
+            QUIET_END = 21,             // Eleva 300X: quiet window end, hours (CMD 02 21 55 key 08, seconds after midnight)
         };
         // Note: indices 0-11 must stay stable (serialized to preferences)
         // NumberType aliases (flat namespace)
@@ -85,6 +101,8 @@ namespace esphome
         static constexpr NumberType VENT_ANGLE = NumberType::VENT_ANGLE;
         static constexpr NumberType AUTO_PROFILE_ROOM_SIZE_INPUT = NumberType::AUTO_PROFILE_ROOM_SIZE_INPUT;
         static constexpr NumberType HUMIDITY_TARGET = NumberType::HUMIDITY_TARGET;
+        static constexpr NumberType QUIET_START = NumberType::QUIET_START;
+        static constexpr NumberType QUIET_END = NumberType::QUIET_END;
 
         enum class SensorType : uint8_t
         {
@@ -100,6 +118,8 @@ namespace esphome
             HUMIDITY = 9,       // Superior 6000S: measured relative humidity (%)
             TEMPERATURE = 10,   // Superior 6000S: measured temperature (degC)
             FILTER_LIFE_MCU = 11, // Superior 6000S: filter life as reported by the MCU (%)
+            AQI_INDEX = 12,     // Eleva 300X: numeric AQI 0–500 (status TLV 0x2C); AQI above is the 1–4 level
+            AMBIENT_LIGHT = 13, // Eleva 300X: raw light sensor reading (status TLV 0x34, ~4400 bright, ~700 covered)
         };
         // SensorType aliases (flat namespace)
         static constexpr SensorType AQI = SensorType::AQI;
@@ -114,6 +134,8 @@ namespace esphome
         static constexpr SensorType HUMIDITY = SensorType::HUMIDITY;
         static constexpr SensorType TEMPERATURE = SensorType::TEMPERATURE;
         static constexpr SensorType FILTER_LIFE_MCU = SensorType::FILTER_LIFE_MCU;
+        static constexpr SensorType AQI_INDEX = SensorType::AQI_INDEX;
+        static constexpr SensorType AMBIENT_LIGHT = SensorType::AMBIENT_LIGHT;
 
         enum class BinarySensorType : uint8_t {
             FILTER_LOW = 0,
@@ -122,6 +144,7 @@ namespace esphome
             WATER_TANK_EMPTY = 3, // Superior 6000S: water tank empty
             DRY_ACTIVE = 4,       // Superior 6000S: drying cycle running
             HUMIDIFYING = 5,      // Superior 6000S: actively misting
+            QUIET_ACTIVE = 6,     // Eleva 300X: quiet period currently lowering the fan (CMD 02 21 55 REPORT key 09: 7 = start, 8 = end)
         };
         static constexpr BinarySensorType FILTER_LOW = BinarySensorType::FILTER_LOW;
         static constexpr BinarySensorType COVER_OPEN = BinarySensorType::COVER_OPEN;
@@ -129,6 +152,7 @@ namespace esphome
         static constexpr BinarySensorType WATER_TANK_EMPTY = BinarySensorType::WATER_TANK_EMPTY;
         static constexpr BinarySensorType DRY_ACTIVE = BinarySensorType::DRY_ACTIVE;
         static constexpr BinarySensorType HUMIDIFYING = BinarySensorType::HUMIDIFYING;
+        static constexpr BinarySensorType QUIET_ACTIVE = BinarySensorType::QUIET_ACTIVE;
 
         enum class ButtonType : uint8_t {
             RESET_FILTER_STATS = 0,
@@ -175,6 +199,7 @@ namespace esphome
             AUTO_PROFILE = 11,      // Superior 6000S: Home / Away auto profile
             HUMIDITY_SUBTYPE = 12,  // Superior 6000S: Smart / Fan humidity sub-mode
             DRY_LEVEL = 13,         // Superior 6000S: dry cycle level (Low / High)
+            QUIET_TRIGGER = 14,     // Eleva 300X: quiet period trigger, Light (0) / Timer (1) (CMD 02 21 55 key 06)
         };
         static constexpr SelectType AUTO_MODE = SelectType::AUTO_MODE;
         static constexpr SelectType SLEEP_MODE = SelectType::SLEEP_MODE;
@@ -191,6 +216,7 @@ namespace esphome
         static constexpr SelectType AUTO_PROFILE = SelectType::AUTO_PROFILE;
         static constexpr SelectType HUMIDITY_SUBTYPE = SelectType::HUMIDITY_SUBTYPE;
         static constexpr SelectType DRY_LEVEL = SelectType::DRY_LEVEL;
+        static constexpr SelectType QUIET_TRIGGER = SelectType::QUIET_TRIGGER;
 
 
 
@@ -266,6 +292,16 @@ namespace esphome
             setAutoDryPowerOffOff,
             setAutoDryWaterEmptyOn,
             setAutoDryWaterEmptyOff,
+            // Eleva 300X
+            setMuteOn,          // CMD=02 17 55 PAY=01 04 01 00 00 00
+            setMuteOff,         // CMD=02 17 55 PAY=01 04 00 00 00 00
+            setAqiRingBright,   // CMD=02 04 55 PAY=02 01 00
+            setAqiRingDim,      // CMD=02 04 55 PAY=02 01 01
+            setElevaQuietConfig,      // CMD=02 21 55 keys 05 06 07 08 (quiet timer/light, window)
+            setElevaAutoFlags,        // CMD=02 21 55 keys 01 02 03 04 (adaptive start, dynamic manual/sleep; 01 echoed)
+            requestElevaAutoConfig,   // CMD=02 21 55 PAY=0C 01 00, MCU answers with the block in its ACK
+            setElevaLocalTime,        // CMD=02 22 55 PAY=01 04 <local epoch LE32>
+            setElevaFilterNotGenuine, // CMD=02 05 55 PAY=04 01 00, sent after resetFilter like the stock app
             COMMAND_TYPE_MAX
 
             // dedicated command for setSleepModeCustom
@@ -338,6 +374,15 @@ namespace esphome
                 "setAutoDryPowerOffOff",
                 "setAutoDryWaterEmptyOn",
                 "setAutoDryWaterEmptyOff",
+                "setMuteOn",
+                "setMuteOff",
+                "setAqiRingBright",
+                "setAqiRingDim",
+                "setElevaQuietConfig",
+                "setElevaAutoFlags",
+                "requestElevaAutoConfig",
+                "setElevaLocalTime",
+                "setElevaFilterNotGenuine",
             };
             static_assert(
                 sizeof(names) / sizeof(names[0]) == COMMAND_TYPE_MAX,

@@ -33,6 +33,9 @@ TYPE_MAP = {
     "humidity": SensorType.HUMIDITY,
     "temperature": SensorType.TEMPERATURE,
     "filter_life_mcu": SensorType.FILTER_LIFE_MCU,
+    # Eleva 300X only below
+    "aqi_index": SensorType.AQI_INDEX,
+    "ambient_light": SensorType.AMBIENT_LIGHT,
 }
 
 TYPE_PROPS = {
@@ -54,6 +57,17 @@ TYPE_PROPS = {
     "aqi": {
         CONF_DEVICE_CLASS: "aqi",
         CONF_ICON: "mdi:molecule",
+        CONF_STATE_CLASS: validate_state_class("measurement"),
+    },
+    "aqi_index": {
+        CONF_DEVICE_CLASS: "aqi",
+        CONF_ICON: "mdi:molecule",
+        CONF_STATE_CLASS: validate_state_class("measurement"),
+    },
+    # Raw reading, not lux (~4400 in a lit room, ~700 with the sensor covered)
+    "ambient_light": {
+        CONF_ICON: "mdi:brightness-6",
+        CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC,
         CONF_STATE_CLASS: validate_state_class("measurement"),
     },
     "current_cadr": {

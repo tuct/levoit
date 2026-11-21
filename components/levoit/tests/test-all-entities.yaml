@@ -31,10 +31,15 @@ uart:
     rx_pin: GPIO16
     baud_rate: 115200
 
+time:
+  - platform: sntp
+    id: sntp_time
+
 levoit:
   id: dev
   model: CORE400S
   uart_id: uart_mcu
+  time_id: sntp_time   # compiles the USE_LEVOIT_TIME path (Eleva 300X local time)
 
 fan:
   - platform: levoit
@@ -88,6 +93,30 @@ switch:
     levoit: dev
     name: "auto_dry_water_empty"
     type: auto_dry_water_empty
+  - platform: levoit
+    levoit: dev
+    name: "mute"
+    type: mute
+  - platform: levoit
+    levoit: dev
+    name: "aqi_ring_dim"
+    type: aqi_ring_dim
+  - platform: levoit
+    levoit: dev
+    name: "quiet_period"
+    type: quiet_period
+  - platform: levoit
+    levoit: dev
+    name: "adaptive_start"
+    type: adaptive_start
+  - platform: levoit
+    levoit: dev
+    name: "dynamic_manual"
+    type: dynamic_manual
+  - platform: levoit
+    levoit: dev
+    name: "dynamic_sleep"
+    type: dynamic_sleep
 
 sensor:
   - platform: levoit
@@ -138,6 +167,14 @@ sensor:
     levoit: dev
     name: "filter_life_mcu"
     type: filter_life_mcu
+  - platform: levoit
+    levoit: dev
+    name: "aqi_index"
+    type: aqi_index
+  - platform: levoit
+    levoit: dev
+    name: "ambient_light"
+    type: ambient_light
 
 binary_sensor:
   - platform: levoit
@@ -164,6 +201,10 @@ binary_sensor:
     levoit: dev
     name: "humidifying"
     type: humidifying
+  - platform: levoit
+    levoit: dev
+    name: "quiet_active"
+    type: quiet_active
 
 select:
   - platform: levoit
@@ -218,6 +259,10 @@ select:
     levoit: dev
     name: "dry_level"
     type: dry_level
+  - platform: levoit
+    levoit: dev
+    name: "quiet_trigger"
+    type: quiet_trigger
 
 number:
   - platform: levoit
@@ -292,6 +337,14 @@ number:
     levoit: dev
     name: "humidity_target"
     type: humidity_target
+  - platform: levoit
+    levoit: dev
+    name: "quiet_start"
+    type: quiet_start
+  - platform: levoit
+    levoit: dev
+    name: "quiet_end"
+    type: quiet_end
 
 text_sensor:
   - platform: levoit

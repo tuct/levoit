@@ -18,6 +18,8 @@ TYPE_MAP = {
     "water_tank_empty": BinarySensorType.WATER_TANK_EMPTY,
     "dry_active": BinarySensorType.DRY_ACTIVE,
     "humidifying": BinarySensorType.HUMIDIFYING,
+    # Eleva 300X only below
+    "quiet_active": BinarySensorType.QUIET_ACTIVE,
 }
 
 TYPE_PROPS = {
@@ -35,6 +37,9 @@ TYPE_PROPS = {
     "dark_detected": {
         CONF_DEVICE_CLASS: "light",
         CONF_ICON: "mdi:weather-night",
+    },
+    "quiet_active": {
+        CONF_ICON: "mdi:volume-low",
     },
 }
 

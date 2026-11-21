@@ -1,0 +1,198 @@
+# Do not use this file directly, it is included in the device yaml files. Put common configuration here.
+# Enable logging
+logger:
+  level: DEBUG
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+  ap:
+    ssid: "${wifi_ap_ssid}"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+uart:
+  - id: uart_mcu2esp
+    # Module pads 27 (IO16) / 28 (IO17). ESPHome flags GPIO16/17 as flash pins on
+    # the C3, so the check is overridden here.
+    tx_pin:
+      number: ${tx_pin}
+      inverted: false
+      ignore_pin_validation_error: true
+    rx_pin:
+      number: ${rx_pin}
+      inverted: false
+      ignore_pin_validation_error: true
+    baud_rate: 115200
+
+# The MCU runs the quiet window itself and asks for the local time at boot;
+# the timezone here decides what "22:30" means to it.
+time:
+  - platform: homeassistant
+    id: ha_time
+
+levoit:
+  id: leveleva
+  model: ELEVA300X
+  time_id: ha_time
+
+fan:
+  - platform: levoit
+    levoit: leveleva
+    name: "Fan"
+    id: levoit_fan1
+
+switch:
+  - platform: levoit
+    levoit: leveleva
+    name: "Display"
+    type: display
+  - platform: levoit
+    levoit: leveleva
+    name: "Child Lock"
+    type: child_lock
+  - platform: levoit
+    levoit: leveleva
+    name: "Light Detect"
+    type: light_detect
+  # Eleva 300X-specific
+  - platform: levoit
+    levoit: leveleva
+    name: "Mute"
+    type: mute
+  - platform: levoit
+    levoit: leveleva
+    name: "AQI Ring Dim"
+    type: aqi_ring_dim
+  # Auto-mode config block (CMD 02 21 55), shared by all modes
+  - platform: levoit
+    levoit: leveleva
+    name: "Quiet Period"
+    type: quiet_period
+  - platform: levoit
+    levoit: leveleva
+    name: "Adaptive Start"
+    type: adaptive_start
+  # Mode-specific: Manual / Sleep
+  - platform: levoit
+    levoit: leveleva
+    name: "Dynamic Manual"
+    type: dynamic_manual
+  - platform: levoit
+    levoit: leveleva
+    name: "Dynamic Sleep"
+    type: dynamic_sleep
+
+number:
+  - platform: levoit
+    levoit: leveleva
+    name: "Filter Months"
+    type: filter_lifetime_months
+  - platform: levoit
+    levoit: leveleva
+    name: "Timer (min)"
+    type: timer
+  # Quiet window in hours after midnight (22.5 = 22:30)
+  - platform: levoit
+    levoit: leveleva
+    name: "Quiet Start"
+    type: quiet_start
+  - platform: levoit
+    levoit: leveleva
+    name: "Quiet End"
+    type: quiet_end
+
+sensor:
+  - platform: levoit
+    levoit: leveleva
+    name: "PM 1.0"
+    type: pm1_0
+  - platform: levoit
+    levoit: leveleva
+    name: "PM 2.5"
+    type: pm25
+  - platform: levoit
+    levoit: leveleva
+    name: "PM 10"
+    type: pm10
+  # Air quality level 1–4 (status TLV 0x09)
+  - platform: levoit
+    levoit: leveleva
+    name: "Air Quality Level"
+    type: aqi
+  # Numeric AQI 0–500 (status TLV 0x2C)
+  - platform: levoit
+    levoit: leveleva
+    name: "AQI"
+    type: aqi_index
+  - platform: levoit
+    levoit: leveleva
+    name: "Current CADR"
+    type: current_cadr
+  - platform: levoit
+    levoit: leveleva
+    name: "Filter %"
+    type: filter_life_left
+  - platform: levoit
+    levoit: leveleva
+    name: "Ambient Light"
+    type: ambient_light
+
+select:
+  - platform: levoit
+    levoit: leveleva
+    name: "Fan Operating Mode"
+    type: fan_operating_mode
+  # Quiet period trigger: Light (darkness) or Timer (Quiet Start/End window)
+  - platform: levoit
+    levoit: leveleva
+    name: "Quiet Trigger"
+    type: quiet_trigger
+
+text_sensor:
+  - platform: levoit
+    levoit: leveleva
+    name: "MCU Version"
+    type: mcu_version
+  - platform: levoit
+    levoit: leveleva
+    name: "ESP Version"
+    type: esp_version
+  - platform: levoit
+    levoit: leveleva
+    name: "Timer Duration"
+    type: timer_duration_initial
+  - platform: levoit
+    levoit: leveleva
+    name: "Timer Remaining"
+    type: timer_duration_remaining
+
+button:
+  - platform: levoit
+    levoit: leveleva
+    name: "Filter Reset"
+    type: reset_filter_stats
+
+binary_sensor:
+  - platform: levoit
+    levoit: leveleva
+    name: "Filter Low"
+    type: filter_low
+  - platform: levoit
+    levoit: leveleva
+    name: "Dark Detected"
+    type: dark_detected
+  - platform: levoit
+    levoit: leveleva
+    name: "Quiet Active"
+    type: quiet_active

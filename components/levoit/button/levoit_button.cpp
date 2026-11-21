@@ -45,6 +45,10 @@ namespace esphome
                     // stock app resets with 01 E4 A5, so clear that too. It is not
                     // what feeds the sensor - the ESP-side estimate above is.
                     this->parent_->sendCommand(CommandType::resetFilter);
+                    // Eleva 300X: the stock app follows the reset with
+                    // genuine = 0 (04 01 00); send the same pair.
+                    if (this->parent_->get_model() == ModelType::ELEVA300X)
+                        this->parent_->sendCommand(CommandType::setElevaFilterNotGenuine);
                     ESP_LOGI(TAG, "Sent MCU filter reset");
                 }
                 break;
