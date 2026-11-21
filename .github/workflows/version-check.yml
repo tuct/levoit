@@ -1,0 +1,44 @@
+name: Version check
+
+# The levoit component version has one source, components/levoit/VERSION.
+# On PRs: it must be a valid version and match the newest released entry in the
+# component change log. On tags: the tag must equal the file.
+on:
+  pull_request:
+    paths:
+      - 'components/levoit/**'
+      - '.github/workflows/version-check.yml'
+  push:
+    tags: ['*']
+  workflow_dispatch:
+
+jobs:
+  version:
+    name: levoit version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check components/levoit/VERSION
+        run: |
+          set -eu
+          version="$(tr -d '[:space:]' < components/levoit/VERSION)"
+          echo "VERSION file: $version"
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.+-]+)?$'; then
+            echo "::error file=components/levoit/VERSION::'$version' is not a version (X.Y.Z or X.Y.Z-suffix)"
+            exit 1
+          fi
+
+          # Newest released entry in the change log ("#### ESP Version: X.Y.Z - date")
+          logged="$(grep -m1 -oE '^#### ESP Version: [0-9]+\.[0-9]+\.[0-9]+' components/levoit/README.md | awk '{print $4}')"
+          echo "Newest change log entry: $logged"
+          if [ "$version" != "$logged" ]; then
+            echo "::error file=components/levoit/VERSION::VERSION is $version but the newest change log entry is $logged — bump both in the same PR, or neither"
+            exit 1
+          fi
+
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ] && [ "$GITHUB_REF_NAME" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match components/levoit/VERSION ($version)"
+            exit 1
+          fi
+          echo "OK"

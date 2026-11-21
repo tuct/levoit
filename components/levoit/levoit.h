@@ -11,6 +11,11 @@
 #include "esphome/components/time/real_time_clock.h"
 #endif
 
+// Set by __init__.py from components/levoit/VERSION.
+#ifndef LEVOIT_VERSION
+#define LEVOIT_VERSION "unknown"
+#endif
+
 namespace esphome {
 namespace levoit {
 
@@ -45,7 +50,7 @@ class LevoitSproutLight;
 
 class Levoit : public Component, public uart::UARTDevice {
  public:
-  const char* get_version() const { return "1.7.0 esphome"; }
+  const char* get_version() const { return LEVOIT_VERSION " esphome"; }
 
   // called from python codegen
   void register_switch(SwitchType type, LevoitSwitch *sw);
