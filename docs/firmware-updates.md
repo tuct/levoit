@@ -218,9 +218,24 @@ What is known from the Eleva 300X:
   a missing file answers `403`, so file names cannot be told apart from
   forbidden ones by probing
 * the Eleva 300X (EU) is model **`LAP-C341S-WEU`**, configModule
-  **`WFON_APR_LAP-C341S-WEU_EU`** (both in its flash). Its file name does not
-  follow the LUH-D301S pattern; the exact URL comes from the cloud's firmware
-  info, as fetched by nico202's `scripts/fetch_ota_info.py` with a VeSync login
+  **`VS_WFON_APR_LAP-C341S-WEU_EU`**. The cloud's firmware info
+  (`/cloud/v2/deviceManaged/getFirmwareUpdateInfoList`, as in nico202's
+  `scripts/fetch_ota_info.py`; pyvesync 3.5.1 drops the Eleva from its device
+  list, so the raw list has to be used) gives a newer path scheme:
+  `http://fw.vesync.com/firmwareUpload/<configModule>/<mainFw|mcuFw>/v1/<file>`
+  * ESP: `…/mainFw/v1/LAP-C341S-WEU_WIFI_C1_ota_v1.0.08.rel.bin` (1 187 009 B)
+  * MCU: `…/mcuFw/v1/LAP-C341S-WEU_MCU_C1_ota_v1.0.13.bin` (64 284 B)
+  * older versions are removed from the server (1.0.07 answers `403`)
+* **The package header differs from the Core 300S.** The Core 300S `.rel.bin`
+  is a 128-byte plain-text header (uppercase MD5 of the payload, name, version,
+  region; see nico202's `make_ota.py`) + the ESP app image. The Eleva's is
+  **129 bytes: `01` + 128 bytes that look random** (no MD5 or SHA-256 of the
+  payload in plain form), followed by an app image byte-identical to the one the
+  OTA wrote to `ota_1`. Either the header is encrypted (128 bytes = the old
+  header size, AES-aligned) or it is a signature (RSA-1024 size). The firmware
+  has `vesync_ota_get_header` / `vesync_ota_check_header`. **If it is a
+  signature, the DNS route cannot work for devices on this newer VeSync SDK
+  (v1.3.1)** — this has to be answered before building the add-on
 * the stock partition table has two 1.5 MB app slots (`ota_0` / `ota_1`); the
   Eleva's ESPHome build is about 0.95 MB, so it fits
 
@@ -251,7 +266,12 @@ Rules for the second case:
   (`fac_data`, cloud identity), so a backup is never shared or reused on
   another unit
 * **No VeSync binaries are hosted here.** The stock firmware is VeSync's; the
-  repo only provides the tooling to take and restore a backup
+  repo only provides the tooling to take and restore a backup. The current
+  stock app can also be fetched from VeSync's public URL (see phase 6): after
+  stripping the package header it is the exact app image. That alone does not
+  restore a device, though — the stock bootloader, partition table, `nvs` and
+  the unit's `fac_data` have to be there too, which is why the device's own
+  backup stays the restore path
 * The web installer offers **"Back up first"** before the first ESPHome flash
   and stores the file locally; restoring is the same page with the backup file
 
