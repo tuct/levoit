@@ -101,7 +101,7 @@ UART1, 115200 8N1, on **GPIO18 = RX** (← MCU TX) and **GPIO19 = TX** (→ MCU 
 
 The module keeps the pad layout of the classic ESP32-SOLO-1: the MCU lines sit on pads 27 / 28, which are IO16 / IO17 on the SOLO-1 (and on the Core 200S/300S/400S), but this C3 module routes them to GPIO18 / GPIO19, the C3's USB D− / D+. On the C3 itself GPIO16 / GPIO17 are internal flash pins.
 
-Read from the stock firmware: `vesync_uart_init` passes three globals (`19`, `18`, `115200`) through the VeSync UART HAL into `uart_set_pin(port, tx = 19, rx = 18)`; nothing else writes them. Matches the Saleae wiring (channel 0 on pad 27 = MCU TX, channel 1 on pad 28 = ESP TX).
+Read from the stock firmware: `vesync_uart_init` passes three globals (`19`, `18`, `115200`) through the VeSync UART HAL into `uart_set_pin(port, tx = 19, rx = 18)`; nothing else writes them. Same values in both stock app builds dumped here (May 2026 in `ota_0`, and Wi-Fi 1.0.08 from Jul 2026, which the VeSync OTA wrote to `ota_1`). Matches the Saleae wiring (channel 0 on pad 27 = MCU TX, channel 1 on pad 28 = ESP TX).
 
 The stock firmware updates the MCU in pass-through mode: the image is streamed from the cloud over UART to the MCU and is not stored on the ESP flash first.
 
