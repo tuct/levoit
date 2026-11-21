@@ -42,14 +42,16 @@ jobs:
           # the generic USE_SWITCH / USE_SELECT / ... without any entity of that
           # kind from this component, which is the mismatch that broke the build.
           - test-foreign-platforms.yaml
-        # A config that exists for only one component goes in an `include`
-        # list, once per ESPHome version, e.g.
-        #   include:
-        #     - { component: levoit, config: test-ethernet.yaml, esphome: latest }
-        #     - { component: levoit, config: test-ethernet.yaml, esphome: '2026.5.3' }
-        # An entry without `esphome` gets an empty version and fails to install.
-        # The local scripts (components/run-compile-tests.*) pick up every
-        # tests/test-*.yaml by themselves.
+        # A config that exists for only one component goes in this `include`
+        # list, once per ESPHome version: an entry without `esphome` gets an
+        # empty version and fails to install. The local scripts
+        # (components/run-compile-tests.*) pick up every tests/test-*.yaml by
+        # themselves.
+        include:
+          # Ethernet instead of Wi-Fi: catches code that needs the wifi
+          # component. levoit only (Philips has no wired test config).
+          - { component: levoit, config: test-ethernet.yaml, esphome: latest }
+          - { component: levoit, config: test-ethernet.yaml, esphome: '2026.5.3' }
     steps:
       - uses: actions/checkout@v4
 

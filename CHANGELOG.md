@@ -21,6 +21,10 @@ Project-level changes. Component releases have their own log:
   (macOS / Linux) or `components\run-compile-tests.ps1` (Windows); `min` builds
   against the minimum version in its own venv. See
   [CONTRIBUTING](./CONTRIBUTING.md#ci)
+* **Levoit component: Ethernet boards build.** A config without the `wifi`
+  component no longer fails on `wifi/wifi_component.h`; the Wi-Fi LED now shows
+  the network state on Wi-Fi and Ethernet alike. See the
+  [component change log](./components/levoit/README.md#change-log)
 
 ### 2026.10.25
 

@@ -19,6 +19,7 @@ esphome compile test-all-entities.yaml
 | `test-all-entities.yaml` | Codegen for **every entity type on every platform**. Anything added to a `TYPE_MAP` without working codegen fails here. |
 | `test-fan-only.yaml` | Sources that include a platform header **without guarding on `USE_LEVOIT_*`**. With only a fan configured, ESPHome copies no `number/`, `sensor/`, `select/` … directories, so an unguarded include cannot resolve. |
 | `test-foreign-platforms.yaml` | The subtler variant: `template` entities supply the platforms, so the **generic** `USE_SWITCH` / `USE_SELECT` / … macros are defined while no levoit platform directory is copied. Guarding on those generic macros instead of `USE_LEVOIT_*` breaks exactly here. |
+| `test-ethernet.yaml` | **Ethernet instead of Wi-Fi.** There is no `wifi` component, so anything that includes `wifi/wifi_component.h` or uses `wifi::global_wifi_component` fails to build. Network state has to come from `network::is_connected()`. levoit only; Philips has no wired variant here. |
 
 Both guard tests exist because that bug was real: before them, a levoit config
 with only a fan did not build at all, and one with an unrelated `template` switch
