@@ -125,6 +125,10 @@ runs, and what a good contribution looks like.
 Adding a model that is not listed above? Start with
 [docs/adding-a-new-device.md](./docs/adding-a-new-device.md).
 
+Planned: firmware updates from Home Assistant (prebuilt images for the original
+ESP, a HACS integration, a way back to stock) — see
+[docs/firmware-updates.md](./docs/firmware-updates.md).
+
 ## Info
 Not my projects, but worth checking out:
 * [levoit-vital-200s + levoit-vital-200s pro, levoit-vital-100s?](https://github.com/targor/levoit_vital/?tab=readme-ov-file)
