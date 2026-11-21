@@ -63,10 +63,14 @@ Checked against ESPHome 2026.11 and the minimum 2026.5.3:
 
 ### 1. One version, from one place
 
-A `VERSION` file at the repo root is the single source:
+`components/levoit/VERSION` is the single source — in the component folder, so
+it ships with the component wherever `external_components` pulls it from
+(done in [#98](https://github.com/tuct/levoit/pull/98)):
 
-* the component reads it in `__init__.py` and defines it for C++; it replaces
-  the hard-coded string in `get_version()` (`"1.7.0 esphome"` today)
+* the component reads it in `__init__.py` and compiles it in as
+  `LEVOIT_VERSION`; `get_version()` reports it (`"1.7.0 esphome"`)
+* a `Version check` workflow requires it to match the newest released change
+  log entry on every PR, and the tag on release tags
 * prebuilt configs pass it to `esphome.project.version`
 * the integration's `manifest.json` carries the same version
 * `main` builds are labelled `<next>-dev+<short sha>`, e.g. `1.8.0-dev+3fa21c4`
@@ -323,7 +327,7 @@ Only the current version of each file stays on the server; older ones answer
 
 | Phase | Deliverable | Depends on |
 |-------|-------------|------------|
-| 1 | `VERSION` file, component define, CI consistency check | — |
+| 1 | `components/levoit/VERSION`, component define, CI consistency check ([#98](https://github.com/tuct/levoit/pull/98)) | — |
 | 2 | Release workflow + GitHub Pages layout + manifests | 1 |
 | 3 | `updates.yaml` package, prebuilt configs switched to it | 2 |
 | 4 | Web installer page | 2 |
