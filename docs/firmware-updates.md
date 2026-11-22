@@ -2,177 +2,159 @@
 
 # Firmware updates from Home Assistant — plan
 
-> **Status: plan, nothing implemented yet.** This page describes the target design
-> and the order it gets built in. Comment in an issue before starting on a part
-> of it.
+> **Status: plan.** Phase 1 is merged ([#98](https://github.com/tuct/levoit/pull/98));
+> the rest is not implemented yet. This page describes the target design and
+> the order it gets built in. Comment in an issue before starting on a part of
+> it.
 
-Today every user builds their own firmware from the device YAML (`ref: main` in
-[`devices/packages/source_git.yaml`](../devices/packages/source_git.yaml)) and
-finds out about new releases by watching this repo. The goal is to see and
-install new versions from Home Assistant, the way ESPHome's own "ready-made
-projects" do — for both ways this repo is used:
+Today every user builds their own firmware from a device YAML that pulls the
+component with `ref: main`
+([`devices/packages/source_git.yaml`](../devices/packages/source_git.yaml)) and
+finds out about new releases by watching this repo.
 
-| Track | Hardware | Who builds the firmware | How it updates |
-|-------|----------|-------------------------|----------------|
-| **Prebuilt** | The device's **original ESP** (Core 200S/300S/400S/600S, Everest Air, Sprout, Superior 6000S, Vital 100S/200S, Eleva 300X …) | CI in this repo | The device itself, from a manifest on GitHub Pages |
-| **Self-built** | An **additional ESP** (XIAO C3/S3/C6, Ethernet boards, own wiring and pins) | The user, in the ESPHome Device Builder | The ESPHome Device Builder, triggered from Home Assistant |
+The goal: Home Assistant **lists every device that runs the `levoit` or
+`philips` component**, links each one to **its config in the ESPHome Device
+Builder**, and shows when a **newer component version** is published. Installing
+it compiles and uploads that config. This works the same way for every device:
 
-Only the original ESP gets prebuilt images: its pins are fixed by the board,
-while additional ESPs are wired differently in almost every install.
+| Hardware | Config | Built by |
+|----------|--------|----------|
+| The device's **original ESP** (Core 200S/300S/400S/600S, Everest Air, Sprout, Superior 6000S, Vital 100S/200S, Eleva 300X, Philips 600/900 …) | **Ready-made** from this repo: board, pins, model and entities filled in; the user only adds a **name** and **Wi-Fi credentials** | The user's ESPHome Device Builder |
+| An **additional ESP** (XIAO C3/S3/C6, Ethernet boards, own wiring and pins) | The user's own config | The user's ESPHome Device Builder |
+
+The original ESP is not a separate track. Its config is an ordinary user config,
+with everything filled in except the name and the Wi-Fi.
 
 ## Goals
 
-* Home Assistant shows **"update available"** with release notes for every
-  device running the `levoit` component
+* Home Assistant lists every device running `levoit` or `philips`, on an
+  original or an additional ESP, together with the Device Builder config it is
+  built from
+* **"Update available"** with release notes when a newer component version is
+  published; installing compiles and uploads that config in the Device Builder
+* Setting up an original ESP means picking the model and entering a name and
+  Wi-Fi credentials, with no YAML editing
 * A **channel** per device: `stable` (tagged releases) or `main` (every merge)
-* **One version number** everywhere: the release tag, the firmware, the
+* **One version number** everywhere: the release tag, the component, the
   `ESP Version` sensor and the Home Assistant integration
-* Prebuilt images carry **no secrets**: Wi-Fi comes from the captive portal or
-  Improv, the API encryption key is set by Home Assistant when the device is
-  adopted
 * Later: flash a **stock** device without opening it, through a DNS add-on that
-  serves ESPHome in place of the VeSync OTA
+  serves the user's ESPHome build in place of the VeSync OTA
 * A way **back to the original VeSync firmware**
 
 ## Non-goals
 
-* No custom update protocol. Everything on the device side is stock ESPHome
-  (`http_request` update + OTA); the device updates fine without the Home
-  Assistant integration installed
-* No prebuilt images for additional ESPs
+* **No prebuilt firmware images** and no `http_request` updates from GitHub
+  Pages. Every device is built from its config in the user's Device Builder, so
+  a device never runs a build that its config does not describe
+* No custom update protocol on the device. The integration works through
+  Home Assistant's ESPHome integration and the Device Builder
+* Not a replacement for the Device Builder: editing configs stays there
 
 ## Building blocks already in ESPHome
 
-Checked against ESPHome 2026.11 and the minimum 2026.5.3:
+Checked against ESPHome 2026.11 and the minimum 2026.5.3 unless marked
+*to verify*:
 
-* **`update:` platform `http_request`** reads a manifest
-  (`name`, `version`, `builds[].chipFamily`, `builds[].ota.path` / `md5` /
-  `summary` / `release_url`) and installs through `ota: platform: http_request`.
-  An update is offered whenever the manifest `version` **differs** from the
-  firmware's `esphome.project.version` — a plain string comparison, so
-  switching from `main` back to `stable` (a downgrade) works too
-* **`set_source_url()`** on that update entity exists in both versions, so a
-  `select` can switch the manifest URL — the channel — at runtime
-* **`api: encryption: {}`** without a key builds an image with no key in it;
-  Home Assistant sets the key on adoption (`NoiseEncryptionSetKeyRequest`) and
-  the device stores it in flash, where it survives later OTA updates
-* **`dashboard_import`** lets the ESPHome Device Builder adopt a running device
-  from its package URL
+* **Build records.** The Device Builder keeps one per config
+  (`.esphome/storage/<config>.yaml.json`) with `name`, `address`,
+  `esphome_version` and `loaded_integrations`. External components are listed
+  there too (a `levoit` test build lists `levoit`), so the records tell which
+  configs use `levoit` or `philips`, also for devices that are offline
+* **Device ↔ config.** Home Assistant's ESPHome integration matches its devices
+  to Device Builder configs by device name, and its firmware update entity
+  installs by asking the Device Builder to compile and upload the config. The
+  integration can use the same Device Builder API (*to verify:* which client
+  library Home Assistant uses for it and whether a custom integration can reuse
+  it)
+* **Remote packages** (`packages: github://tuct/levoit/<path>@<ref>`) let a
+  short user config pull the ready-made device config from this repo. *To
+  verify:* relative `!include` inside a remote package on 2026.5.3
+* **`dashboard_import` + `esphome.project`**: a device running a ready-made
+  config shows up as *discovered* in the Device Builder; *Adopt* writes a short
+  config with the name, the package URL and `!secret wifi_ssid` /
+  `wifi_password`, which is exactly the "add a name and Wi-Fi" step
 
 ## Design
 
-### 1. One version, from one place
+### 1. One version, from one place — done
 
-`components/levoit/VERSION` is the single source — in the component folder, so
-it ships with the component wherever `external_components` pulls it from
-(done in [#98](https://github.com/tuct/levoit/pull/98)):
+`components/levoit/VERSION` is the single source. It lives in the component
+folder, so it ships with the component wherever `external_components` pulls it
+from ([#98](https://github.com/tuct/levoit/pull/98)):
 
 * the component reads it in `__init__.py` and compiles it in as
   `LEVOIT_VERSION`; `get_version()` reports it (`"1.7.0 esphome"`)
 * a `Version check` workflow requires it to match the newest released change
   log entry on every PR, and the tag on release tags
-* prebuilt configs pass it to `esphome.project.version`
-* the integration's `manifest.json` carries the same version
-* `main` builds are labelled `<next>-dev+<short sha>`, e.g. `1.8.0-dev+3fa21c4`
-* CI fails if the tag, `VERSION` and `manifest.json` disagree
 
-### 2. Release pipeline (prebuilt track)
+Still to add:
 
-A new workflow next to `compile-tests.yml`:
+* **The commit.** When the component comes from git, `__init__.py` also
+  compiles in the commit it was built from, so a build from `main` between
+  releases reports e.g. `1.7.0+3fa21c4`. Without it, every `main` build after
+  1.7.0 looks like 1.7.0 and the integration cannot tell it is behind
+* the integration's `manifest.json` carries the same version; CI fails if the
+  tag, `VERSION` and `manifest.json` disagree
+* `philips`: same scheme, see [open questions](#open-questions)
 
-| Trigger | Channel | Version |
-|---------|---------|---------|
-| Tag `X.Y.Z` | `stable` | `X.Y.Z` |
-| Push to `main` | `main` | `X.Y.Z-dev+<sha>` |
+### 2. Ready-made configs for original ESPs
 
-For every original-ESP device config it runs `esphome compile` and publishes to
-GitHub Pages:
-
-```
-firmware/<device>/<channel>/manifest.json
-firmware/<device>/<channel>/<device>.ota.bin
-firmware/<device>/<channel>/<device>.factory.bin
-```
-
-`manifest.json` follows the ESP Web Tools format that ESPHome reads:
-
-```json
-{
-  "name": "Levoit Core 300S",
-  "version": "1.8.0",
-  "home_assistant_domain": "esphome",
-  "builds": [{
-    "chipFamily": "ESP32",
-    "ota": {
-      "path": "levoit-core300s.ota.bin",
-      "md5": "…",
-      "summary": "First line of the release notes",
-      "release_url": "https://github.com/tuct/levoit/releases/tag/1.8.0"
-    },
-    "parts": [{ "path": "levoit-core300s.factory.bin", "offset": 0 }]
-  }]
-}
-```
-
-`chipFamily` must match ESPHome's variant name (`ESP32` for the SOLO-1C units,
-`ESP32-C3` for the ESP32-C3-SOLO-1 units).
-
-### 3. Device package `devices/packages/updates.yaml`
-
-Included by the prebuilt configs only:
+Every device folder gets a package that holds the whole device: board, pins,
+UART, the component with its model, the entities, `esphome.project`
+(`tuct.levoit-core300s`) and `dashboard_import`. The config the user keeps is
+short:
 
 ```yaml
+substitutions:
+  name: levoit-core300s
+  friendly_name: Bedroom purifier
+
+packages:
+  device: github://tuct/levoit/devices/levoit-core300s/package.yaml@stable
+
 esphome:
-  project:
-    name: tuct.${device_name}
-    version: ${levoit_version}
-
-dashboard_import:
-  package_import_url: github://tuct/levoit/devices/${device_name}/${device_name}.yaml@main
-
-api:
-  encryption: {}          # key set by Home Assistant on adoption
+  name: ${name}
+  friendly_name: ${friendly_name}
 
 wifi:
-  ap: {}                  # no credentials in the image
-captive_portal:
-improv_serial:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
-http_request:
-ota:
-  - platform: esphome
-  - platform: http_request
-
-update:
-  - platform: http_request
-    id: firmware_update
-    name: Firmware
-    source: https://tuct.github.io/levoit/firmware/${device_name}/stable/manifest.json
-
-select:
-  - platform: template
-    name: Update channel
-    options: [stable, main]
-    restore_value: true
-    optimistic: true
-    entity_category: config
-    on_value:
-      - lambda: |-
-          id(firmware_update).set_source_url(
-            "https://tuct.github.io/levoit/firmware/${device_name}/" + x + "/manifest.json");
-      - component.update: firmware_update
+api:
+  encryption:
+    key: "…"   # generated when the config is created
 ```
 
-The sketch shows the shape, not final code (the boot-time source URL has to
-follow the restored channel, for example).
+The `@stable` / `@main` at the end of the package URL is the channel.
 
-### 4. Web installer
+This replaces the `*-builder.yaml` files and
+[`make-builder-yaml.ps1`](../devices/make-builder-yaml.ps1), which inline
+everything because relative `!include` does not work in the Device Builder; a
+remote package does not need it. The existing full device YAMLs stay as the
+example for additional ESPs and for local development.
 
-A page on the same GitHub Pages site using ESP Web Tools and the factory
-images: first flash of an original ESP from the browser over USB, no ESPHome
-install needed. After that, every update comes over the air.
+Ways to get a ready-made config:
 
-### 5. Home Assistant integration "Levoit ESPHome" (HACS)
+* **Adopt** a device that already runs one: it shows up as *discovered* in the
+  Device Builder
+* **Create** one from the integration (phase 4): pick the model, enter a name
+  and Wi-Fi credentials (or use the Device Builder's `secrets.yaml`)
+* **Paste** the snippet above into a new config in the Device Builder
+
+The first flash of a stock unit is still over USB, from the Device Builder or
+ESPHome Web, until the DNS add-on (phase 6) exists.
+
+### 3. Release flow
+
+| Trigger | What happens |
+|---------|--------------|
+| Tag `X.Y.Z` | GitHub release with the change log entry as notes; the workflow moves the `stable` branch to the tag |
+| Merge to `main` | Nothing extra: `main` is the `main` channel |
+| Every PR | CI compiles every ready-made device config (on top of the current compile tests) |
+
+No firmware binaries are published.
+
+### 4. Home Assistant integration "Levoit ESPHome" (HACS)
 
 Lives in this repo at `custom_components/levoit_esphome/`, with a `hacs.json`
 at the root. HACS requires the integration under `custom_components/` at the
@@ -182,27 +164,36 @@ releases, so the integration shares the release number with the component.
 
 What it does:
 
-* **Discovery:** finds ESPHome devices running the `levoit` component through
-  the ESPHome integration (project name `tuct.*`, or the `ESP Version` sensor)
-* **One update entity per device:** installed version, latest version of the
-  device's channel, release notes from the GitHub release
-* **Channel:** shows and sets the device's `Update channel` select
-* **Install:**
-  * prebuilt: presses the device's own `Firmware` update entity
-  * self-built: asks the ESPHome Device Builder add-on to compile and upload
-    that device's config (the same path Home Assistant's ESPHome update entity
-    uses when the add-on is installed)
+* **List:** every ESPHome device whose Device Builder config loads `levoit` or
+  `philips` (from the build records), plus devices without a config there that
+  report the component through the `ESP Version` sensor or a `tuct.*` project
+  name. Per device: the config file (opens it in the Device Builder), original
+  or additional ESP, channel, installed and latest version
+* **Connect a config:** a device without a Device Builder config shows
+  *no config*. For an original ESP the integration offers to create the
+  ready-made config (model from the project name, name from the device, Wi-Fi
+  from `secrets.yaml` or entered); for an additional ESP it links to the
+  Device Builder to create one
+* **Update entity per device:** installed version against the latest version of
+  the device's channel (newest release for `stable`, newest commit for `main`),
+  release notes from the GitHub release. *Install* asks the Device Builder to
+  compile and upload that device's config
+* **Channel:** shown per device; switching rewrites the `@stable` / `@main` ref
+  in the config. Older configs that use `external_components` with `ref: main`
+  show up on the `main` channel
 
-For self-built configs, the channel is the git ref the config builds from. The
-release workflow moves a `stable` branch to each new tag, so a config can use
-`ref: stable` or `ref: main`; the integration compares the device's version
-with the newest release or `main` commit and triggers a rebuild.
+### 5. Backup and restore page
+
+A page on GitHub Pages, using ESP Web Tools / esptool-js, for the first USB
+flash of an original ESP: **back up the stock flash first** and keep the file
+locally, then flash the factory image the user downloaded from their own Device
+Builder. Restoring is the same page with the backup file (see phase 7).
 
 ### 6. Later: DNS add-on for stock devices
 
 A Home Assistant add-on that answers DNS for the VeSync firmware host and serves
-an ESPHome image in its place, so a stock unit can be flashed without opening
-it — the approach
+the user's own ESPHome build (from the Device Builder) in its place, so a stock
+unit can be flashed without opening it — the approach
 [nico202/levoit-core300s-ota-wifi-flash](https://github.com/nico202/levoit-core300s-ota-wifi-flash)
 takes for the Core 300S.
 
@@ -262,7 +253,7 @@ device:
 | Installed via | Stock firmware afterwards | Back to stock |
 |---------------|---------------------------|---------------|
 | DNS add-on (phase 6) | Still in the other app slot, together with `nvs` and the factory keys in `fac_data` | Point `otadata` at the stock slot and reboot — a button in the integration, no download |
-| Serial / web installer with ESPHome's partition table | Overwritten | Write back the user's **own** flash backup |
+| USB, with ESPHome's partition table | Overwritten | Write back the user's **own** flash backup (phase 5) |
 
 Rules for the second case:
 
@@ -276,10 +267,8 @@ Rules for the second case:
   restore a device, though — the stock bootloader, partition table, `nvs` and
   the unit's `fac_data` have to be there too, which is why the device's own
   backup stays the restore path
-* The web installer offers **"Back up first"** before the first ESPHome flash
-  and stores the file locally; restoring is the same page with the backup file
 
-For the DNS route, the ESPHome image has to keep the stock partition table
+For the DNS route, the ESPHome build has to keep the stock partition table
 (two 1.5 MB slots) rather than bring its own, so the stock slot and `fac_data`
 stay untouched.
 
@@ -327,25 +316,25 @@ Only the current version of each file stays on the server; older ones answer
 
 | Phase | Deliverable | Depends on |
 |-------|-------------|------------|
-| 1 | `components/levoit/VERSION`, component define, CI consistency check ([#98](https://github.com/tuct/levoit/pull/98)) | — |
-| 2 | Release workflow + GitHub Pages layout + manifests | 1 |
-| 3 | `updates.yaml` package, prebuilt configs switched to it | 2 |
-| 4 | Web installer page | 2 |
-| 5 | HACS integration "Levoit ESPHome" | 3 |
+| 1 | `components/levoit/VERSION`, component define, CI consistency check ([#98](https://github.com/tuct/levoit/pull/98)) — **done** | — |
+| 2 | Commit in the version string; release workflow (GitHub release, `stable` branch) | 1 |
+| 3 | Ready-made package per original-ESP device, short adopt config, CI compiles them | 2 |
+| 4 | HACS integration "Levoit ESPHome": list, connect a config, update, channel | 2, 3 |
+| 5 | Backup and restore page | — |
 | 6 | DNS add-on (research first) | 3 |
-| 7 | Back to stock: backup / restore in the web installer, slot switch for DNS installs | 4, 6 |
+| 7 | Back to stock: restore on the page, slot switch for DNS installs | 5, 6 |
 
-Phases 1–3 make one PR; the device side then works without the integration.
+Phases 2 and 3 can ship before the integration: the Device Builder already
+offers adoption, and users on `@stable` get releases with their next install.
 
 ## Open questions
 
-* **OTA password on prebuilt images.** An image without secrets also has no
-  `ota: platform: esphome` password, so anyone on the LAN could flash it. Drop
-  native OTA from prebuilt images (updates only through `http_request` and
-  Home Assistant), or accept it like ESPHome's ready-made projects do?
-* **Adopted devices.** Once a user adopts a prebuilt device into the Device
-  Builder and builds it themselves, the `http_request` update would overwrite
-  their build. The adopted config should drop the update package; the
-  integration then treats the device as self-built
-* **Philips devices.** The `philips` component lives in the same repo — same
-  integration, or out of scope?
+* **Philips version.** Release tags are repo-wide. Give `philips` its own
+  `VERSION` and change log, or one version for the repo that both components
+  report?
+* **Writing configs.** Creating a config from the integration means writing a
+  file into the Device Builder's config folder (`/config/esphome/` on
+  Home Assistant OS) or going through a Device Builder API. Which works on
+  container installs, where the add-on does not exist?
+* **Integration name.** "Levoit ESPHome" also covers the Philips devices — keep
+  the name, or pick a neutral one before the first HACS release?
