@@ -64,21 +64,26 @@ This compiles every supported device using the local component and prints a pass
 
 ### ESPHome web builder / dashboard (no local setup)
 
-Each device folder contains pre-generated `*-builder-*.yaml` files with all configuration inlined — no local clone or package includes needed. Upload directly to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard.
+Each device folder contains pre-generated `*-builder*.yaml` files with all configuration inlined — no local clone or package includes needed. Upload directly to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome Device Builder.
 
 | File | Board |
 |------|-------|
 | `levoit-core300s-builder.yaml` | original ESP32-SOLO-1C |
-| `levoit-core300s-builder-c3.yaml` | ESP32-C3 replacement |
+| `levoit-core300s-builder-c3.yaml` | Seeed XIAO ESP32-C3 replacement |
 | `levoit-core300s-builder-s3.yaml` | ESP32-S3 replacement |
 
-(Same pattern applies to all devices.)
+(Same pattern for all devices; a file whose name does not start with the folder name, such as `philips-ac0650.yaml`, becomes `philips-ac0650-builder.yaml`.)
 
-To regenerate all builder files after making changes to `common.yaml`:
+They read `wifi_ssid`, `wifi_password`, `wifi_ap_password`, `api_key` and `ota_password` from your `secrets.yaml`, and pull the component from the **`stable`** branch, which moves to every release. For every merge instead, change `ref: stable` to `ref: main` in your copy.
+
+**Don't edit them in the repo.** They are generated from the device yaml and its `common.yaml`; edit those and regenerate (Windows PowerShell 5.1 or PowerShell 7):
 
 ```powershell
-.\make-builder-yaml.ps1
+.\make-builder-yaml.ps1           # regenerate all
+.\make-builder-yaml.ps1 -Check    # what CI runs: fails if one is out of date
 ```
+
+CI (`Builder files` workflow) runs the check and compiles every builder file against the components of the PR. The Sprout is the exception: its full config needs the local `levoit_audio` component, so `levoit-sprout-builder.yaml` is kept by hand (no sound).
 
 ---
 

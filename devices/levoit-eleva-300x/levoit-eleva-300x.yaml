@@ -26,10 +26,6 @@ esp32:
   framework:
     type: esp-idf
 
-# Keep the log on J3 (TXD0/RXD0), like the stock firmware
-logger:
-  hardware_uart: UART0
-
 packages:
   common: !include common.yaml
   source: !include ../packages/source_git.yaml

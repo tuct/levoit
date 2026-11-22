@@ -32,6 +32,7 @@ protocol** as the Levoit air purifiers, so it needs no new component — just
 |------|---------|
 | [`levoit-superior-6000s.yaml`](./levoit-superior-6000s.yaml) | Flash the device's own ESP32; pulls the component from git |
 | [`levoit-superior-6000s_dev.yaml`](./levoit-superior-6000s_dev.yaml) | Same, but builds against this repo's local `components/` |
+| [`levoit-superior-6000s-builder.yaml`](./levoit-superior-6000s-builder.yaml) | Everything inlined, for the ESPHome Device Builder (generated, see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)) |
 | [`common.yaml`](./common.yaml) | All the entities — included by both |
 | [`secrets-example.yaml`](./secrets-example.yaml) | Copy to `secrets.yaml` and fill in |
 

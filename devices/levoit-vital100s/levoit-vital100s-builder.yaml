@@ -1,4 +1,6 @@
-﻿#example levoit-vital100s.yaml for flashing the original ESP32-C3-SOLO-1
+# Generated from devices/levoit-vital100s/levoit-vital100s.yaml by devices/make-builder-yaml.ps1 - in the
+# repo, edit that file or its common.yaml and regenerate, not this one.
+#example levoit-vital100s.yaml for flashing the original ESP32-C3-SOLO-1
 substitutions:
   device_name: levoit-vital100s
   wifi_ap_ssid: "Levoit-Vital100S"
@@ -27,7 +29,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/tuct/levoit
-      ref: main
+      ref: stable
     components: [levoit]
 logger:
   level: VERBOSE

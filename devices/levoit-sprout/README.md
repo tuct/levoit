@@ -245,7 +245,7 @@ Use the pre-generated builder yaml to flash without a local clone — all config
 |------|-------|
 | `levoit-sprout-builder.yaml` | original ESP32 |
 
-Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. Regenerate with `.\make-builder-yaml.ps1` from the `devices/` folder.
+Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. This one is **kept by hand and has no sound**: the full config needs the local `levoit_audio` component and asset build script, which the Device Builder cannot use, so `make-builder-yaml.ps1` skips the Sprout.
 
 ### Restore Original Firmware
 

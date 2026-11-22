@@ -2,6 +2,8 @@
 # Enable logging
 logger:
   level: DEBUG
+  # Keep the log on J3 (TXD0/RXD0), like the stock firmware
+  hardware_uart: UART0
 
 api:
   encryption:
