@@ -6,6 +6,15 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P4P721ETB5)
 
+> [!TIP]
+> **New: [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha), a Home Assistant integration for these purifiers.**
+> It finds every device running the `levoit` or `philips` component and shows its installed and latest component version.
+> When a new release is out, it appears under *Settings → Updates*, and *Install* compiles and uploads it through the ESPHome Device Builder.
+> *Add device* makes a ready-to-flash config from a template (original ESP or ESP32-C3), and an optional sidebar page lists all devices with their versions, channel and filter %.
+> Install it from the Marketplace as a custom repository: [setup steps](https://github.com/tuct/levoit-esphome-ha#installation).
+
+![The Levoit ESPHome sidebar page in Home Assistant: each device with model, ESP, channel, installed and latest version, filter %, status, Compile and Compile & upload](./docs/images/levoit-esphome-ha-panel.png)
+
 I like Wi-Fi enabled air purifiers! But I hate the fact that they all depend on a cloud service.
 
 I've run Home Assistant and custom-built ESPHome devices at home for quite some time, and found a project that let me flash custom, ESPHome-based firmware onto a Levoit Core 300S (which I already owned).

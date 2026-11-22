@@ -527,10 +527,40 @@ Auto mode options per model:
 
 ## Change Log
 
-#### Unreleased
+#### ESP Version: 1.7.2 - 2026.11.22
 
+**Vital fixes from real units.** Timer, filter wear, Wi-Fi LED and the daytime
+fan mode, tested on a Vital 100S and a Vital 200S. Most of these came from
+wasdennnoch, thanks!
+
+* **Vital timer**: no more status request every 10 seconds forever when no
+  timer runs (an empty timer reply left the timer marked active). Duplicate
+  frames are now skipped only for the periodic status messages; timer replies,
+  button events and other answers are always handled
+  ([#114](https://github.com/tuct/levoit/pull/114))
+* **Filter wear in Auto at the lowest speed**: when the Vital idles below
+  level 1 (`FanLevel` 0), Current CADR and filter wear use the derated sleep
+  speed instead of level 1. Changing *Filter Lifetime Months* updates Filter %
+  and the remaining filter life at once. The fan entity still shows 25% there
+  (four speed steps), now documented in the Vital 100S README
+  ([#113](https://github.com/tuct/levoit/pull/113))
+* **Wi-Fi LED no longer stuck blinking after boot**: a fixed 2-second
+  "blink" command could overwrite the solid LED when Wi-Fi connected quickly.
+  The LED now follows the connection state, and is set again once the MCU
+  first answers ([#116](https://github.com/tuct/levoit/pull/116))
+* **Filter-LED blink at boot only on Core models** (200S / 300S / 400S /
+  600S), which have that LED command. On Vital, Everest Air and Sprout the
+  same code meant something else: the Vital display was toggled every second
+  until Wi-Fi connected ([#112](https://github.com/tuct/levoit/pull/112))
+* **Daytime fan mode** (`daytime_fan_mode`, Vital 200S) offers Manual, Sleep,
+  Auto and Pet, without the Unknown3 / Unknown4 placeholders; options map to
+  the device's mode values by name, through one shared table
+  ([#111](https://github.com/tuct/levoit/pull/111))
+* **`dark_detected`** no longer has `device_class: light`: Home Assistant read
+  that as "light detected" and showed the opposite. It now shows on / off
+  ([#110](https://github.com/tuct/levoit/pull/110))
 * No compiler warning on ESP32-C3 builds at log level `VERBOSE` (Superior
-  6000S dry-time log line); 1.7.1 fixed the ones at lower log levels
+  6000S dry-time log line) ([#118](https://github.com/tuct/levoit/pull/118))
 
 #### ESP Version: 1.7.1 - 2026.11.22
 
