@@ -128,9 +128,10 @@ Phase 3 makes them fit for the add-on:
   `ref: stable` (today `ref: main`); the add-on switches it by rewriting that
   line
 * **Per-device keys.** All builder files read the same `!secret api_key` and
-  `ota_password`. When the add-on creates a config it writes a fresh API
-  encryption key (and OTA password) for that device into it, so devices do not
-  share one key
+  `ota_password`. For a **new** device the add-on writes a fresh API
+  encryption key and OTA password into its config, so devices do not share one
+  key. A device that already runs ESPHome **keeps its own** (see onboarding in
+  phase 4a)
 * **Always in step with the sources.** CI regenerates the builder files and
   fails if they differ from the committed ones, then compiles them with dummy
   secrets
@@ -210,6 +211,35 @@ for devices that are offline) and through Home Assistant devices that have an
 * **Manage**: open in the Device Builder, switch the channel (rewrites the
   `ref:`), rename, refresh from template (see phase 2)
 
+**Onboarding an existing device.** Most devices already run ESPHome with a
+config of their own. Moving one to a builder-file config must keep what the
+device and Home Assistant already use, or the first upload breaks it: a new
+OTA password makes the device refuse the upload, a new API key makes
+Home Assistant lose the device, a new name makes it a new device.
+
+| Kept | Read from |
+|------|-----------|
+| API encryption key | The device's current config, resolving `!secret` through the Device Builder's `secrets.yaml` (both read through the Device Builder API). No config there: the Home Assistant ESPHome config entry of the device (`noise_psk`), passed on by the integration, which runs inside Home Assistant |
+| OTA password | The current config / `secrets.yaml`. Home Assistant does not store it, so without a config the user enters it (or the first install goes over USB) |
+| Name (`esphome.name`, `friendly_name`) | The current config, else the Home Assistant device |
+| Wi-Fi, fallback AP password, static IP / `use_address` | The current config; Wi-Fi otherwise from `secrets.yaml` or entered |
+| Board / ESP variant | The current config or build record, checked against the builder file chosen |
+
+Rules:
+
+* **References stay references.** A value the old config reads with
+  `!secret xyz` is written as `!secret xyz` again, not copied in as plain text
+* **The old config is kept**: renamed to `<name>.yaml.bak` (or a copy saved)
+  before the new one replaces it, so onboarding can be undone
+* **Preview first**: the page shows the new config and what was carried over;
+  nothing is saved or compiled before the user confirms
+* **Validate before upload**: the new config is compiled first; a value that
+  could not be read stops onboarding with a message instead of guessing
+
+*To verify:* a device on an Arduino config moving to the ESP-IDF builder file
+over OTA (the partition table differs; ESPHome 2026.11 can send one with
+`--partition-table`).
+
 **Updates.** A device is behind when a newer component version is out on its
 channel, or when the Device Builder runs a newer ESPHome than the device. Then:
 
@@ -227,6 +257,10 @@ Uploading an arbitrary `.bin` is not part of 4a; see phase 8.
 * **Install** asks the add-on to recompile and upload that device
 * Without the add-on it compares the `esp_version` sensor with GitHub and only
   shows that an update exists
+* **Onboarding without a config:** hands the add-on the API encryption key
+  from the device's ESPHome config entry. Only for the device being onboarded,
+  only when the user starts it. Until 4b exists, onboarding needs the device's
+  config in the Device Builder
 
 ### 5. Backup and restore page
 
@@ -382,7 +416,7 @@ Only the current version of each file stays on the server; older ones answer
 | 1 | `components/levoit/VERSION`, component define, CI consistency check ([#98](https://github.com/tuct/levoit/pull/98)) — **done** | — |
 | 2 | Commit in the version string; `philips` reports the same version; release workflow (`stable` branch) | 1 |
 | 3 | Builder files on `ref: stable`, CI keeps them regenerated and compiles them | 2 |
-| 4a | Add-on "Levoit ESPHome": device list, connect / create / manage configs, recompile and upload | 2, 3 |
+| 4a | Add-on "Levoit ESPHome": device list, connect / create / manage configs, onboarding with the existing keys and secrets, recompile and upload | 2, 3 |
 | 4b | Integration "Levoit ESPHome" (HACS): update entities, install through the add-on | 4a |
 | 5 | Backup and restore page | — |
 | 6 | DNS add-on (research first) | 3 |
@@ -400,6 +434,8 @@ Device Builder on `ref: stable` get releases with their next install.
   does the work; the integration adds Home Assistant update entities
 * **Configs go through the Device Builder API**, never through the config
   folder
+* **Onboarding keeps the device's own keys and secrets** (API key, OTA
+  password, name, Wi-Fi); fresh keys only for new devices
 * **Both keep the name "Levoit ESPHome"**, although they also cover the
   Philips devices
 * **`.bin` upload comes later** (phase 8), at the user's own risk, with the
