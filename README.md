@@ -13,7 +13,7 @@
 > *Add device* makes a ready-to-flash config from a template (original ESP or ESP32-C3), and an optional sidebar page lists all devices with their versions, channel and filter %.
 > Install it from the Marketplace as a custom repository: [setup steps](https://github.com/tuct/levoit-esphome-ha#installation).
 
-![The Levoit ESPHome sidebar page in Home Assistant: each device with model, ESP, channel, installed and latest version, filter %, status, Compile and Compile & upload](./docs/images/levoit-esphome-ha-panel.png)
+![The Levoit ESPHome sidebar page in Home Assistant: each device with model, ESP, channel, installed and latest version, filter %, status, Update, Compile and Compile & upload](./docs/images/levoit-esphome-ha-panel.png)
 
 I like Wi-Fi enabled air purifiers! But I hate the fact that they all depend on a cloud service.
 
