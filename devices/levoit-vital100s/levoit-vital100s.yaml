@@ -7,16 +7,17 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  platformio_options:
-    board_build.flash_mode: dio
-    # board_build.f_flash is the key PlatformIO reads for flash frequency;
-    # board_build.flash_freq is not recognised and was silently ignored.
-    board_build.f_flash: 40000000L
+  min_version: 2026.6.0
 
 esp32:
   board: esp32-c3-devkitm-1
   variant: esp32c3
   flash_size: 4MB
+  # Stock ESP32-C3-SOLO-1 module: DIO at 40 MHz. esp32: flash_mode /
+  # flash_frequency work with both build toolchains (ESPHome 2026.6.0+);
+  # platformio_options are ignored by the native ESP-IDF build.
+  flash_mode: dio
+  flash_frequency: 40MHz
   cpu_frequency: 160Mhz
   framework:
     type: esp-idf

@@ -30,7 +30,7 @@
 
 // Frames logged as hex are cut off after this many bytes. ESPHome 2026.11
 // removed the std::string format_hex_pretty(); format_hex_pretty_to() writes
-// into a caller buffer and exists since 2026.3 (min supported is 2026.5.3).
+// into a caller buffer and exists since 2026.3 (min supported is 2026.6.0).
 static constexpr size_t PHILIPS_HEX_LOG_MAX = 128;
 
 namespace esphome {

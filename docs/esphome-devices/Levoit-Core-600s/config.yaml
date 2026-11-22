@@ -2,7 +2,7 @@ esphome:
   name: levoit-core600s
   friendly_name: Levoit Core 600S
   name_add_mac_suffix: true
-  min_version: 2026.5.3
+  min_version: 2026.6.0
 
 esp32:
   board: esp32dev
