@@ -62,10 +62,14 @@ Checked against ESPHome 2026.11 and the minimum 2026.5.3 unless marked
   configs use `levoit` or `philips`, also for devices that are offline
 * **Device ↔ config.** Home Assistant's ESPHome integration matches its devices
   to Device Builder configs by device name, and its firmware update entity
-  installs by asking the Device Builder to compile and upload the config. The
-  integration can use the same Device Builder API (*to verify:* which client
-  library Home Assistant uses for it and whether a custom integration can reuse
-  it)
+  installs by asking the Device Builder to compile and upload the config.
+  **The integration uses the Device Builder API for everything**: listing
+  configs, creating and changing a config, compiling and uploading. It never
+  writes into the config folder directly, so it works the same wherever the
+  Device Builder runs (add-on or its own container). *To verify:* the
+  endpoints for listing, creating and saving a config, how the integration
+  reaches and authenticates to the Device Builder outside the add-on, and
+  whether it can reuse the client library Home Assistant uses
 * **Remote packages** (`packages: github://tuct/levoit/<path>@<ref>`) let a
   short user config pull the ready-made device config from this repo. *To
   verify:* relative `!include` inside a remote package on 2026.5.3
@@ -95,7 +99,12 @@ Still to add:
   1.7.0 looks like 1.7.0 and the integration cannot tell it is behind
 * the integration's `manifest.json` carries the same version; CI fails if the
   tag, `VERSION` and `manifest.json` disagree
-* `philips`: same scheme, see [open questions](#open-questions)
+* **`philips` reports the same version.** This is a mono repo with one release
+  number. `components/philips/__init__.py` reads `../levoit/VERSION`, which is
+  always there because `external_components` clones the whole repo, and
+  compiles it in. `philips` has no version sensor yet; it gets an
+  `esp_version` text sensor like `levoit`. Its changes go into the same
+  release notes
 
 ### 2. Ready-made configs for original ESPs
 
@@ -171,15 +180,15 @@ What it does:
   or additional ESP, channel, installed and latest version
 * **Connect a config:** a device without a Device Builder config shows
   *no config*. For an original ESP the integration offers to create the
-  ready-made config (model from the project name, name from the device, Wi-Fi
-  from `secrets.yaml` or entered); for an additional ESP it links to the
-  Device Builder to create one
+  ready-made config through the Device Builder API (model from the project
+  name, name from the device, Wi-Fi from `secrets.yaml` or entered); for an
+  additional ESP it links to the Device Builder to create one
 * **Update entity per device:** installed version against the latest version of
   the device's channel (newest release for `stable`, newest commit for `main`),
   release notes from the GitHub release. *Install* asks the Device Builder to
   compile and upload that device's config
 * **Channel:** shown per device; switching rewrites the `@stable` / `@main` ref
-  in the config. Older configs that use `external_components` with `ref: main`
+  in the config through the Device Builder API. Older configs that use `external_components` with `ref: main`
   show up on the `main` channel
 
 ### 5. Backup and restore page
@@ -317,7 +326,7 @@ Only the current version of each file stays on the server; older ones answer
 | Phase | Deliverable | Depends on |
 |-------|-------------|------------|
 | 1 | `components/levoit/VERSION`, component define, CI consistency check ([#98](https://github.com/tuct/levoit/pull/98)) — **done** | — |
-| 2 | Commit in the version string; release workflow (GitHub release, `stable` branch) | 1 |
+| 2 | Commit in the version string; `philips` reports the same version; release workflow (GitHub release, `stable` branch) | 1 |
 | 3 | Ready-made package per original-ESP device, short adopt config, CI compiles them | 2 |
 | 4 | HACS integration "Levoit ESPHome": list, connect a config, update, channel | 2, 3 |
 | 5 | Backup and restore page | — |
@@ -327,14 +336,11 @@ Only the current version of each file stays on the server; older ones answer
 Phases 2 and 3 can ship before the integration: the Device Builder already
 offers adoption, and users on `@stable` get releases with their next install.
 
-## Open questions
+## Decisions
 
-* **Philips version.** Release tags are repo-wide. Give `philips` its own
-  `VERSION` and change log, or one version for the repo that both components
-  report?
-* **Writing configs.** Creating a config from the integration means writing a
-  file into the Device Builder's config folder (`/config/esphome/` on
-  Home Assistant OS) or going through a Device Builder API. Which works on
-  container installs, where the add-on does not exist?
-* **Integration name.** "Levoit ESPHome" also covers the Philips devices — keep
-  the name, or pick a neutral one before the first HACS release?
+* **One version for the repo.** `levoit` and `philips` report the same
+  release number from `components/levoit/VERSION`
+* **The integration goes through the Device Builder API**, never through the
+  config folder
+* **The integration keeps the name "Levoit ESPHome"**, although it also covers
+  the Philips devices
