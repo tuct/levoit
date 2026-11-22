@@ -114,6 +114,11 @@ class Levoit : public Component, public uart::UARTDevice {
   void track_cadr_usage();  // Track CADR and runtime based on fan state
   uint32_t calculate_current_cadr_per_hour() const;  // Compute current CADR/h based on speed and model
   float calculate_filter_life_left_percent() const;  // Remaining filter life percentage (0-100 with decimals)
+  // Core 200S / 300S / 400S / 600S: the Core protocol (it has a filter LED command)
+  bool is_core_model() const {
+    return this->model_ == ModelType::CORE200S || this->model_ == ModelType::CORE300S ||
+           this->model_ == ModelType::CORE400S || this->model_ == ModelType::CORE600S;
+  }
   // True where the MCU accepts a filter-counter reset of its own, in addition
   // to the ESP-side CADR counters. The Core200S does (01 E4 A5, captured from
   // the stock firmware); it does not report filter life back, so the ESP
@@ -249,6 +254,7 @@ class Levoit : public Component, public uart::UARTDevice {
   time::RealTimeClock *time_{nullptr};
 #endif
   bool display_on_{false};
+  bool fan_sleep_speed_{false};  // true when MCU reports FanLevel 0 (Sleep or Auto-low speed)
 
   uint16_t cadr = 235;
   uint8_t buffer_[512];
@@ -261,7 +267,7 @@ class Levoit : public Component, public uart::UARTDevice {
   WifiLedState wifi_led_state_{WifiLedState::UNKNOWN};
   bool mcu_seen_{false};  // set on first valid RX frame from MCU
   bool filter_led_on_{false};
-  bool filter_blinking_{false};
+  bool filter_blinking_{false};  // Core models only: filter LED blinks until Wi-Fi connects
 
   // Superior 6000S ESP-managed timer state
   bool esp_timer_active_{false};

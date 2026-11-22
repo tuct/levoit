@@ -42,37 +42,23 @@
 
 ## Known issue: Auto mode reports 25% at the lowest fan rate
 
-In **Auto** mode with good air quality (blue indicator), the unit drops the fan
-below its first manual level — roughly 10% by ear — but Home Assistant keeps
-reporting **25%**, the same as level 1. Reported in
-[#72](https://github.com/tuct/levoit/issues/72). Not yet fixed.
+In **Auto** mode with Very Good air quality (blue indicator), the unit drops the fan
+to its whisper-quiet sleep speed (below manual level 1), while Home Assistant's
+fan slider continues to show **25%** (the lowest of the 4 discrete speed steps).
+Reported in [#72](https://github.com/tuct/levoit/issues/72).
 
-The likely cause: the MCU sends **two** separate datapoints, and the component
-only uses one.
+On the wire (`0x00 0x55` status payload), the MCU reports two fan-speed fields:
 
-| DP | Name | Used for |
-|----|------|----------|
-| `0x04` | `FanLevel` | The fan entity's speed — 1–4, so 25 / 50 / 75 / 100% |
-| `0x05` | `FanSpeed` | Parsed and **discarded** ([`vital_status.cpp:159`](../../components/levoit/vital_status.cpp#L159)) |
+| DP | Name | Value in Auto-low | Used for |
+|----|------|-------------------|----------|
+| `0x04` | `FanLevel` | `0` (sleep speed; manual levels are `1`–`4`) | The fan entity's speed (clamped to `1..4` -> 25 / 50 / 75 / 100%) and CADR tracking |
+| `0x05` | `FanSpeed` | `1` (`1`–`4`) | Parsed and logged (`vital_status.cpp`) |
 
-In auto-low the MCU most likely holds `FanLevel` at 1 while `FanSpeed` carries
-the real rate. The fan entity has four discrete speeds and cannot express
-anything below 25%, so the number HA shows is correct for `FanLevel` and simply
-does not describe what the fan is doing.
-
-**To confirm it**, set the logger to `VERBOSE` and watch for `FanSpeed=` while
-the unit is in auto with a blue indicator:
-
-```yaml
-logger:
-  level: VERBOSE
-  logs:
-    levoit.vital: VERBOSE
-```
-
-If `FanSpeed` moves while `FanLevel` stays at 1, that is the value worth
-exposing — as its own sensor rather than by changing the fan entity, since
-redefining the existing percentages would break anyone's automations.
+Because ESPHome's 4-speed `Fan` entity only represents speeds `1..4` (`25%..100%`) when
+the fan is `ON` (`0%` means `OFF` in Home Assistant), `FanLevel = 0` is clamped to
+speed `1` (`25%`) on the fan slider so the entity stays `ON`, while `Current CADR` and
+filter wear tracking apply the 63% sleep-speed derating (`34 m³/h` instead of `55 m³/h`
+on Vital 100S).
 
 ## Teardown / Disassembly
 

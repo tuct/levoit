@@ -83,7 +83,9 @@ They read `wifi_ssid`, `wifi_password`, `wifi_ap_password`, `api_key` and `ota_p
 .\make-builder-yaml.ps1 -Check    # what CI runs: fails if one is out of date
 ```
 
-CI (`Builder files` workflow) runs the check and compiles every builder file against the components of the PR. The Sprout is the exception: its full config needs the local `levoit_audio` component, so `levoit-sprout-builder.yaml` is kept by hand (no sound).
+CI (`Builder files` workflow) runs the check and compiles every builder file against the components of the PR.
+
+The script also writes [`templates.json`](./templates.json): the builder files the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration offers when adding a device (variant `original`, `xiao_c3` or `c3`, with model, title, board and default name; S3 builder files are not offered). It is generated and checked like the builder files; add a title for a new device folder in the script's `$Titles`. The Sprout is the exception: its full config needs the local `levoit_audio` component, so `levoit-sprout-builder.yaml` is kept by hand (no sound).
 
 ---
 

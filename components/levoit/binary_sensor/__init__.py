@@ -35,7 +35,6 @@ TYPE_PROPS = {
         CONF_ICON: "mdi:door-open",
     },
     "dark_detected": {
-        CONF_DEVICE_CLASS: "light",
         CONF_ICON: "mdi:weather-night",
     },
     "quiet_active": {

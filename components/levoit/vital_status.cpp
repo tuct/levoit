@@ -24,9 +24,21 @@ namespace esphome
                             const uint8_t *payload,
                             size_t payload_len)
     {
-      (void)self;
       if (!payload || payload_len == 0)
+      {
+        if (self != nullptr)
+        {
+          if (self->is_timer_active())
+          {
+            self->stop_timer();
+            self->publish_number(NumberType::TIMER, 0);
+            self->publish_sensor(SensorType::TIMER_CURRENT, 0);
+            self->publish_text_sensor(TextSensorType::TIMER_DURATION_CURRENT, format_duration_minutes(0));
+          }
+          self->set_timer_stop_pending(false);
+        }
         return;
+      }
 
       std::vector<LevoitTLV> tlvs;
       bool ok = extract_tlvs_from_payload(model, payload, payload_len, tlvs, 0);

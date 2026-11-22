@@ -346,6 +346,8 @@ namespace esphome
 
         void Levoit::apply_fan_status(int power, int speed, int mode)
         {
+            if (speed != -1)
+                this->fan_sleep_speed_ = (speed == 0);
 #ifdef USE_LEVOIT_FAN
             if (this->fan_ != nullptr)
                 this->fan_->apply_device_status(power, speed, mode);
@@ -554,8 +556,12 @@ namespace esphome
                 this->sendCommand(setHumidityTarget);
                 break;
 
+            case NumberType::FILTER_LIFETIME_MONTHS:
+                this->publish_filter_stats_now();
+                break;
+
             default:
-                // WHITE_NOISE_MIN, FILTER_LIFETIME_MONTHS, USED_CADR, TOTAL_RUNTIME:
+                // WHITE_NOISE_MIN, USED_CADR, TOTAL_RUNTIME:
                 // ESP-side values, nothing to send to the MCU
                 break;
             }
@@ -720,6 +726,7 @@ namespace esphome
                     this->sendCommand(setFanModeManual);
                     break;
                 case 1:
+                    this->fan_sleep_speed_ = true;
                     this->sendCommand(setFanModeSleep);
                     break;
                 case 2:
@@ -760,6 +767,7 @@ namespace esphome
             }
             if (speed_level != -1)
             {
+                this->fan_sleep_speed_ = false;
                 switch (speed_level)
                 {
                 case 1:
@@ -870,9 +878,16 @@ namespace esphome
                 ESP_LOGI(TAG, "Initialized total_runtime to 0");
             }
                                
-            this->sendCommand(CommandType::setFilterLedOn);
-            filter_led_on_ = true;
-            filter_blinking_ = true;
+            // Core models: blink the filter LED until Wi-Fi connects. The other
+            // protocols have no filter LED command (on Vital the same code is
+            // tag 0x06 DisplayIlluminated, which toggled the display).
+            if (this->is_core_model())
+            {
+                this->sendCommand(CommandType::setFilterLedOn);
+                filter_led_on_ = true;
+                filter_blinking_ = true;
+            }
+
             // EverestAir: push the computed filter % to the MCU panel on boot
             // (delay so the MCU has finished booting), then keep it in sync
             // whenever the value changes (see push_filter_pct_if_changed).
@@ -980,9 +995,9 @@ namespace esphome
                 return 0;
             uint32_t result = (cadr * (uint32_t)speed) / max_speed;
 
-            // Sleep mode derates level 1 to 63%
+            // Sleep mode (or Auto mode idling at FanLevel 0) derates level 1 to 63%
             esphome::StringRef preset = this->fan_->get_preset_mode();
-            if (!preset.empty() && preset == "Sleep" && speed == 1)
+            if (speed == 1 && (this->fan_sleep_speed_ || (!preset.empty() && preset == "Sleep")))
             {
                 result = (uint32_t)(result * 0.63f);
             }
@@ -1071,7 +1086,8 @@ namespace esphome
                         if (desired == WifiLedState::SOLID)
                         {
                             ESP_LOGD(TAG, "WiFi connected - setting LED solid");
-                            this->sendCommand(CommandType::setFilterLedOff);
+                            if (this->is_core_model())
+                                this->sendCommand(CommandType::setFilterLedOff);
                             filter_led_on_ = false;
                             filter_blinking_ = false;
                             if (prev == WifiLedState::OFF)
