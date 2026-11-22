@@ -73,7 +73,7 @@ static const char *model_name(PhilipsModel m) {
 
 void Philips::dump_config() {
   ESP_LOGCONFIG(TAG, "Philips Air Purifier (model=%s)", model_name(this->model_));
-  this->check_uart_settings(115200);
+  // UART settings (115200 8N1) are checked at config validation, see __init__.py
 }
 
 void Philips::loop() {
