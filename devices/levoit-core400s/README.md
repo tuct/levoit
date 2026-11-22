@@ -90,6 +90,28 @@ I had to use extended wires for re-assembly, did not find another way!
 
 ![ha](./images/teardown_33.jpg)
 
+### Opening it without extension wires
+
+Two community methods that avoid extending the stock cables, both from
+[discussion #33](https://github.com/tuct/levoit/discussions/33):
+
+**Twist off the top** (kocy33, on a `CORE400S Ctrl V1.2`):
+
+1. Remove the 6 screws in the filter compartment, as above. Without them the top
+   does not come off.
+2. Work about 11 plastic picks (e.g. iFixit picks) in around the top to release
+   the clips, then twist the black top part **counterclockwise** and lift it.
+3. Unplug the cables with the top off, work on the board in comfort, and
+   reassemble without extending anything.
+
+<img src="./images/v12-kocy33-1-twist-off.jpg" width="32%" alt="Picks around the top, twist it counterclockwise"> <img src="./images/v12-kocy33-2-top-off.jpg" width="32%" alt="The top lifted off after twisting"> <img src="./images/v12-kocy33-3-clips.jpg" width="20%" alt="Where the clips are">
+
+**Reach in through the handle** (EdenNelson): split the unit in the middle as
+described above, then plug and unplug the connectors through the handle opening
+with long (12-inch) cooking tweezers or hemostats. Soldering a JST-PH 2.0 mm
+6-pin connector onto the board for the flash cable then lets you reconnect it
+later, to flash the stock firmware or ESPHome again, without taking everything
+apart.
 
 ### J1 Debug Header Pinout
 
@@ -137,6 +159,20 @@ ESP32-to-MCU link), not J1.
 > Not sure which oin is RX/TX but simply change if you got it wrong
 
 ![ha](./images/pcp_front.jpg)
+
+#### On the `CORE400S Ctrl V1.2`
+
+kocy33 found the pads and wired a Seeed XIAO ESP32-C3 on this revision
+([discussion #33](https://github.com/tuct/levoit/discussions/33)):
+
+| What | Where |
+|------|-------|
+| MCU link | test pads **TP33** (marked RX) and **TP29** (marked TX), next to Q1 / Q2 / R23 / R25. If the MCU does not answer, swap `rx_pin` / `tx_pin` |
+| 5 V for the new ESP | the **5V** pin of header **J4** (its pins are labelled TX, RX, GND, 5V); kocy33 powered the C3 from it |
+
+<img src="./images/v12-kocy33-4-rx-tx-pads.jpg" width="49%" alt="RX on TP33 (teal wire), TX on TP29 (yellow wire)"> <img src="./images/v12-kocy33-5-j4-5v.jpg" width="49%" alt="Header J4 with TX, RX, GND and 5V on the Core400S_Ctrl_V1.2">
+
+<img src="./images/v12-kocy33-6-wired.jpg" width="49%" alt="The new ESP wired in, inside the unit"> <img src="./images/v12-kocy33-7-board.jpg" width="40%" alt="The CORE400S Ctrl V1.2 board">
 
 
 ## Flash Original ESP32
