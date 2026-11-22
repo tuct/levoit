@@ -529,6 +529,8 @@ Auto mode options per model:
 
 #### Unreleased
 
+* No compiler warnings on ESP32-C3 / RISC-V builds any more: `uint32_t` log
+  values use `PRIu32`, and the number command switch has a `default`
 * **New `model` text sensor** (`type: model`): reports the configured `model:`,
   e.g. `CORE300S`, so Home Assistant (the Levoit ESPHome integration) can tell
   the device type without its config. The device configs get it with the next
