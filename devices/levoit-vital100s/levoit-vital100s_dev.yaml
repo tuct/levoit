@@ -11,11 +11,8 @@ esphome:
 
 esp32:
   board: esp32-c3-devkitm-1
-  # Stock ESP32-C3-SOLO-1 module: DIO at 40 MHz. esp32: flash_mode /
-  # flash_frequency work with both build toolchains (ESPHome 2026.6.0+);
-  # platformio_options are ignored by the native ESP-IDF build.
+  # Stock ESP32-C3-SOLO-1 module: DIO at default 80 MHz (matches stock firmware).
   flash_mode: dio
-  flash_frequency: 40MHz
   framework:
     type: esp-idf
 #    sdkconfig_options:

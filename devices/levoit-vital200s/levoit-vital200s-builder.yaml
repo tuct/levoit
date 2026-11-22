@@ -1,19 +1,27 @@
 # Generated from devices/levoit-vital200s/levoit-vital200s.yaml by devices/make-builder-yaml.ps1 - in the
 # repo, edit that file or its common.yaml and regenerate, not this one.
-#example levoit-vital200s.yaml for flashing the original ESP32-SOLO-1C
+#example levoit-vital200s.yaml for flashing the original ESP32-C3-SOLO-1
 substitutions:
   device_name: levoit-vital200s
   wifi_ap_ssid: "Levoit-Vital200S"
-  rx_pin: GPIO18                            
-  tx_pin: GPIO19                     
+  rx_pin: GPIO18
+  tx_pin: GPIO19
 
 esphome:
   name: ${device_name}
+  min_version: 2026.6.0
 
 esp32:
-  board: esp32-c3-devkitm-1    
+  board: esp32-c3-devkitm-1
+  variant: esp32c3
+  flash_size: 4MB
+  # Stock ESP32-C3-SOLO-1 module: DIO at default 80 MHz (matches stock firmware).
+  flash_mode: dio
+  cpu_frequency: 160Mhz
   framework:
     type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
 
 external_components:
   - source:
