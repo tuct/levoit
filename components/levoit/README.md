@@ -527,6 +527,11 @@ Auto mode options per model:
 
 ## Change Log
 
+#### Unreleased
+
+* No compiler warning on ESP32-C3 builds at log level `VERBOSE` (Superior
+  6000S dry-time log line); 1.7.1 fixed the ones at lower log levels
+
 #### ESP Version: 1.7.1 - 2026.11.22
 
 **Firmware updates from Home Assistant, step one: the version tells the build,
