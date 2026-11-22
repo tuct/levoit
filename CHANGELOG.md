@@ -24,7 +24,9 @@ Project-level changes. Component releases have their own log:
   Vital 100S and a Vital 200S, and the Eleva's stock image headers set DIO at
   80 MHz ([#117](https://github.com/tuct/levoit/pull/117), [#119](https://github.com/tuct/levoit/pull/119))
 * **Device builder templates** (`devices/templates.json`) for the Levoit
-  ESPHome integration's *Add device* ([#109](https://github.com/tuct/levoit/pull/109))
+  ESPHome integration's *Add device*: original ESP, XIAO ESP32-C3, ESP32-C3 and,
+  for the Core and Vital models, ESP32-S3 ([#109](https://github.com/tuct/levoit/pull/109),
+  [#121](https://github.com/tuct/levoit/pull/121)); S3 needs the integration 0.4.1 or newer
 
 ### 2026.11.22
 
