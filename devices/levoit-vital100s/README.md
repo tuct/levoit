@@ -189,7 +189,7 @@ Use the pre-generated builder yaml to flash without a local clone — all config
 |------|-------|
 | `levoit-vital100s-builder.yaml` | original ESP32-C3-SOLO-1 |
 | `levoit-vital100s-builder-c3.yaml` | ESP32-C3 replacement |
-| `levoit-vital100s-builder-s3.yaml` | ESP32-S3 replacement |
+| `levoit-vital100s-builder-s3.yaml` | Seeed XIAO ESP32-S3 replacement |
 
 Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. Regenerate with `.\make-builder-yaml.ps1` from the `devices/` folder.
 

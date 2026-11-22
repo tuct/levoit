@@ -1,15 +1,15 @@
-#example levoit-vital100s-s3.yaml for flashing a new ESP32-S3
+#example levoit-vital100s-s3.yaml for a Seeed XIAO ESP32-S3
 substitutions:
   device_name: levoit-vital100s-s3
   wifi_ap_ssid: "Levoit-Vital100S"
-  rx_pin: GPIO05
-  tx_pin: GPIO06
+  rx_pin: GPIO05  # XIAO ESP32-S3 pad D4
+  tx_pin: GPIO06  # XIAO ESP32-S3 pad D5
 
 esphome:
   name: ${device_name}
 
 esp32:
-  board: esp32-s3-devkitc-1
+  board: seeed_xiao_esp32s3
   framework:
     type: esp-idf
 
