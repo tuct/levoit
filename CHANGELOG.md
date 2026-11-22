@@ -5,14 +5,26 @@
 Project-level changes. Component releases have their own log:
 [levoit](./components/levoit/README.md#change-log).
 
-### Unreleased
+### 2026.11.22 (component 1.7.2)
 
+* **Levoit component [1.7.2](./components/levoit/README.md#change-log)**: Vital
+  timer, filter wear, Wi-Fi LED and daytime fan mode fixes, `dark_detected`
+  shown the right way round
 * **Device configs report their model**: every device config and builder file
   has the `model` text sensor (component 1.7.1); the Philips configs also get
   the `esp_version` sensor. The Levoit ESPHome integration reads both
-* **Eleva 300X: flash at 80 MHz** (DIO, as before). The stock firmware's image
-  header sets DIO at 80 MHz; 40 MHz was taken over from the Vital 100S, which
-  moves to 80 MHz as well
+  ([#108](https://github.com/tuct/levoit/pull/108))
+* **Vital 100S / 200S configs in line with each other**: room-size limits
+  9–52 m² / 9–87 m², `efficiency_counter` and `dark_detected` added, the Vital
+  100S logger at `DEBUG` instead of `VERBOSE`, the Vital 200S stock configs get
+  `flash_mode: dio` and `min_version: 2026.6.0` like the 100S
+  ([#117](https://github.com/tuct/levoit/pull/117), by wasdennnoch)
+* **Vital 100S and Eleva 300X: flash at 80 MHz** (DIO, as before), as the stock
+  firmware runs it. This replaces the 40 MHz from 1.7.1: tested at 80 MHz on a
+  Vital 100S and a Vital 200S, and the Eleva's stock image headers set DIO at
+  80 MHz ([#117](https://github.com/tuct/levoit/pull/117), [#119](https://github.com/tuct/levoit/pull/119))
+* **Device builder templates** (`devices/templates.json`) for the Levoit
+  ESPHome integration's *Add device* ([#109](https://github.com/tuct/levoit/pull/109))
 
 ### 2026.11.22
 
