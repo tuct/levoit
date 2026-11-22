@@ -33,6 +33,7 @@ protocol** as the Levoit air purifiers, so it needs no new component — just
 | [`levoit-superior-6000s.yaml`](./levoit-superior-6000s.yaml) | Flash the device's own ESP32; pulls the component from git |
 | [`levoit-superior-6000s_dev.yaml`](./levoit-superior-6000s_dev.yaml) | Same, but builds against this repo's local `components/` |
 | [`levoit-superior-6000s-builder.yaml`](./levoit-superior-6000s-builder.yaml) | Everything inlined, for the ESPHome Device Builder (generated, see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)) |
+| [`levoit-superior-6000s-s3.yaml`](./levoit-superior-6000s-s3.yaml) / [`_dev`](./levoit-superior-6000s-s3_dev.yaml) / [`builder-s3`](./levoit-superior-6000s-builder-s3.yaml) | A replacement Seeed XIAO ESP32-S3 on the MCU link (RX GPIO5 = pad D4 to module pin 27, TX GPIO4 = pad D3 to pin 28, as confirmed for the LEH-S601S-WUS in [#78](https://github.com/tuct/levoit/discussions/78)); untested with an S3 |
 | [`common.yaml`](./common.yaml) | All the entities — included by both |
 | [`secrets-example.yaml`](./secrets-example.yaml) | Copy to `secrets.yaml` and fill in |
 

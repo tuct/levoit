@@ -93,6 +93,10 @@ function Get-OutputPath([string]$DeviceYaml) {
         $suffix = $deviceName.Substring($folderBase.Length)
         return Join-Path $deviceDir "$folderBase-builder$suffix.yaml"
     }
+    # philips-ac0650-s3 in philips-600-series/ -> philips-ac0650-builder-s3
+    if ($deviceName -match '^(.+)(-(?:c3|s3))$') {
+        return Join-Path $deviceDir "$($Matches[1])-builder$($Matches[2]).yaml"
+    }
     # philips-ac0650 in philips-600-series/ -> philips-ac0650-builder
     return Join-Path $deviceDir "$deviceName-builder.yaml"
 }

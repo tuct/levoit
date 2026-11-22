@@ -220,7 +220,7 @@ The Saleae Logic 2 captures behind this section are in [uart/saleae/](uart/salea
 
 ## ESPHome (WIP, not tested on hardware)
 
-`model: ELEVA300X` in the levoit component. Configs: [levoit-eleva-300x.yaml](levoit-eleva-300x.yaml) (GitHub source) and [levoit-eleva-300x_dev.yaml](levoit-eleva-300x_dev.yaml) (local component), both for the stock ESP32-C3 module; the logger stays on J3 (UART0). For the ESPHome Device Builder: [levoit-eleva-300x-builder.yaml](levoit-eleva-300x-builder.yaml), everything inlined (see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)).
+`model: ELEVA300X` in the levoit component. Configs: [levoit-eleva-300x.yaml](levoit-eleva-300x.yaml) (GitHub source) and [levoit-eleva-300x_dev.yaml](levoit-eleva-300x_dev.yaml) (local component), both for the stock ESP32-C3 module; the logger stays on J3 (UART0). For the ESPHome Device Builder: [levoit-eleva-300x-builder.yaml](levoit-eleva-300x-builder.yaml), everything inlined (see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)). For a replacement Seeed XIAO ESP32-S3 instead of the stock module (RX GPIO5 = pad D4 to module pin 27, TX GPIO4 = pad D3 to pin 28, stock EN held low): [levoit-eleva-300x-s3.yaml](levoit-eleva-300x-s3.yaml), [_dev](levoit-eleva-300x-s3_dev.yaml) and [builder-s3](levoit-eleva-300x-builder-s3.yaml); untested.
 
 Before flashing:
 

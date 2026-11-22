@@ -90,6 +90,7 @@ Use the pre-generated builder yaml to flash without a local clone — all config
 |------|-------|
 | `levoit-everest-air-builder.yaml` | original ESP32-SOLO-1 |
 | `levoit-everest-air-builder-c3.yaml` | Seeed XIAO ESP32-C3 replacement (D4 to TP82, D3 to TP33, as on a tested unit) |
+| `levoit-everest-air-builder-s3.yaml` | Seeed XIAO ESP32-S3 replacement: the same GPIO5 / GPIO6, on the S3 pads D4 (to TP82) and D5 (to TP33); untested |
 
 Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. Regenerate with `.\make-builder-yaml.ps1` from the `devices/` folder.
 

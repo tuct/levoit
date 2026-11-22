@@ -204,6 +204,9 @@ if it resists, back off and re-check the wide slat rather than pushing.
 2. Flash [`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml) (or
    [`philips-ac0950.yaml`](./philips-ac0950.yaml) for the non-sensor model; in
    the ESPHome Device Builder, [`philips-ac0950-builder.yaml`](./philips-ac0950-builder.yaml)).
+   With a **Seeed XIAO ESP32-S3** instead of a C3:
+   [`philips-ac0950-s3.yaml`](./philips-ac0950-s3.yaml) / [`philips-ac0950-builder-s3.yaml`](./philips-ac0950-builder-s3.yaml),
+   on the same pads (D7 = pad A, D10 = pad B; GPIO44 / GPIO9 on the S3). Untested.
 3. Watch the log. `MCU link up` means the handshake completed. If it does not
    appear, see [Boot sequence](#boot-sequence) — the stock module's *first*
    handshake attempt reliably fails and only the second, about two minutes later,

@@ -5,6 +5,16 @@
 Project-level changes. Component releases have their own log:
 [levoit](./components/levoit/README.md#change-log).
 
+### Unreleased
+
+* **Seeed XIAO ESP32-S3 configs for the remaining models**: Everest Air,
+  Superior 6000S, Eleva 300X, Philips 600 series (AC0650) and 900 series
+  (AC0950), with builder files and Add device templates. Everest Air keeps the
+  GPIO numbers of its XIAO C3 config; the Philips configs keep the XIAO C3's
+  pads (GPIO20 / GPIO21 / GPIO10 are not on the XIAO S3). All untested on
+  hardware so far. Philips builder files are named `…-builder-s3.yaml` like the
+  Levoit ones
+
 ### 2026.11.22 (component 1.7.2)
 
 * **Levoit component [1.7.2](./components/levoit/README.md#change-log)**: Vital

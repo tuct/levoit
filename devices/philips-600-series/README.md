@@ -123,6 +123,11 @@ UART and park the stock module.
    [`philips-ac0650-builder.yaml`](./philips-ac0650-builder.yaml), everything inlined
    and the component from GitHub.
 
+   With a **Seeed XIAO ESP32-S3** instead of a C3: [`philips-ac0650-s3.yaml`](./philips-ac0650-s3.yaml)
+   (Device Builder: [`philips-ac0650-builder-s3.yaml`](./philips-ac0650-builder-s3.yaml)).
+   Same pads as the XIAO C3 (D7 = MCU TX, D6 = MCU RX), so the same wiring; on the
+   S3 they are GPIO44 / GPIO43. Untested.
+
    Both pull in [`common.yaml`](./common.yaml) for the shared entities. The
    `model:` option toggles the 651-only datapoints, so the rest of the config is
    identical between variants.
