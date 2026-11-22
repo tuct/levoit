@@ -1,7 +1,7 @@
 # Dev variant of levoit-everest-air-c3.yaml — builds against the LOCAL component
 # (../../components) for flashing a replacement ESP32-C3.
-# NOTE: UART pins below are placeholders — verify against your wiring, see this
-# device's README "Wiring New ESP".
+# UART pins as wired on a tested unit (XIAO D4 to TP82, D3 to TP33); check them
+# against your own wiring, see this device's README "Wiring New ESP".
 substitutions:
   device_name: levoit-everest-air-c3
   wifi_ap_ssid: "Levoit-EverestAir"
