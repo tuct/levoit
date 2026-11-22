@@ -56,22 +56,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
+        id: python
         with:
           python-version: '3.12'
 
-      # PlatformIO toolchains and the ESP-IDF sources are the slow part, not the
-      # compile itself, so cache them across runs.
-      - name: Cache PlatformIO
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.platformio
-            ~/.cache/pip
-          # per ESPHome version: each release can pin a different toolchain
-          key: pio-${{ runner.os }}-esphome-${{ matrix.esphome }}-${{ hashFiles('components/*/tests/*.yaml') }}
-          restore-keys: pio-${{ runner.os }}-esphome-${{ matrix.esphome }}-
-
       - name: Install ESPHome ${{ matrix.esphome }}
+        id: esphome
         run: |
           if [ "${{ matrix.esphome }}" = "latest" ]; then
             pip install esphome
@@ -79,6 +69,20 @@ jobs:
             pip install "esphome==${{ matrix.esphome }}"
           fi
           esphome version
+          echo "version=$(esphome version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      # The toolchains and ESP-IDF sources are the slow part, not the compile
+      # itself. Newer ESPHome builds with its own ESP-IDF in ~/.cache/esphome/idf,
+      # older releases through PlatformIO in ~/.platformio. Keyed by the
+      # installed version (each release can pin a different toolchain), so
+      # "latest" gets a fresh cache when ESPHome moves on.
+      - name: Cache ESP-IDF / PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/esphome/idf
+            ~/.platformio
+          key: compile-tests-toolchains-${{ runner.os }}-esphome-${{ steps.esphome.outputs.version }}-py${{ steps.python.outputs.python-version }}
 
       - name: esphome config
         working-directory: components/${{ matrix.component }}/tests

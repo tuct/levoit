@@ -128,8 +128,11 @@ The **builder files** (`devices/*/*-builder*.yaml`) are what users paste into
 the ESPHome Device Builder. They are generated: after changing a device yaml
 or its `common.yaml`, run `devices/make-builder-yaml.ps1` and commit the
 result. The `Builder files` workflow fails when one is out of date, and
-compiles every one of them against the components of the PR (with dummy
-secrets). A key such as `logger:` must be set in only one of the device yaml
+compiles them against the components of the PR (with dummy secrets): a PR
+that only touches `devices/<x>/` builds `<x>`'s builder files, one that
+touches `components/` or `.github/` builds all of them, in jobs of up to five
+files (`.github/scripts/builder_ci_matrix.py`). Pushes to `main` build all.
+A key such as `logger:` must be set in only one of the device yaml
 and `common.yaml`: ESPHome merges packages, a single inlined file cannot.
 
 Builder files pull the component from the `stable` branch (the latest

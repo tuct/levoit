@@ -2,14 +2,21 @@ name: Builder files
 
 # The devices/*/*-builder*.yaml files are what users paste into the ESPHome
 # Device Builder. Check that they match their device yaml / common.yaml
-# (devices/make-builder-yaml.ps1) and that every one of them builds against the
-# components in this checkout.
+# (devices/make-builder-yaml.ps1) and that they build against the components
+# in this checkout.
+#
+# Only what a change can break is built (.github/scripts/builder_ci_matrix.py):
+# a PR that touches devices/<x>/ builds <x>'s builder files, one that touches
+# components/ or .github/ builds all of them; main and manual runs build all.
+# The files are built in groups of up to five per job, so the ESP-IDF set-up
+# happens once per group and a PR takes a few job slots instead of 25.
 on:
   pull_request:
     paths:
       - 'devices/**'
       - 'components/**'
       - '.github/scripts/builder_ci_config.py'
+      - '.github/scripts/builder_ci_matrix.py'
       - '.github/workflows/builder-files.yml'
   push:
     branches: [main]
@@ -17,6 +24,7 @@ on:
       - 'devices/**'
       - 'components/**'
       - '.github/scripts/builder_ci_config.py'
+      - '.github/scripts/builder_ci_matrix.py'
       - '.github/workflows/builder-files.yml'
   workflow_dispatch:
 
@@ -30,56 +38,83 @@ jobs:
     name: builder files up to date
     runs-on: ubuntu-latest
     outputs:
-      files: ${{ steps.list.outputs.files }}
+      groups: ${{ steps.list.outputs.groups }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Regenerate and compare
         shell: pwsh
         run: ./devices/make-builder-yaml.ps1 -Check
 
-      - name: List builder files
+      - name: Builder files to build
         id: list
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          files="$(ls devices/*/*-builder*.yaml | jq -R -s -c 'split("\n") | map(select(length > 0))')"
-          echo "files=$files" >> "$GITHUB_OUTPUT"
-          echo "$files"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff --name-only "$BASE_SHA"...HEAD > "$RUNNER_TEMP/changed.txt"
+            echo "Changed files:"; cat "$RUNNER_TEMP/changed.txt"
+            groups="$(python3 .github/scripts/builder_ci_matrix.py < "$RUNNER_TEMP/changed.txt")"
+          else
+            groups="$(python3 .github/scripts/builder_ci_matrix.py --all)"
+          fi
+          echo "groups=$groups" >> "$GITHUB_OUTPUT"
+          echo "$groups" | python3 -c "import json,sys; [print(g['name'], '->', g['files']) for g in json.load(sys.stdin)] or print('nothing to build')"
 
   compile:
-    name: ${{ matrix.file }}
+    name: ${{ matrix.group.name }}
     needs: up-to-date
+    if: needs.up-to-date.outputs.groups != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        file: ${{ fromJSON(needs.up-to-date.outputs.files) }}
+        group: ${{ fromJSON(needs.up-to-date.outputs.groups) }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
+        id: python
         with:
           python-version: '3.12'
 
-      # PlatformIO toolchains and the ESP-IDF sources are the slow part.
-      - name: Cache PlatformIO
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.platformio
-            ~/.cache/pip
-          key: pio-${{ runner.os }}-builder-${{ hashFiles(matrix.file) }}
-          restore-keys: |
-            pio-${{ runner.os }}-builder-
-            pio-${{ runner.os }}-esphome-latest-
-
       - name: Install ESPHome
+        id: esphome
         run: |
           pip install esphome
           esphome version
+          echo "version=$(esphome version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
 
-      - name: Use this checkout's components and dummy secrets
-        run: python .github/scripts/builder_ci_config.py "${{ matrix.file }}" "$RUNNER_TEMP/builder"
+      # ESPHome's native ESP-IDF build keeps the framework, toolchains and its
+      # Python environment here; downloading them was ~45 s of every job.
+      # Same key in every group, so one job saves it and the others reuse it.
+      - name: Cache ESP-IDF
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/esphome/idf
+          key: esphome-idf-${{ runner.os }}-esphome-${{ steps.esphome.outputs.version }}-py${{ steps.python.outputs.python-version }}
 
       - name: esphome compile
-        working-directory: ${{ runner.temp }}/builder
-        run: esphome compile "$(basename "${{ matrix.file }}")"
+        run: |
+          failed=()
+          for file in ${{ matrix.group.files }}; do
+            echo "::group::$file"
+            name="$(basename "$file")"
+            dir="$RUNNER_TEMP/builder"
+            if python .github/scripts/builder_ci_config.py "$file" "$dir" \
+               && (cd "$dir" && esphome compile "$name"); then
+              echo "$file: ok"
+            else
+              failed+=("$file")
+              echo "::error file=$file::esphome compile failed"
+            fi
+            # free the disk for the next one
+            rm -rf "$dir/.esphome/build"
+            echo "::endgroup::"
+          done
+          if [ ${#failed[@]} -gt 0 ]; then
+            echo "Failed: ${failed[*]}"
+            exit 1
+          fi
