@@ -4,6 +4,7 @@
 #include "tlv.h"
 #include "types.h"
 #include "decoder_helpers.h"
+#include <cinttypes>
 #include <vector>
 #include <string>
 
@@ -150,7 +151,7 @@ namespace esphome
             uint8_t dry_active_flag = t.value_ptr[3];
             uint8_t dry_level = t.value_ptr[4];
 
-            ESP_LOGV(TAG_SUP, "DryRemaining=%u sec, DryActive=%u, DryLevel=%u",
+            ESP_LOGV(TAG_SUP, "DryRemaining=%" PRIu32 " sec, DryActive=%u, DryLevel=%u",
                      dry_remaining, dry_active_flag, dry_level);
 
             // Active flag: 01=active, 02=inactive (unusual)
