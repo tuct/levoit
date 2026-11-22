@@ -62,6 +62,19 @@ CONFIG_SCHEMA = cv.All(
     .extend(uart.UART_DEVICE_SCHEMA)
 )
 
+# The MCU link is 115200 8N1 in both directions. Checked when the config is
+# validated; the run-time UARTDevice::check_uart_settings() is deprecated and
+# goes away in ESPHome 2027.3.0.
+FINAL_VALIDATE_SCHEMA = uart.final_validate_device_schema(
+    "philips",
+    baud_rate=115200,
+    require_tx=True,
+    require_rx=True,
+    data_bits=8,
+    parity="NONE",
+    stop_bits=1,
+)
+
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
