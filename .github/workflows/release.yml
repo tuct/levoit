@@ -1,0 +1,61 @@
+name: Release
+
+# On every published release, move the stable branch to the release tag, so a
+# config that pulls the components with `ref: stable` gets releases only.
+# Release notes stay hand-written. Run it by hand to point stable at an
+# existing tag (for example the first time).
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to point stable at, e.g. 1.7.0
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-stable
+  cancel-in-progress: false
+
+jobs:
+  stable:
+    name: move stable
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Point stable at the release tag
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          set -eu
+          sha="$(git rev-parse --verify "refs/tags/$TAG^{commit}")"
+
+          # The tag must be the version the components report. Releases from
+          # before components/levoit/VERSION existed have no file to check.
+          if version="$(git show "$sha:components/levoit/VERSION" 2>/dev/null)"; then
+            version="$(printf '%s' "$version" | tr -d '[:space:]')"
+            if [ "$version" != "$TAG" ]; then
+              echo "::error::Tag $TAG, but components/levoit/VERSION at that commit is $version"
+              exit 1
+            fi
+          else
+            echo "::warning::No components/levoit/VERSION at $TAG; not checked"
+          fi
+
+          # Forward only: stable never moves back to an older release.
+          if old="$(git rev-parse --verify -q refs/remotes/origin/stable)"; then
+            if ! git merge-base --is-ancestor "$old" "$sha"; then
+              echo "::error::stable is at $old, which $TAG ($sha) does not contain; move it by hand if that is intended"
+              exit 1
+            fi
+          fi
+
+          git push origin "$sha:refs/heads/stable"
+          echo "stable -> $TAG ($sha)"

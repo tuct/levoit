@@ -1,3 +1,6 @@
+import importlib.util
+from pathlib import Path
+
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import uart
@@ -5,6 +8,25 @@ from esphome.const import CONF_ID
 
 DEPENDENCIES = ["uart"]
 CODEOWNERS = ["@tuct"]
+
+
+def _repo_version() -> str:
+    """The repo's one version, from components/levoit/version_info.py.
+
+    This is a mono repo with one release number. external_components clones the
+    whole repo, so the levoit folder is there even when only philips is used;
+    it is loaded by path so the levoit component itself is not loaded.
+    """
+    path = Path(__file__).resolve().parent.parent / "levoit" / "version_info.py"
+    if not path.is_file():
+        return "unknown"
+    spec = importlib.util.spec_from_file_location("_tuct_repo_version_info", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.version()
+
+
+PHILIPS_VERSION = _repo_version()
 
 CONF_PHILIPS_MODEL = "model"
 # 600 series: AC0650 = base (no PM sensor, no Auto), AC0651 = same + PM sensor.
@@ -46,3 +68,4 @@ async def to_code(config):
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
     cg.add(var.set_model(MODEL_MAP[config[CONF_PHILIPS_MODEL]]))
+    cg.add_define("PHILIPS_VERSION", PHILIPS_VERSION)

@@ -113,6 +113,10 @@ text_sensor:
     philips: purifier
     name: "MCU Version"
     type: mcu_version
+  - platform: philips
+    philips: purifier
+    name: "ESP Version"
+    type: esp_version
 ```
 
 Ready-made device configs live in [`devices/philips-600-series/`](../../devices/philips-600-series/).
@@ -135,6 +139,7 @@ Ready-made device configs live in [`devices/philips-600-series/`](../../devices/
 | `number` | `timer` | 900 only | Sleep timer in hours, 0 (off) to 12 |
 | `sensor` | `timer_remaining` | 900 only | Minutes left on the sleep timer (counts down; read-only) |
 | `text_sensor` | `mcu_version` | both | MCU firmware version (from the boot device-info report) |
+| `text_sensor` | `esp_version` | both | Component version and the commit it was built from, e.g. `1.7.0+3fa21c4 esphome`. One version for the repo, shared with `levoit` |
 
 ## Notes
 

@@ -5,6 +5,14 @@
 Project-level changes. Component releases have their own log:
 [levoit](./components/levoit/README.md#change-log).
 
+### Unreleased
+
+* **One version for the repo.** `philips` now reports the same version as
+  `levoit` (from `components/levoit/VERSION`) and has an `esp_version` text
+  sensor, e.g. `1.7.0+3fa21c4 esphome`
+* **`stable` branch**: a release workflow moves it to every published release,
+  so a config can pull the component with `ref: stable` and get releases only
+
 ### 2026.11.21
 
 * **Levoit component [1.7.0](./components/levoit/README.md#change-log)** — the
