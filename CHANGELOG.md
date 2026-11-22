@@ -7,6 +7,12 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
+* **Superior 6000S on its stock ESP32-C3-SOLO-1**: the configs used `esp32dev`
+  with GPIO16 / GPIO17, a guess carried over from the purifiers. They now use
+  the C3 module with the MCU link on GPIO18 / GPIO19, as egoleos confirmed on an
+  LEH-S601S-WUS ([#78](https://github.com/tuct/levoit/discussions/78)); DIO
+  flash, the log on UART0, ESPHome 2026.6.0 or newer. The README has the
+  flashing steps (GPIO9 low for download mode)
 * **Seeed XIAO ESP32-S3 configs for the remaining models**: Everest Air,
   Superior 6000S, Eleva 300X, Philips 600 series (AC0650) and 900 series
   (AC0950), with builder files and Add device templates. Everest Air keeps the
