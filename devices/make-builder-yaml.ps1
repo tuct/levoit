@@ -14,7 +14,10 @@
 #   philips-ac0650.yaml      -> philips-ac0650-builder.yaml
 #
 # The component comes from the `stable` branch, which the Release workflow moves
-# to every release. A device that needs other local components (the Sprout's
+# to every release, with `refresh: always`: ESPHome otherwise fetches a git
+# component once a day, so a build right after a release (an update from the
+# Levoit ESPHome integration) would still use the old commit.
+# A device that needs other local components (the Sprout's
 # levoit_audio) cannot be built in the Device Builder: it is skipped, and its
 # builder file, if any, is kept by hand.
 #
@@ -152,7 +155,8 @@ function New-BuilderYaml([string]$DeviceYaml) {
         "      type: git",
         "      url: https://github.com/tuct/levoit",
         "      ref: $Ref",
-        "    components: [$($components -join ', ')]"
+        "    components: [$($components -join ', ')]",
+        "    refresh: always"
     ) -join "`n"
 
     return "# Generated from devices/$relative by devices/make-builder-yaml.ps1 - in the`n" +

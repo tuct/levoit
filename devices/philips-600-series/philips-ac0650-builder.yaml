@@ -25,6 +25,7 @@ external_components:
       url: https://github.com/tuct/levoit
       ref: stable
     components: [philips]
+    refresh: always
 logger:
   # On the ESP32-C3 the default logger UART (UART0) is GPIO20/21 — the same pins
   # as the MCU link. Log over the native USB instead so those pins stay free.
