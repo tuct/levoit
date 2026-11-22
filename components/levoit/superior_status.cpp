@@ -151,7 +151,7 @@ namespace esphome
             uint8_t dry_level = t.value_ptr[4];
 
             ESP_LOGV(TAG_SUP, "DryRemaining=%u sec, DryActive=%u, DryLevel=%u",
-                     dry_remaining, dry_active_flag, dry_level);
+                     (unsigned)dry_remaining, dry_active_flag, dry_level);
 
             // Active flag: 01=active, 02=inactive (unusual)
             have_dry_active = true;
