@@ -99,7 +99,7 @@ Read with `esptool read-flash 0 ALL`. Secure Boot and flash encryption are **dis
 | MCU TX → ESP RX | 27 | IO18 | `rx_pin: GPIO18` | ch 0 |
 | ESP TX → MCU RX | 28 | IO19 | `tx_pin: GPIO19` | ch 1 |
 
-Same module and pins as the [Vital 100S](../levoit-vital100s) and [Vital 200S](../levoit-vital200s), both tested on the stock module. The configs take over the Vital 100S flash settings too (DIO, 40 MHz, 4 MB).
+Same module and pins as the [Vital 100S](../levoit-vital100s) and [Vital 200S](../levoit-vital200s), both tested on the stock module. Flash: DIO at 80 MHz, 4 MB, as the stock firmware's image header (bootloader and app, both dumps) sets it.
 
 Don't go by the classic **ESP32-SOLO-1** datasheet: it has the same footprint, but there pins 27 / 28 are IO16 / IO17. On the C3, GPIO16 / GPIO17 are internal flash pins, which ESPHome refuses. GPIO18 / GPIO19 are the C3's USB pins, so ESPHome warns that USB-Serial-JTAG uses them; that is expected, the log runs on UART0.
 
