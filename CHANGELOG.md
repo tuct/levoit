@@ -27,6 +27,14 @@ Project-level changes. Component releases have their own log:
   ESPHome integration's *Add device*: original ESP, XIAO ESP32-C3, ESP32-C3 and,
   for the Core and Vital models, ESP32-S3 ([#109](https://github.com/tuct/levoit/pull/109),
   [#121](https://github.com/tuct/levoit/pull/121)); S3 needs the integration 0.4.1 or newer
+* **S3 configs for the Seeed XIAO ESP32-S3**: the Core 200S / 300S / 400S / 600S
+  and Vital 100S / 200S S3 configs use `board: seeed_xiao_esp32s3` instead of the
+  generic DevKitC-1. Same GPIO numbers, so existing wiring keeps working; the
+  pin lines name the XIAO pads (GPIO4 = D3, GPIO5 = D4, GPIO6 = D5)
+  ([#123](https://github.com/tuct/levoit/pull/123))
+* **CI**: the builder-file check builds only the devices a PR touches (all of
+  them for component changes), up to five files per job
+  ([#122](https://github.com/tuct/levoit/pull/122))
 
 ### 2026.11.22
 
