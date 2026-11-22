@@ -96,6 +96,10 @@ text_sensor:
     philips: purifier
     name: "mcu_version"
     type: mcu_version
+  - platform: philips
+    philips: purifier
+    name: "esp_version"
+    type: esp_version
 
 button:
   - platform: philips

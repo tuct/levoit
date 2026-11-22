@@ -521,7 +521,7 @@ Auto mode options per model:
 | Feature | Type | Config Key | Description |
 |---------|----|------------|-------------|
 | MCU Version | text_sensor | `mcu_version` | Firmware version string of the purifier MCU chip |
-| ESP Version | text_sensor | `esp_version` | ESPHome component version string |
+| ESP Version | text_sensor | `esp_version` | Component version and the commit it was built from, e.g. `1.7.0+3fa21c4 esphome` |
 | Error | text_sensor | `error_message` | Device error status: "Ok" or "Sensor Error" **Not for Core200S** |
 
 ## Change Log
@@ -533,6 +533,11 @@ Auto mode options per model:
   (`1.7.0 esphome`); a new `Version check` workflow keeps it in step with this
   change log and with release tags. First step of the
   [firmware update plan](../../docs/firmware-updates.md)
+* **The version now includes the commit it was built from**, e.g.
+  `1.7.0+3fa21c4 esphome` on the `esp_version` sensor (`.dirty` for a local
+  checkout with uncommitted changes). Builds from `main` between two releases
+  can now be told apart from the release. Without git around the component
+  it stays `1.7.0`
 * **Everest Air: one "set speed" action now leaves Auto/Sleep/Turbo**, like on
   the other models; no need to set the Manual preset first
   ([#92](https://github.com/tuct/levoit/issues/92)). The Manual mode frame

@@ -4,6 +4,12 @@
 #include "esphome/core/component.h"
 #include "esphome/components/uart/uart.h"
 
+// Set by __init__.py from components/levoit/VERSION (one version for the repo)
+// and the git commit, e.g. "1.7.0+3fa21c4".
+#ifndef PHILIPS_VERSION
+#define PHILIPS_VERSION "unknown"
+#endif
+
 namespace esphome {
 namespace philips {
 
@@ -50,6 +56,7 @@ enum class NumberType : uint8_t {
 
 enum class TextSensorType : uint8_t {
   MCU_VERSION = 0,   // MCU firmware version string from the group 0x01 device-info report
+  ESP_VERSION = 1,   // this component's version, PHILIPS_VERSION + " esphome"
 };
 
 class PhilipsFan;
@@ -80,6 +87,8 @@ class Philips : public Component, public uart::UARTDevice {
   }
   uint8_t mode_medium() const { return this->is_900() ? MODE_MEDIUM_900 : MODE_MEDIUM_600; }
   uint32_t hepa_total() const { return this->is_900() ? 9600 : 4800; }
+  // Same format as the levoit esp_version sensor, e.g. "1.7.0+3fa21c4 esphome".
+  const char *get_version() const { return PHILIPS_VERSION " esphome"; }
 
   // registered from python codegen
   void set_fan(PhilipsFan *f) { fan_ = f; }
@@ -136,7 +145,7 @@ class Philips : public Component, public uart::UARTDevice {
   PhilipsFan *fan_{nullptr};
   PhilipsSensor *sensors_[5]{nullptr, nullptr, nullptr, nullptr, nullptr};
   PhilipsSwitch *switches_[3]{nullptr, nullptr, nullptr};
-  PhilipsTextSensor *text_sensors_[1]{nullptr};
+  PhilipsTextSensor *text_sensors_[2]{nullptr, nullptr};
   PhilipsSelect *selects_[1]{nullptr};
   PhilipsNumber *numbers_[1]{nullptr};
 

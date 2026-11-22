@@ -11,7 +11,8 @@
 #include "esphome/components/time/real_time_clock.h"
 #endif
 
-// Set by __init__.py from components/levoit/VERSION.
+// Set by __init__.py from components/levoit/VERSION and the git commit,
+// e.g. "1.7.0+3fa21c4" (see version_info.py).
 #ifndef LEVOIT_VERSION
 #define LEVOIT_VERSION "unknown"
 #endif

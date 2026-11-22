@@ -10,6 +10,7 @@ class PhilipsTextSensor : public text_sensor::TextSensor, public Component {
  public:
   void set_parent(Philips *p) { parent_ = p; }
   void set_type(TextSensorType t) { type_ = t; }
+  void setup() override;
   void dump_config() override;
 
  protected:

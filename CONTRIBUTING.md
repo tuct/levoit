@@ -126,14 +126,21 @@ Device configs under `devices/` are *not* built by CI — they need a
 
 ## Versioning
 
-The levoit component version lives in one place,
+The repo has one version, for both components, in one place:
 [`components/levoit/VERSION`](./components/levoit/VERSION). The build compiles
-it in (`LEVOIT_VERSION`), and the `esp_version` sensor reports it. It must
+it in (`LEVOIT_VERSION`, `PHILIPS_VERSION`) together with the git commit it was
+built from, and the `esp_version` sensors report it (`1.7.0+3fa21c4 esphome`;
+see [`version_info.py`](./components/levoit/version_info.py)). It must
 match the newest released entry (`#### ESP Version: X.Y.Z - date`) in the
 [change log](./components/levoit/README.md#change-log). Bump both in the same
 PR, or neither — a changelog entry for a version the binary does not report is
 worse than no entry. The `Version check` workflow enforces this on every PR
 that touches the component, and checks that a release tag matches the file.
+
+Publishing a release on GitHub (tag `X.Y.Z`, notes written by hand) runs the
+`Release` workflow, which moves the `stable` branch forward to that tag.
+Configs that pull the components with `ref: stable` get releases only; `main`
+gets every merge.
 
 ## Secrets
 
