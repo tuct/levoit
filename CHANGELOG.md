@@ -9,6 +9,17 @@ Project-level changes. Component releases have their own log:
 
 * **`model` text sensor** for `levoit` and `philips`, reporting the configured
   model; added to the device configs once released
+* **Minimum ESPHome is now 2026.6.0** (CI, READMEs, the esphome-devices configs)
+* **Vital 100S / Eleva 300X on the stock ESP32-C3-SOLO-1: DIO at 40 MHz again
+  with current ESPHome.** The override was set through `platformio_options`,
+  which ESPHome's native ESP-IDF build ignores, leaving the board default
+  (QIO, 80 MHz) that can fail to boot on that module. They now use
+  `esp32: flash_mode: dio` / `flash_frequency: 40MHz` (ESPHome 2026.6.0+) and
+  set `min_version: 2026.6.0`; the Vital 100S `_dev` config gets them too
+* **C3 / S3 replacement configs** (and the Mini): removed a copied
+  `platformio_options` block (`BOARD_HAS_PSRAM`, `qio_opi`, QIO / 80 MHz). It
+  only applies to Arduino builds and the board defaults, and produced
+  deprecation / ignored warnings
 * **One version for the repo.** `philips` now reports the same version as
   `levoit` (from `components/levoit/VERSION`) and has an `esp_version` text
   sensor, e.g. `1.7.0+3fa21c4 esphome`

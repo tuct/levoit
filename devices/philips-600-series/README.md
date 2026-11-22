@@ -29,7 +29,7 @@ Two variants are supported via the `model:` option — both speak the identical
 | MCU link | UART, 115200 8N1, `FE FF` protocol |
 | Fan speeds | 3 (Sleep / Medium / Turbo) + Auto on 651 |
 | PM sensor | PM1003 (AC0651 only) |
-| ESPHome | 2026.5.3+ |
+| ESPHome | 2026.6.0+ |
 
 ## Features
 

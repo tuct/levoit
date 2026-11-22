@@ -2,18 +2,16 @@ esphome:
   name: levoit-vital100s
   friendly_name: Levoit Vital 100S
   name_add_mac_suffix: true
-  min_version: 2026.5.3
-  platformio_options:
-    # The stock ESP32-C3-SOLO-1 needs these; esp32-c3-devkitm-1 defaults to
-    # QIO at 80 MHz, which builds fine but can fail to boot on the original
-    # module. board_build.f_flash is the key PlatformIO reads — flash_freq is
-    # silently ignored.
-    board_build.flash_mode: dio
-    board_build.f_flash: 40000000L
+  min_version: 2026.6.0
 
 esp32:
   board: esp32-c3-devkitm-1
   variant: esp32c3
+  # The stock ESP32-C3-SOLO-1 needs these; esp32-c3-devkitm-1 defaults to QIO at
+  # 80 MHz, which builds fine but can fail to boot on the original module.
+  # platformio_options would be ignored by the native ESP-IDF build.
+  flash_mode: dio
+  flash_frequency: 40MHz
   framework:
     type: esp-idf
     sdkconfig_options:

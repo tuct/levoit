@@ -102,7 +102,7 @@ esphome compile test-all-entities.yaml
 
 CI builds every config twice: with the **newest** ESPHome (unpinned, so a new
 ESPHome release can turn the checks red without any change in this repo) and
-with the **minimum** stated in the component READMEs (currently **2026.5.3**,
+with the **minimum** stated in the component READMEs (currently **2026.6.0**,
 the `esphome` matrix in the workflow; raise both together). Reproduce the
 minimum build locally with the `min` argument of the scripts above.
 

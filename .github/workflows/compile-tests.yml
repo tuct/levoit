@@ -31,7 +31,7 @@ jobs:
         # one is the minimum stated in the component READMEs, so a fix for a new
         # release cannot silently drop support for older ones. Raise it together
         # with the READMEs.
-        esphome: ['latest', '2026.5.3']
+        esphome: ['latest', '2026.6.0']
         config:
           # every platform and every entity type - maximum codegen coverage
           - test-all-entities.yaml
@@ -51,7 +51,7 @@ jobs:
           # Ethernet instead of Wi-Fi: catches code that needs the wifi
           # component. levoit only (Philips has no wired test config).
           - { component: levoit, config: test-ethernet.yaml, esphome: latest }
-          - { component: levoit, config: test-ethernet.yaml, esphome: '2026.5.3' }
+          - { component: levoit, config: test-ethernet.yaml, esphome: '2026.6.0' }
     steps:
       - uses: actions/checkout@v4
 
