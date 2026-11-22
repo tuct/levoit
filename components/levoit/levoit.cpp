@@ -346,6 +346,8 @@ namespace esphome
 
         void Levoit::apply_fan_status(int power, int speed, int mode)
         {
+            if (speed != -1)
+                this->fan_sleep_speed_ = (speed == 0);
 #ifdef USE_LEVOIT_FAN
             if (this->fan_ != nullptr)
                 this->fan_->apply_device_status(power, speed, mode);
@@ -724,6 +726,7 @@ namespace esphome
                     this->sendCommand(setFanModeManual);
                     break;
                 case 1:
+                    this->fan_sleep_speed_ = true;
                     this->sendCommand(setFanModeSleep);
                     break;
                 case 2:
@@ -764,6 +767,7 @@ namespace esphome
             }
             if (speed_level != -1)
             {
+                this->fan_sleep_speed_ = false;
                 switch (speed_level)
                 {
                 case 1:
@@ -990,9 +994,9 @@ namespace esphome
                 return 0;
             uint32_t result = (cadr * (uint32_t)speed) / max_speed;
 
-            // Sleep mode derates level 1 to 63%
+            // Sleep mode (or Auto mode idling at FanLevel 0) derates level 1 to 63%
             esphome::StringRef preset = this->fan_->get_preset_mode();
-            if (!preset.empty() && preset == "Sleep" && speed == 1)
+            if (speed == 1 && (this->fan_sleep_speed_ || (!preset.empty() && preset == "Sleep")))
             {
                 result = (uint32_t)(result * 0.63f);
             }

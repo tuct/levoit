@@ -249,6 +249,7 @@ class Levoit : public Component, public uart::UARTDevice {
   time::RealTimeClock *time_{nullptr};
 #endif
   bool display_on_{false};
+  bool fan_sleep_speed_{false};  // true when MCU reports FanLevel 0 (Sleep or Auto-low speed)
 
   uint16_t cadr = 235;
   uint8_t buffer_[512];
