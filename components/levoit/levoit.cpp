@@ -868,11 +868,6 @@ namespace esphome
                 ESP_LOGI(TAG, "Initialized total_runtime to 0");
             }
                                
-            // Set LED to blink on initial connect until WiFi is connected.
-            // Delay slightly so the MCU has time to finish booting before we send commands.
-            this->set_timeout("wifi_led_init", 2000, [this]() {
-                this->sendCommand(CommandType::setWifiLedBlinking);
-            });
             // Core models: blink the filter LED until Wi-Fi connects. The other
             // protocols have no filter LED command (on Vital the same code is
             // tag 0x06 DisplayIlluminated, which toggled the display).
@@ -1067,49 +1062,57 @@ namespace esphome
                     // Determine WiFi state: connecting = not connected and not disabled
                     bool is_connecting = !is_connected && !is_disabled;
 
-                    if (is_connected && !wifi_led_solid_)
+                    WifiLedState desired = is_connected
+                                               ? WifiLedState::SOLID
+                                               : (is_connecting ? WifiLedState::BLINKING : WifiLedState::OFF);
+
+                    if (desired != wifi_led_state_)
                     {
-                        ESP_LOGD(TAG, "WiFi connected - setting LED solid");
-                        wifi_led_solid_ = true;
-                        wifi_led_blink_sent_ = false;
-                        if (this->is_core_model())
-                            this->sendCommand(CommandType::setFilterLedOff);
-                        filter_led_on_ = false;
-                        filter_blinking_ = false;
-                        // Ensure any blinking is cleared before setting solid LED
-                        this->sendCommand(CommandType::setWifiLedOff);
-                        if (this->model_ == ModelType::CORE200S)
+                        WifiLedState prev = wifi_led_state_;
+                        wifi_led_state_ = desired;
+                        this->cancel_timeout("wifi_led_on");
+                        this->cancel_timeout("wifi_led_on_retry");
+
+                        if (desired == WifiLedState::SOLID)
                         {
-                            this->set_timeout(500, [this]() {
+                            ESP_LOGD(TAG, "WiFi connected - setting LED solid");
+                            if (this->is_core_model())
+                                this->sendCommand(CommandType::setFilterLedOff);
+                            filter_led_on_ = false;
+                            filter_blinking_ = false;
+                            if (prev == WifiLedState::OFF)
+                            {
                                 this->sendCommand(CommandType::setWifiLedOn);
-                                this->set_timeout(500, [this]() {
+                            }
+                            else
+                            {
+                                // Clear blinking first, then wait before setting solid so back-to-back
+                                // UART frames aren't dropped while the MCU processes the first command.
+                                this->sendCommand(CommandType::setWifiLedOff);
+                                this->set_timeout("wifi_led_on", 500, [this]() {
+                                    if (this->wifi_led_state_ != WifiLedState::SOLID)
+                                        return;
                                     this->sendCommand(CommandType::setWifiLedOn);
+                                    if (this->model_ == ModelType::CORE200S)
+                                    {
+                                        this->set_timeout("wifi_led_on_retry", 500, [this]() {
+                                            if (this->wifi_led_state_ == WifiLedState::SOLID)
+                                                this->sendCommand(CommandType::setWifiLedOn);
+                                        });
+                                    }
                                 });
-                            });
+                            }
+                        }
+                        else if (desired == WifiLedState::BLINKING)
+                        {
+                            ESP_LOGD(TAG, "WiFi connecting - setting LED blinking");
+                            this->sendCommand(CommandType::setWifiLedBlinking);
                         }
                         else
                         {
-                            this->sendCommand(CommandType::setWifiLedOn);
+                            ESP_LOGD(TAG, "WiFi disabled - setting LED off");
+                            this->sendCommand(CommandType::setWifiLedOff);
                         }
-                    }
-                    else if (is_connecting && wifi_led_solid_)
-                    {
-                        ESP_LOGD(TAG, "WiFi connecting - setting LED blinking");
-                        this->sendCommand(CommandType::setWifiLedBlinking);
-                        wifi_led_solid_ = false;
-                    }
-                    else if (is_connecting && !wifi_led_solid_ && !wifi_led_blink_sent_)
-                    {
-                        // Retry blinking on initial boot in case the setup() command was missed
-                        ESP_LOGD(TAG, "WiFi connecting - initial blink retry");
-                        this->sendCommand(CommandType::setWifiLedBlinking);
-                        wifi_led_blink_sent_ = true;
-                    }
-                    else if (is_disabled && wifi_led_solid_)
-                    {
-                        ESP_LOGD(TAG, "WiFi disabled - setting LED off");
-                        this->sendCommand(CommandType::setWifiLedOff);
-                        wifi_led_solid_ = false;
                     }
                 }
             }
@@ -1345,6 +1348,22 @@ namespace esphome
             const uint8_t cmd_sz = msg[6];
             const uint8_t ptype0 = msg[7];
             const uint8_t ptype1 = msg[8];
+
+            if (!this->mcu_seen_)
+            {
+                this->mcu_seen_ = true;
+                bool is_wifi_led_ack = (msg_type == 0x12) &&
+                                       ((ptype0 == 0x18 && ptype1 == 0x50) ||
+                                        (ptype0 == 0x29 && ptype1 == 0xA1));
+                if (!is_wifi_led_ack && this->wifi_led_state_ != WifiLedState::UNKNOWN)
+                {
+                    // Re-sync Wi-Fi LED once we hear from the MCU in case an earlier
+                    // boot-time LED command was sent before the MCU finished starting up.
+                    this->cancel_timeout("wifi_led_on");
+                    this->cancel_timeout("wifi_led_on_retry");
+                    this->wifi_led_state_ = WifiLedState::UNKNOWN;
+                }
+            }
 
             // Frame sanity
             ESP_LOGD(TAG,
