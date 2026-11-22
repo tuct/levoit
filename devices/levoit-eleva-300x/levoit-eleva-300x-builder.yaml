@@ -34,6 +34,7 @@ external_components:
       url: https://github.com/tuct/levoit
       ref: stable
     components: [levoit]
+    refresh: always
 logger:
   level: DEBUG
   # Keep the log on J3 (TXD0/RXD0), like the stock firmware

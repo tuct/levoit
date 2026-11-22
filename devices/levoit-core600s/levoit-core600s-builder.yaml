@@ -25,6 +25,7 @@ external_components:
       url: https://github.com/tuct/levoit
       ref: stable
     components: [levoit]
+    refresh: always
 logger:
   level: VERBOSE
 

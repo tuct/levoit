@@ -74,7 +74,7 @@ Each device folder contains pre-generated `*-builder*.yaml` files with all confi
 
 (Same pattern for all devices; a file whose name does not start with the folder name, such as `philips-ac0650.yaml`, becomes `philips-ac0650-builder.yaml`.)
 
-They read `wifi_ssid`, `wifi_password`, `wifi_ap_password`, `api_key` and `ota_password` from your `secrets.yaml`, and pull the component from the **`stable`** branch, which moves to every release. For every merge instead, change `ref: stable` to `ref: main` in your copy.
+They read `wifi_ssid`, `wifi_password`, `wifi_ap_password`, `api_key` and `ota_password` from your `secrets.yaml`, and pull the component from the **`stable`** branch, which moves to every release, with `refresh: always` so every build fetches it (ESPHome's default is once a day, which would rebuild an old commit right after a release). For every merge instead, change `ref: stable` to `ref: main` in your copy.
 
 **Don't edit them in the repo.** They are generated from the device yaml and its `common.yaml`; edit those and regenerate (Windows PowerShell 5.1 or PowerShell 7):
 
