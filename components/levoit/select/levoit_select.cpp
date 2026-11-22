@@ -1,6 +1,7 @@
 #include "levoit_select.h"
 #include "../levoit.h"
 #include "../types.h"
+#include "../fan_modes.h"
 #include "esphome/core/log.h"
 #include "esphome/components/select/select_traits.h"
 
@@ -10,16 +11,6 @@ namespace esphome
   {
 
     static const char *const TAG = "levoit.select";
-
-    static int fan_operating_mode_to_raw(const std::string &value)
-    {
-      if (value == "Manual") return 0;
-      if (value == "Sleep") return 1;
-      if (value == "Auto") return 2;
-      if (value == "Turbo") return 4;
-      if (value == "Pet") return 5;
-      return -1;
-    }
 
     void LevoitSelect::setup() {
       switch (this->type_) {
@@ -109,7 +100,7 @@ namespace esphome
       uint32_t index = it - options.begin();
       if (this->type_ == SelectType::FAN_OPERATING_MODE_SELECT ||
           this->type_ == SelectType::DAYTIME_FAN_MODE) {
-        int mode = fan_operating_mode_to_raw(value);
+        int mode = fan_operating_mode_to_raw(StringRef(value));
         if (mode < 0) {
           ESP_LOGW(TAG, "Unknown fan operating mode option: %s", value.c_str());
           return;
