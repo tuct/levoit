@@ -12,6 +12,14 @@ Project-level changes. Component releases have their own log:
   sensor, e.g. `1.7.0+3fa21c4 esphome`
 * **`stable` branch**: a release workflow moves it to every published release,
   so a config can pull the component with `ref: stable` and get releases only
+* **Builder files follow `stable`** and are checked by CI: the `Builder files`
+  workflow fails when one does not match its device yaml / `common.yaml`, and
+  compiles every one. New builder files for the Eleva 300X, Everest Air,
+  Superior 6000S and Philips AC0650 / AC0950; `make-builder-yaml.ps1` no
+  longer garbles `—`, handles the Philips configs and has a `-Check` mode
+* **Core 600S:** the README pointed original-ESP users at
+  `levoit-core600s-builder-solo-1c.yaml`, which has no `esphome:` section and
+  does not validate. It is removed; use `levoit-core600s-builder.yaml`
 
 ### 2026.11.21
 
