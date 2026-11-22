@@ -140,6 +140,7 @@ Ready-made device configs live in [`devices/philips-600-series/`](../../devices/
 | `sensor` | `timer_remaining` | 900 only | Minutes left on the sleep timer (counts down; read-only) |
 | `text_sensor` | `mcu_version` | both | MCU firmware version (from the boot device-info report) |
 | `text_sensor` | `esp_version` | both | Component version and the commit it was built from, e.g. `1.7.0+3fa21c4 esphome`. One version for the repo, shared with `levoit` |
+| `text_sensor` | `model` | both | The configured `model:`, e.g. `AC0951`; lets Home Assistant (the Levoit ESPHome integration) tell the device type without the config |
 
 ## Notes
 

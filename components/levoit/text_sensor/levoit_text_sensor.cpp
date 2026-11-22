@@ -15,6 +15,10 @@ namespace esphome
         case TextSensorType::ESP_VERSION:
           this->publish_state(this->parent_->get_version());
           break;
+        case TextSensorType::MODEL:
+          // Known at build time, like the ESP version
+          this->publish_state(this->parent_->get_model_name());
+          break;
         default:
           break;
       }

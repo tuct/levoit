@@ -168,6 +168,7 @@ namespace esphome
             AUTO_MODE_ROOM_SIZE_HIGH_FAN = 4,
             ERROR_MESSAGE = 5,
             SPROUT_EVENT = 6,   // Sprout: last MCU event string (CMD=02 08 55)
+            MODEL = 7,          // configured model (`model:` of the levoit block), e.g. CORE300S
         };
         static constexpr TextSensorType MCU_VERSION = TextSensorType::MCU_VERSION;
         static constexpr TextSensorType ESP_VERSION = TextSensorType::ESP_VERSION;
@@ -176,6 +177,7 @@ namespace esphome
         static constexpr TextSensorType AUTO_MODE_ROOM_SIZE_HIGH_FAN = TextSensorType::AUTO_MODE_ROOM_SIZE_HIGH_FAN;
         static constexpr TextSensorType ERROR_MESSAGE = TextSensorType::ERROR_MESSAGE;
         static constexpr TextSensorType SPROUT_EVENT = TextSensorType::SPROUT_EVENT;
+        static constexpr TextSensorType MODEL = TextSensorType::MODEL;
 
 
 

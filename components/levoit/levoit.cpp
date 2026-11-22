@@ -797,6 +797,7 @@ namespace esphome
 
         void Levoit::set_device_model(std::string model)
         {
+            this->model_name_ = model;
             if (model == "VITAL200S")
                 model_ = ModelType::VITAL200S;
             else if (model == "VITAL100S")

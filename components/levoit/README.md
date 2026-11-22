@@ -522,12 +522,17 @@ Auto mode options per model:
 |---------|----|------------|-------------|
 | MCU Version | text_sensor | `mcu_version` | Firmware version string of the purifier MCU chip |
 | ESP Version | text_sensor | `esp_version` | Component version and the commit it was built from, e.g. `1.7.0+3fa21c4 esphome` |
+| Model | text_sensor | `model` | The configured `model:`, e.g. `CORE300S`; lets Home Assistant (the Levoit ESPHome integration) tell the device type without the config |
 | Error | text_sensor | `error_message` | Device error status: "Ok" or "Sensor Error" **Not for Core200S** |
 
 ## Change Log
 
 #### Unreleased
 
+* **New `model` text sensor** (`type: model`): reports the configured `model:`,
+  e.g. `CORE300S`, so Home Assistant (the Levoit ESPHome integration) can tell
+  the device type without its config. The device configs get it with the next
+  release, as builder files pull `stable`
 * The component version has one source now, `components/levoit/VERSION`. The
   build compiles it in and the `esp_version` sensor reports it as before
   (`1.7.0 esphome`); a new `Version check` workflow keeps it in step with this
