@@ -108,6 +108,8 @@ class Levoit : public Component, public uart::UARTDevice {
   void loop() override;
   void dump_config() override;
   void set_device_model(std::string model);
+  // The configured `model:` string, for the model text sensor.
+  const std::string &get_model_name() const { return this->model_name_; }
   void process_message(uint8_t *msg, int len);
   void track_cadr_usage();  // Track CADR and runtime based on fan state
   uint32_t calculate_current_cadr_per_hour() const;  // Compute current CADR/h based on speed and model
@@ -223,13 +225,14 @@ class Levoit : public Component, public uart::UARTDevice {
   LevoitNumber *numbers_[24] {nullptr};
   LevoitSensor *sensors_[16] {nullptr};    // max SensorType index = 8 (FAN_RPM)
   LevoitSelect *selects_[16] {nullptr};    // max SelectType index = 9 (SLEEP_PREFERENCE)
-  LevoitTextSensor *text_sensor_[16] {nullptr};  // max TextSensorType index = 6 (SPROUT_EVENT)
+  LevoitTextSensor *text_sensor_[16] {nullptr};  // max TextSensorType index = 7 (MODEL)
   class LevoitBinarySensor *binary_sensors_[8] {nullptr};
   bool binary_sensor_states_[8] {false};
   class LevoitButton *buttons_[4] {nullptr};
   LevoitFan *fan_{nullptr};
   LevoitSproutLight *sprout_light_{nullptr};
   ModelType model_{ModelType::VITAL100S};
+  std::string model_name_;
   // Last commanded LED values — set by sendSproutLightDirect, read by build_sprout_command
   uint8_t  pending_led_bri_{100};    // 0–100 percent
   uint16_t pending_led_ct_{3500};    // Kelvin

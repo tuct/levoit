@@ -57,6 +57,7 @@ enum class NumberType : uint8_t {
 enum class TextSensorType : uint8_t {
   MCU_VERSION = 0,   // MCU firmware version string from the group 0x01 device-info report
   ESP_VERSION = 1,   // this component's version, PHILIPS_VERSION + " esphome"
+  MODEL = 2,         // configured model (`model:` of the philips block), e.g. AC0951
 };
 
 class PhilipsFan;
@@ -75,6 +76,9 @@ class Philips : public Component, public uart::UARTDevice {
 
   void set_model(PhilipsModel m) { model_ = m; }
   PhilipsModel get_model() const { return model_; }
+  // The configured `model:` string, for the model text sensor.
+  void set_model_name(const char *name) { model_name_ = name; }
+  const char *get_model_name() const { return model_name_; }
 
   // 900 series (AC0950/AC0951). Same protocol, but medium fan mode and the
   // HEPA total differ, and it exposes datapoints the 600 series does not.
@@ -142,10 +146,11 @@ class Philips : public Component, public uart::UARTDevice {
   static uint16_t crc16_(const uint8_t *data, size_t len);
 
   PhilipsModel model_{PhilipsModel::AC0650};
+  const char *model_name_{""};
   PhilipsFan *fan_{nullptr};
   PhilipsSensor *sensors_[5]{nullptr, nullptr, nullptr, nullptr, nullptr};
   PhilipsSwitch *switches_[3]{nullptr, nullptr, nullptr};
-  PhilipsTextSensor *text_sensors_[2]{nullptr, nullptr};
+  PhilipsTextSensor *text_sensors_[3]{nullptr, nullptr, nullptr};
   PhilipsSelect *selects_[1]{nullptr};
   PhilipsNumber *numbers_[1]{nullptr};
 

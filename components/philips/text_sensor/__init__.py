@@ -13,11 +13,13 @@ TextSensorType = philips_ns.enum("TextSensorType", is_class=True)
 TYPE_MAP = {
     "mcu_version": TextSensorType.MCU_VERSION,
     "esp_version": TextSensorType.ESP_VERSION,
+    "model": TextSensorType.MODEL,
 }
 
 # Defaults per type, used when the config does not set them.
 TYPE_PROPS = {
     "esp_version": {CONF_ICON: "mdi:chip", CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC},
+    "model": {CONF_ICON: "mdi:air-purifier", CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC},
 }
 
 CONFIG_SCHEMA = text_sensor.text_sensor_schema(PhilipsTextSensor).extend(

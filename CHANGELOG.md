@@ -7,6 +7,8 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
+* **`model` text sensor** for `levoit` and `philips`, reporting the configured
+  model; added to the device configs once released
 * **One version for the repo.** `philips` now reports the same version as
   `levoit` (from `components/levoit/VERSION`) and has an `esp_version` text
   sensor, e.g. `1.7.0+3fa21c4 esphome`

@@ -68,4 +68,5 @@ async def to_code(config):
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
     cg.add(var.set_model(MODEL_MAP[config[CONF_PHILIPS_MODEL]]))
+    cg.add(var.set_model_name(config[CONF_PHILIPS_MODEL]))
     cg.add_define("PHILIPS_VERSION", PHILIPS_VERSION)

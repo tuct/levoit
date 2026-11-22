@@ -18,6 +18,7 @@ TYPE_MAP = {
     "auto_mode_room_size_high_fan": TextSensorType.AUTO_MODE_ROOM_SIZE_HIGH_FAN,
     "error_message": TextSensorType.ERROR_MESSAGE,
     "sprout_event": TextSensorType.SPROUT_EVENT,
+    "model": TextSensorType.MODEL,
 }
 
 TYPE_PROPS = {
@@ -28,6 +29,7 @@ TYPE_PROPS = {
     "auto_mode_room_size_high_fan": {},
     "error_message": {CONF_ICON: "mdi:alert-circle-outline", CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC},
     "sprout_event": {CONF_ICON: "mdi:bell-outline", CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC},
+    "model": {CONF_ICON: "mdi:air-purifier", CONF_ENTITY_CATEGORY: ENTITY_CATEGORY_DIAGNOSTIC},
 }
 
 
