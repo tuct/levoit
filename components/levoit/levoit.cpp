@@ -16,6 +16,7 @@
 #include <algorithm>
 #include "freertos/task.h"
 #include "decoder.h"
+#include "fan_modes.h"
 #include "tlv.h"
 #include "vital_status.h"
 #include "core_status.h"
@@ -53,25 +54,6 @@ namespace esphome
     {
 
         static const char *const TAG = "levoit";
-
-        static const char *fan_operating_mode_to_option_(uint32_t mode)
-        {
-            switch (mode)
-            {
-            case 0:
-                return "Manual";
-            case 1:
-                return "Sleep";
-            case 2:
-                return "Auto";
-            case 4:
-                return "Turbo";
-            case 5:
-                return "Pet";
-            default:
-                return nullptr;
-            }
-        }
 
         static bool supports_auto_fan_mode_(ModelType model)
         {
@@ -173,9 +155,9 @@ namespace esphome
             if (!sl)
                 return;
             const auto &options = sl->traits.get_options();
-            if (type == SelectType::FAN_OPERATING_MODE_SELECT)
+            if (type == SelectType::FAN_OPERATING_MODE_SELECT || type == SelectType::DAYTIME_FAN_MODE)
             {
-                const char *opt = fan_operating_mode_to_option_(value);
+                const char *opt = fan_operating_mode_to_option(value);
                 if (opt == nullptr)
                 {
                     ESP_LOGW(TAG, "publish_select: invalid fan mode %u", (unsigned)value);
@@ -317,6 +299,14 @@ namespace esphome
             auto *sel = this->selects_[sl_idx_(type)];
             if (sel == nullptr || !sel->has_state())
                 return false;
+            if (type == SelectType::FAN_OPERATING_MODE_SELECT || type == SelectType::DAYTIME_FAN_MODE)
+            {
+                int mode = fan_operating_mode_to_raw(sel->current_option());
+                if (mode < 0)
+                    return false;
+                out = static_cast<size_t>(mode);
+                return true;
+            }
             auto idx = sel->active_index();
             if (!idx.has_value())
                 return false;
