@@ -1,0 +1,23 @@
+# MUJI/Philips AC0650/10 — replacement Seeed XIAO ESP32-S3 on the MCU↔module UART.
+# The stock ESP32-C3-WROOM-02U has secure boot and can't be reflashed, so wire a
+# replacement to the MCU UART (hold the stock module's EN low to disable it).
+# Same pads as the XIAO C3 config (D7 / D6), so the wiring is the same; on the
+# S3 those pads are GPIO44 / GPIO43. The log goes over USB (common.yaml).
+# NOTE: verify the UART pins against your wiring (the MCU link, NOT the flash header).
+substitutions:
+  device_name: philips-ac0650-s3
+  wifi_ap_ssid: "Philips-AC0650"
+  philips_model: AC0650
+  rx_pin: GPIO44   # XIAO S3 D7 — MCU TX → ESP RX
+  tx_pin: GPIO43   # XIAO S3 D6 — ESP TX → MCU RX
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: seeed_xiao_esp32s3
+  framework:
+    type: esp-idf
+
+packages:
+  common: !include common.yaml

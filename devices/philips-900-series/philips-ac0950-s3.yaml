@@ -1,0 +1,23 @@
+# Philips Series 900 AC0950 — replacement Seeed XIAO ESP32-S3 on the MCU<->module UART.
+#
+# Same pads as the XIAO C3 config (D7 / D10), so the wiring is the same; on the
+# S3 those pads are GPIO44 / GPIO9. The log goes over USB (common.yaml).
+# ⚠️ The protocol and the C3 pins are confirmed on an AC0951; the AC0950 (no PM
+# sensor) has never been captured, and this S3 variant is untested.
+substitutions:
+  device_name: philips-ac0950-s3
+  wifi_ap_ssid: "Philips-AC0950"
+  philips_model: AC0950
+  rx_pin: GPIO44   # XIAO S3 D7  — MCU TX (pad A) -> ESP RX
+  tx_pin: GPIO9    # XIAO S3 D10 — ESP TX -> MCU RX (pad B)
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: seeed_xiao_esp32s3
+  framework:
+    type: esp-idf
+
+packages:
+  common: !include common.yaml

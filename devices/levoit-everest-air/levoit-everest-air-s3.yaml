@@ -1,0 +1,21 @@
+#example levoit-everest-air-s3.yaml for a Seeed XIAO ESP32-S3
+# Same GPIO numbers as the XIAO C3 config (GPIO5 to TP82, GPIO6 to TP33); on the
+# XIAO ESP32-S3 these are other pads than on the C3. Check them against your own
+# wiring, see this device's README "Wiring New ESP".
+substitutions:
+  device_name: levoit-everest-air-s3
+  wifi_ap_ssid: "Levoit-EverestAir"
+  rx_pin: GPIO05  # XIAO ESP32-S3 pad D4, to TP82
+  tx_pin: GPIO06  # XIAO ESP32-S3 pad D5, to TP33
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: seeed_xiao_esp32s3
+  framework:
+    type: esp-idf
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_git.yaml

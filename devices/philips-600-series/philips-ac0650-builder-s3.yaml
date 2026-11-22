@@ -1,0 +1,100 @@
+# Generated from devices/philips-600-series/philips-ac0650-s3.yaml by devices/make-builder-yaml.ps1 - in the
+# repo, edit that file or its common.yaml and regenerate, not this one.
+# MUJI/Philips AC0650/10 — replacement Seeed XIAO ESP32-S3 on the MCU↔module UART.
+# The stock ESP32-C3-WROOM-02U has secure boot and can't be reflashed, so wire a
+# replacement to the MCU UART (hold the stock module's EN low to disable it).
+# Same pads as the XIAO C3 config (D7 / D6), so the wiring is the same; on the
+# S3 those pads are GPIO44 / GPIO43. The log goes over USB (common.yaml).
+# NOTE: verify the UART pins against your wiring (the MCU link, NOT the flash header).
+substitutions:
+  device_name: philips-ac0650-s3
+  wifi_ap_ssid: "Philips-AC0650"
+  philips_model: AC0650
+  rx_pin: GPIO44   # XIAO S3 D7 — MCU TX → ESP RX
+  tx_pin: GPIO43   # XIAO S3 D6 — ESP TX → MCU RX
+
+esphome:
+  name: ${device_name}
+
+esp32:
+  board: seeed_xiao_esp32s3
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/tuct/levoit
+      ref: stable
+    components: [philips]
+    refresh: always
+logger:
+  # On the ESP32-C3 the default logger UART (UART0) is GPIO20/21 — the same pins
+  # as the MCU link. Log over the native USB instead so those pins stay free.
+  hardware_uart: USB_SERIAL_JTAG
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "${wifi_ap_ssid}"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+uart:
+  - id: uart_mcu
+    tx_pin: ${tx_pin}
+    rx_pin: ${rx_pin}
+    baud_rate: 115200
+
+philips:
+  id: purifier
+  model: ${philips_model}   # AC0650 (base) or AC0651 (PM2.5 + Auto Mode)
+
+fan:
+  - platform: philips
+    philips: purifier
+    name: "Fan"        # 3 speeds: 1=Sleep, 2=Medium, 3=Turbo
+
+sensor:
+  - platform: philips
+    philips: purifier
+    name: "Pre-filter"
+    type: filter_clean
+  - platform: philips
+    philips: purifier
+    name: "HEPA Filter"
+    type: filter_lifetime
+
+button:
+  - platform: philips
+    philips: purifier
+    name: "Reset Pre-filter"
+    type: reset_prefilter
+  - platform: philips
+    philips: purifier
+    name: "Reset HEPA Filter"
+    type: reset_hepa
+
+text_sensor:
+  - platform: philips
+    philips: purifier
+    name: "MCU Version"
+    type: mcu_version
+  - platform: philips
+    philips: purifier
+    name: "ESP Version"
+    type: esp_version
+  - platform: philips
+    philips: purifier
+    name: "Model"
+    type: model
