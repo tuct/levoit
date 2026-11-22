@@ -124,6 +124,19 @@ PR, or CI will not cover it.
 Device configs under `devices/` are *not* built by CI — they need a
 `secrets.yaml`. Build those locally with `devices/build-all-dev.ps1`.
 
+The **builder files** (`devices/*/*-builder*.yaml`) are what users paste into
+the ESPHome Device Builder. They are generated: after changing a device yaml
+or its `common.yaml`, run `devices/make-builder-yaml.ps1` and commit the
+result. The `Builder files` workflow fails when one is out of date, and
+compiles every one of them against the components of the PR (with dummy
+secrets). A key such as `logger:` must be set in only one of the device yaml
+and `common.yaml`: ESPHome merges packages, a single inlined file cannot.
+
+Builder files pull the component from the `stable` branch (the latest
+release), while CI builds them against the PR. So a device yaml or
+`common.yaml` may use a new component option only once that option is in a
+release; until then keep it in the `_dev` configs.
+
 ## Versioning
 
 The repo has one version, for both components, in one place:

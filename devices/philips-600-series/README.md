@@ -119,6 +119,10 @@ UART and park the stock module.
    - **AC0651** → [`philips-ac0651-c3_dev.yaml`](./philips-ac0651-c3_dev.yaml)
      (`model: AC0651` — adds PM2.5, allergen index, Auto preset, standby sensor)
 
+   For the ESPHome Device Builder (no local clone), use
+   [`philips-ac0650-builder.yaml`](./philips-ac0650-builder.yaml), everything inlined
+   and the component from GitHub.
+
    Both pull in [`common.yaml`](./common.yaml) for the shared entities. The
    `model:` option toggles the 651-only datapoints, so the rest of the config is
    identical between variants.

@@ -1,11 +1,16 @@
-﻿# example levoit-core600s-solo-1c.yaml for flashing stock ESP32-SOLO-1C
-# !!! CHECK YOUR MODEL BEFORE FLASHING !!!
-# There have been sightings of multiple different ESP32s used in retail units.
+# Generated from devices/levoit-everest-air/levoit-everest-air.yaml by devices/make-builder-yaml.ps1 - in the
+# repo, edit that file or its common.yaml and regenerate, not this one.
+# Example levoit-everest-air.yaml for flashing the original ESP32-SOLO-1.
+# NOTE: UART pins below are placeholders (original ESP32-SOLO-1 mapping) —
+# verify against your wiring, see this device's README "Wiring New ESP".
 substitutions:
-  device_name: levoit-core600s-solo-1c
-  wifi_ap_ssid: free-levoit-Core600S
-  rx_pin: GPIO16
-  tx_pin: GPIO17
+  device_name: levoit-everest-air
+  wifi_ap_ssid: "Levoit-EverestAir"
+  rx_pin: GPIO16 #TP82
+  tx_pin: GPIO17 #TP33
+
+esphome:
+  name: ${device_name}
 
 esp32:
   board: esp32dev
@@ -18,10 +23,10 @@ external_components:
   - source:
       type: git
       url: https://github.com/tuct/levoit
-      ref: main
+      ref: stable
     components: [levoit]
 logger:
-  level: VERBOSE
+  level: DEBUG
 
 api:
   encryption:
@@ -52,107 +57,114 @@ uart:
     baud_rate: 115200
 
 levoit:
-  id: levoitcore600
-  model: CORE600S
+  id: leveverestair
+  model: EVERESTAIR
 
 fan:
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Fan"
     id: levoit_fan1
 
 switch:
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Display"
     type: display
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Child Lock"
     type: child_lock
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Light Detect"
     type: light_detect
 
 number:
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Timer (min)"
     type: timer
   - platform: levoit
-    levoit: levoitcore600
-    name: "Auto Mode Room Size"
-    type: efficiency_room_size
-  - platform: levoit
-    levoit: levoitcore600
-    name: "Auto Mode Room Size Preset"
-    type: auto_profile_room_size_input
-    min_value: 9
-    max_value: 147
-  - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Filter Months"
     type: filter_lifetime_months
+  # EverestAir-specific: vent louver angle 45–90° (CMD 02 12 55)
+  - platform: levoit
+    levoit: leveverestair
+    name: "Vent Angle"
+    type: vent_angle
 
 sensor:
   - platform: levoit
-    levoit: levoitcore600
-    name: "AQ - PM 2.5"
+    levoit: leveverestair
+    name: "PM 1.0"
+    type: pm1_0
+  - platform: levoit
+    levoit: leveverestair
+    name: "PM 2.5"
     type: pm25
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
+    name: "PM 10"
+    type: pm10
+  - platform: levoit
+    levoit: leveverestair
     name: "AQI"
     type: aqi
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Current CADR"
     type: current_cadr
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Filter %"
     type: filter_life_left
 
 select:
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Fan Operating Mode"
     type: fan_operating_mode
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Auto Mode"
     type: auto_mode
 
 text_sensor:
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "MCU Version"
     type: mcu_version
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "ESP Version"
     type: esp_version
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Timer Duration"
     type: timer_duration_initial
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Timer Remaining"
     type: timer_duration_remaining
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Error"
     type: error_message
 
 button:
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Filter Reset"
     type: reset_filter_stats
 
 binary_sensor:
   - platform: levoit
-    levoit: levoitcore600
+    levoit: leveverestair
     name: "Filter Low"
     type: filter_low
+  - platform: levoit
+    levoit: leveverestair
+    name: "Cover Open"
+    type: cover_open

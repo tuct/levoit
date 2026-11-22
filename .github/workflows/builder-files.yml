@@ -1,0 +1,85 @@
+name: Builder files
+
+# The devices/*/*-builder*.yaml files are what users paste into the ESPHome
+# Device Builder. Check that they match their device yaml / common.yaml
+# (devices/make-builder-yaml.ps1) and that every one of them builds against the
+# components in this checkout.
+on:
+  pull_request:
+    paths:
+      - 'devices/**'
+      - 'components/**'
+      - '.github/scripts/builder_ci_config.py'
+      - '.github/workflows/builder-files.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'devices/**'
+      - 'components/**'
+      - '.github/scripts/builder_ci_config.py'
+      - '.github/workflows/builder-files.yml'
+  workflow_dispatch:
+
+# A new push to the same PR cancels the previous run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  up-to-date:
+    name: builder files up to date
+    runs-on: ubuntu-latest
+    outputs:
+      files: ${{ steps.list.outputs.files }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Regenerate and compare
+        shell: pwsh
+        run: ./devices/make-builder-yaml.ps1 -Check
+
+      - name: List builder files
+        id: list
+        run: |
+          files="$(ls devices/*/*-builder*.yaml | jq -R -s -c 'split("\n") | map(select(length > 0))')"
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+          echo "$files"
+
+  compile:
+    name: ${{ matrix.file }}
+    needs: up-to-date
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        file: ${{ fromJSON(needs.up-to-date.outputs.files) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # PlatformIO toolchains and the ESP-IDF sources are the slow part.
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-builder-${{ hashFiles(matrix.file) }}
+          restore-keys: |
+            pio-${{ runner.os }}-builder-
+            pio-${{ runner.os }}-esphome-latest-
+
+      - name: Install ESPHome
+        run: |
+          pip install esphome
+          esphome version
+
+      - name: Use this checkout's components and dummy secrets
+        run: python .github/scripts/builder_ci_config.py "${{ matrix.file }}" "$RUNNER_TEMP/builder"
+
+      - name: esphome compile
+        working-directory: ${{ runner.temp }}/builder
+        run: esphome compile "$(basename "${{ matrix.file }}")"

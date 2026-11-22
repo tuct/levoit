@@ -1,4 +1,6 @@
-﻿#example levoit-core400s-s3.yaml for flashing a new ESP32-S3
+# Generated from devices/levoit-core400s/levoit-core400s-s3.yaml by devices/make-builder-yaml.ps1 - in the
+# repo, edit that file or its common.yaml and regenerate, not this one.
+#example levoit-core400s-s3.yaml for flashing a new ESP32-S3
 substitutions:
   device_name: levoit-core400s-s3
   wifi_ap_ssid: "Levoit-Core400S"
@@ -22,7 +24,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/tuct/levoit
-      ref: main
+      ref: stable
     components: [levoit]
 logger:
   level: VERBOSE

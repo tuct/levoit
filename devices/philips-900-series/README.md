@@ -202,7 +202,8 @@ if it resists, back off and re-check the wide slat rather than pushing.
 1. Copy [`secrets-example.yaml`](./secrets-example.yaml) to `secrets.yaml` and
    fill in your Wi-Fi credentials.
 2. Flash [`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml) (or
-   [`philips-ac0950.yaml`](./philips-ac0950.yaml) for the non-sensor model).
+   [`philips-ac0950.yaml`](./philips-ac0950.yaml) for the non-sensor model; in
+   the ESPHome Device Builder, [`philips-ac0950-builder.yaml`](./philips-ac0950-builder.yaml)).
 3. Watch the log. `MCU link up` means the handshake completed. If it does not
    appear, see [Boot sequence](#boot-sequence) — the stock module's *first*
    handshake attempt reliably fails and only the second, about two minutes later,
