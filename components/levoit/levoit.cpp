@@ -554,8 +554,12 @@ namespace esphome
                 this->sendCommand(setHumidityTarget);
                 break;
 
+            case NumberType::FILTER_LIFETIME_MONTHS:
+                this->publish_filter_stats_now();
+                break;
+
             default:
-                // WHITE_NOISE_MIN, FILTER_LIFETIME_MONTHS, USED_CADR, TOTAL_RUNTIME:
+                // WHITE_NOISE_MIN, USED_CADR, TOTAL_RUNTIME:
                 // ESP-side values, nothing to send to the MCU
                 break;
             }
