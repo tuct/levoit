@@ -526,6 +526,14 @@ Auto mode options per model:
 
 ## Change Log
 
+#### Unreleased
+
+* The component version has one source now, `components/levoit/VERSION`. The
+  build compiles it in and the `esp_version` sensor reports it as before
+  (`1.7.0 esphome`); a new `Version check` workflow keeps it in step with this
+  change log and with release tags. First step of the
+  [firmware update plan](../../docs/firmware-updates.md)
+
 #### ESP Version: 1.7.0 - 2026.11.21
 
 **A new device, the Levoit Eleva 300X, and ESPHome 2026.11 support.** Thanks to

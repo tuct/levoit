@@ -126,11 +126,14 @@ Device configs under `devices/` are *not* built by CI — they need a
 
 ## Versioning
 
-The levoit component version lives in `components/levoit/levoit.h`
-(`get_version()`) and must match the newest entry in its
+The levoit component version lives in one place,
+[`components/levoit/VERSION`](./components/levoit/VERSION). The build compiles
+it in (`LEVOIT_VERSION`), and the `esp_version` sensor reports it. It must
+match the newest released entry (`#### ESP Version: X.Y.Z - date`) in the
 [change log](./components/levoit/README.md#change-log). Bump both in the same
 PR, or neither — a changelog entry for a version the binary does not report is
-worse than no entry.
+worse than no entry. The `Version check` workflow enforces this on every PR
+that touches the component, and checks that a release tag matches the file.
 
 ## Secrets
 
