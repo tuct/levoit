@@ -706,9 +706,51 @@ namespace esphome
             // Optional: restrict by model
             // if (model_ != ModelType::VITAL200S && type == SwitchType::QUICK_CLEAN) return;
 
+            auto send_mode = [this](int m)
+            {
+                switch (m)
+                {
+                case 0:
+                    this->sendCommand(setFanModeManual);
+                    break;
+                case 1:
+                    this->sendCommand(setFanModeSleep);
+                    break;
+                case 2:
+                    this->sendCommand(setFanModeAuto);
+                    break;
+                case 4:
+                    this->sendCommand(setFanModeTurbo);
+                    break;
+                case 3:
+                    this->sendCommand(setFanModeHumidity);
+                    break;
+                case 5:
+                    this->sendCommand(setFanModePet);
+                    break;
+                case 6:
+                    // Superior 6000S Dry mode - level comes from the DRY_LEVEL select
+                    this->sendCommand(this->dry_level_preference_ == 1 ? setDryLevelHigh : setDryLevelLow);
+                    break;
+                default:
+                    break;
+                }
+            };
+
+            // EverestAir: a speed call made in Auto/Sleep/Turbo sends a fan level
+            // plus "Manual" (see LevoitFan::control). Sent level-then-Manual, the
+            // Everest does not end up in Manual at the requested level (#92);
+            // Manual-then-level is the sequence that works on the unit (preset
+            // first, then speed). Other models keep level-then-mode.
+            const bool mode_before_speed = this->model_ == ModelType::EVERESTAIR;
+
             if (power != -1)
             {
                 this->sendCommand(power == 1 ? setDeviceON : setDeviceOFF);
+            }
+            if (mode != -1 && mode_before_speed)
+            {
+                send_mode(mode);
             }
             if (speed_level != -1)
             {
@@ -745,35 +787,9 @@ namespace esphome
                     break;
                 }
             }
-            if (mode != -1)
+            if (mode != -1 && !mode_before_speed)
             {
-                switch (mode)
-                {
-                case 0:
-                    this->sendCommand(setFanModeManual);
-                    break;
-                case 1:
-                    this->sendCommand(setFanModeSleep);
-                    break;
-                case 2:
-                    this->sendCommand(setFanModeAuto);
-                    break;
-                case 4:
-                    this->sendCommand(setFanModeTurbo);
-                    break;
-                case 3:
-                    this->sendCommand(setFanModeHumidity);
-                    break;
-                case 5:
-                    this->sendCommand(setFanModePet);
-                    break;
-                case 6:
-                    // Superior 6000S Dry mode - level comes from the DRY_LEVEL select
-                    this->sendCommand(this->dry_level_preference_ == 1 ? setDryLevelHigh : setDryLevelLow);
-                    break;
-                default:
-                    break;
-                }
+                send_mode(mode);
             }
         }
 

@@ -533,6 +533,12 @@ Auto mode options per model:
   (`1.7.0 esphome`); a new `Version check` workflow keeps it in step with this
   change log and with release tags. First step of the
   [firmware update plan](../../docs/firmware-updates.md)
+* **Everest Air: one "set speed" action now leaves Auto/Sleep/Turbo**, like on
+  the other models; no need to set the Manual preset first
+  ([#92](https://github.com/tuct/levoit/issues/92)). The Manual mode frame
+  (`02 02 55`) is now sent before the fan level (`02 03 55`) on this model
+* Everest Air: fan level `0xFF` (reported while off) no longer reads as speed 3,
+  so setting 100% on a unit that is off also sends the level
 
 #### ESP Version: 1.7.0 - 2026.11.21
 
