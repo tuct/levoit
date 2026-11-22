@@ -88,3 +88,11 @@ text_sensor:
     philips: purifier
     name: "MCU Version"
     type: mcu_version
+  - platform: philips
+    philips: purifier
+    name: "ESP Version"
+    type: esp_version
+  - platform: philips
+    philips: purifier
+    name: "Model"
+    type: model

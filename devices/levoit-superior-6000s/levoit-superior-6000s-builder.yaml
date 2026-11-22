@@ -158,6 +158,10 @@ text_sensor:
     levoit: levoitsuperior6000
     name: "ESP Version"
     type: esp_version
+  - platform: levoit
+    levoit: levoitsuperior6000
+    name: "Model"
+    type: model
 
 binary_sensor:
   - platform: levoit
