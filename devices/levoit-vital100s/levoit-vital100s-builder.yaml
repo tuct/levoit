@@ -147,6 +147,10 @@ text_sensor:
     type: esp_version
   - platform: levoit
     levoit: levoitvital100
+    name: "Model"
+    type: model
+  - platform: levoit
+    levoit: levoitvital100
     name: "Timer Duration"
     type: timer_duration_initial
   - platform: levoit

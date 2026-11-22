@@ -5,6 +5,12 @@
 Project-level changes. Component releases have their own log:
 [levoit](./components/levoit/README.md#change-log).
 
+### Unreleased
+
+* **Device configs report their model**: every device config and builder file
+  has the `model` text sensor (component 1.7.1); the Philips configs also get
+  the `esp_version` sensor. The Levoit ESPHome integration reads both
+
 ### 2026.11.22
 
 * **Levoit component [1.7.1](./components/levoit/README.md#change-log)**: the

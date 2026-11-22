@@ -140,6 +140,10 @@ text_sensor:
     type: esp_version
   - platform: levoit
     levoit: levoitcore600
+    name: "Model"
+    type: model
+  - platform: levoit
+    levoit: levoitcore600
     name: "Timer Duration"
     type: timer_duration_initial
   - platform: levoit
