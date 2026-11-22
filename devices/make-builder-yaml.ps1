@@ -25,8 +25,8 @@
 # Linux, so -Check gives the same answer locally and in CI.
 #
 # It also writes devices/templates.json: the builder files the Levoit ESPHome
-# integration offers for new devices (variant original, xiao_c3 or c3; S3
-# builder files are not offered), with model, title, board and default name.
+# integration offers for new devices (variant original, xiao_c3, c3 or s3),
+# with model, title, board and default name.
 
 param(
     [string]$Target = "",   # single device yaml to process; empty = all
@@ -187,7 +187,6 @@ function Get-TemplateEntry([string]$DeviceYaml, [string]$OutputPath, [string]$Te
     # A builder file the integration offers for new devices, or $null.
     $folder = Split-Path (Split-Path $OutputPath -Parent) -Leaf
     $file = Split-Path $OutputPath -Leaf
-    if ($file -match '-builder-s3\.yaml$') { return $null }
     $board = ([regex]::Match($Text, '(?m)^  board:\s*(\S+)')).Groups[1].Value
     $name = ([regex]::Match($Text, '(?m)^  device_name:\s*(\S+)')).Groups[1].Value
     $m = [regex]::Match($Text, '(?m)^(levoit|philips):[ \t]*\n(?:[ \t]+.*\n)*?[ \t]+model:\s*(\S+)')
@@ -203,6 +202,8 @@ function Get-TemplateEntry([string]$DeviceYaml, [string]$OutputPath, [string]$Te
         $variant = "original"
     } elseif ($board -match 'c3') {
         $variant = "c3"
+    } elseif ($board -match 's3') {
+        $variant = "s3"
     } else {
         return $null
     }
