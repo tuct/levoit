@@ -102,6 +102,8 @@ number:
     levoit: levoitvital200
     name: "Auto Mode Room Size"
     type: efficiency_room_size
+    min_value: 9
+    max_value: 87
   - platform: levoit
     levoit: levoitvital200
     name: "Auto Mode Room Size Preset"
@@ -150,6 +152,10 @@ sensor:
     levoit: levoitvital200
     name: "Filter %"
     type: filter_life_left
+  - platform: levoit
+    levoit: levoitvital200
+    name: "Efficiency Counter"
+    type: efficiency_counter
 
 select:
   - platform: levoit
