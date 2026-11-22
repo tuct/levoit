@@ -282,15 +282,15 @@ Replacing the original ESP32 lets you keep the original firmware intact and swit
 This route uses the `RX` / `TX` test pads (the ESP32-to-MCU link), not the
 `TXD` / `RXD` flashing pads on ISP1.
 
-**Wiring (ESP32-S3 example):**
+**Wiring (Seeed XIAO ESP32-S3):**
 
-| PCB | ESP32-S3 |
+| PCB | XIAO ESP32-S3 |
 |-----|----------|
 | EN | GND |
 | 3.3V | 3.3V |
 | GND | GND |
-| RX | GPIO05 |
-| TX | GPIO04 |
+| RX | GPIO05 (pad D4) |
+| TX | GPIO04 (pad D3) |
 
 ![PCB ESP32-S3 wiring](./images/pcb_wire_s3.jpg)
 
@@ -380,7 +380,7 @@ Use the pre-generated builder yaml to flash without a local clone — all config
 |------|-------|
 | `levoit-core200s-builder.yaml` | original ESP32-SOLO-1C |
 | `levoit-core200s-builder-c3.yaml` | ESP32-C3 replacement |
-| `levoit-core200s-builder-s3.yaml` | ESP32-S3 replacement |
+| `levoit-core200s-builder-s3.yaml` | Seeed XIAO ESP32-S3 replacement |
 
 Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. Regenerate with `.\make-builder-yaml.ps1` from the `devices/` folder.
 

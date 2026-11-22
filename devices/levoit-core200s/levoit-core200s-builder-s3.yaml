@@ -1,17 +1,17 @@
 # Generated from devices/levoit-core200s/levoit-core200s-s3.yaml by devices/make-builder-yaml.ps1 - in the
 # repo, edit that file or its common.yaml and regenerate, not this one.
-#example levoit-core200s-s3.yaml for flashing a new ESP32-S3
+#example levoit-core200s-s3.yaml for a Seeed XIAO ESP32-S3
 substitutions:
   device_name: levoit-core200s-s3
   wifi_ap_ssid: "Levoit-Core200S"
-  rx_pin: GPIO05
-  tx_pin: GPIO04
+  rx_pin: GPIO05  # XIAO ESP32-S3 pad D4
+  tx_pin: GPIO04  # XIAO ESP32-S3 pad D3
 
 esphome:
   name: ${device_name}
 
 esp32:
-  board: esp32-s3-devkitc-1
+  board: seeed_xiao_esp32s3
   framework:
     type: esp-idf
 

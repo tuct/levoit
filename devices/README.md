@@ -27,7 +27,7 @@ Each device folder contains a YAML file per board variant, e.g.:
 ```
 levoit-core300s/levoit-core300s.yaml        # original ESP32-SOLO-1C
 levoit-core300s/levoit-core300s-c3.yaml     # ESP32-C3 replacement
-levoit-core300s/levoit-core300s-s3.yaml     # ESP32-S3 replacement
+levoit-core300s/levoit-core300s-s3.yaml     # Seeed XIAO ESP32-S3 replacement
 ```
 
 These pull the `levoit` component directly from GitHub on every compile:
@@ -70,7 +70,7 @@ Each device folder contains pre-generated `*-builder*.yaml` files with all confi
 |------|-------|
 | `levoit-core300s-builder.yaml` | original ESP32-SOLO-1C |
 | `levoit-core300s-builder-c3.yaml` | Seeed XIAO ESP32-C3 replacement |
-| `levoit-core300s-builder-s3.yaml` | ESP32-S3 replacement |
+| `levoit-core300s-builder-s3.yaml` | Seeed XIAO ESP32-S3 replacement |
 
 (Same pattern for all devices; a file whose name does not start with the folder name, such as `philips-ac0650.yaml`, becomes `philips-ac0650-builder.yaml`.)
 
