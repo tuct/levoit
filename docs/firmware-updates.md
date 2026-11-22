@@ -125,26 +125,32 @@ from `secrets.yaml`, and the name from the `device_name` substitution.
 Phase 3 makes them fit for the add-on:
 
 * **Channel** = the `ref:` of the component's git source. The script writes
-  `ref: stable` (today `ref: main`); the add-on switches it by rewriting that
-  line
-* **Per-device keys.** All builder files read the same `!secret api_key` and
-  `ota_password`. For a **new** device the add-on writes a fresh API
-  encryption key and OTA password into its config, so devices do not share one
-  key. A device that already runs ESPHome **keeps its own** (see onboarding in
-  phase 4a)
+  `ref: stable` (until phase 3 it was `ref: main`); the add-on switches it by
+  rewriting that line
+* **Per-device keys** (with *create*, phase 4c). All builder files read the
+  same `!secret api_key` and `ota_password`. For a **new** device the add-on
+  writes a fresh API encryption key and OTA password into its config, so
+  devices do not share one key. A device that already runs ESPHome **keeps its
+  own** (see onboarding in phase 4a)
 * **Always in step with the sources.** CI regenerates the builder files and
   fails if they differ from the committed ones, then compiles them with dummy
   secrets
 * the existing full device YAMLs stay as they are, for local development and as
   the example for additional ESPs
 
+**Templates offered for new configs**: the **original ESP** and the **Seeed
+XIAO ESP32-C3** of each device. Other builder files (S3, the Sprout's
+hand-made one) stay in the repo but are not offered by the add-on.
+
 Ways to get a ready-made config:
 
-* **Create** one from the add-on (phase 4): pick the model and the ESP variant,
+* **Paste** a builder file into a new config in the Device Builder, as today.
+  This is the way at the start: the add-on expects the device's config to be in
+  the Device Builder already
+* Later, **create** one from the add-on: pick the model and original / XIAO C3,
   enter a name; Wi-Fi from the Device Builder's `secrets.yaml` or entered. The
   add-on fetches the builder file at the channel's ref and saves it through the
   Device Builder API
-* **Paste** a builder file into a new config in the Device Builder, as today
 
 A builder file is a full copy: releases bring new **component** code through
 `ref:`, but changes to the device config itself (new entities in
@@ -201,17 +207,19 @@ Found through the Device Builder's build records (`loaded_integrations`, also
 for devices that are offline) and through Home Assistant devices that have an
 `esp_version` sensor but no config.
 
-**Configs** (all through the Device Builder API):
+**Configs** (all through the Device Builder API). **First version: connect
+only.** The device's config is expected to be in the Device Builder already
+(a pasted builder file or the user's own); the add-on links the two and works
+with that config. Creating and onboarding come later.
 
-* **Connect** a device to an existing config (matched by device name, or picked
+* **Connect** a device to its existing config (matched by device name, or picked
   by hand)
-* **Create** a config: for an original ESP the ready-made one (model, name,
-  Wi-Fi from `secrets.yaml` or entered); for an additional ESP a starting
-  config to finish in the Device Builder
 * **Manage**: open in the Device Builder, switch the channel (rewrites the
   `ref:`), rename, refresh from template (see phase 2)
+* Later: **create** a config from a template (original or XIAO C3), and
+  **onboard** a device whose config is elsewhere (below)
 
-**Onboarding an existing device.** Most devices already run ESPHome with a
+**Later: onboarding an existing device.** Most devices already run ESPHome with a
 config of their own. Moving one to a builder-file config must keep what the
 device and Home Assistant already use, or the first upload breaks it: a new
 OTA password makes the device refuse the upload, a new API key makes
@@ -257,10 +265,9 @@ Uploading an arbitrary `.bin` is not part of 4a; see phase 8.
 * **Install** asks the add-on to recompile and upload that device
 * Without the add-on it compares the `esp_version` sensor with GitHub and only
   shows that an update exists
-* **Onboarding without a config:** hands the add-on the API encryption key
-  from the device's ESPHome config entry. Only for the device being onboarded,
-  only when the user starts it. Until 4b exists, onboarding needs the device's
-  config in the Device Builder
+* **Onboarding without a config** (with phase 4c): hands the add-on the API
+  encryption key from the device's ESPHome config entry. Only for the device
+  being onboarded, only when the user starts it
 
 ### 5. Backup and restore page
 
@@ -416,7 +423,8 @@ Only the current version of each file stays on the server; older ones answer
 | 1 | `components/levoit/VERSION`, component define, CI consistency check ([#98](https://github.com/tuct/levoit/pull/98)) — **done** | — |
 | 2 | Commit in the version string; `philips` reports the same version; release workflow (`stable` branch) | 1 |
 | 3 | Builder files on `ref: stable`, CI keeps them regenerated and compiles them | 2 |
-| 4a | Add-on "Levoit ESPHome": device list, connect / create / manage configs, onboarding with the existing keys and secrets, recompile and upload | 2, 3 |
+| 4a | Add-on "Levoit ESPHome": device list, connect to the config already in the Device Builder, manage, recompile and upload | 2, 3 |
+| 4c | Add-on: create a config from a template (original / XIAO C3), onboarding with the existing keys and secrets | 4a |
 | 4b | Integration "Levoit ESPHome" (HACS): update entities, install through the add-on | 4a |
 | 5 | Backup and restore page | — |
 | 6 | DNS add-on (research first) | 3 |
