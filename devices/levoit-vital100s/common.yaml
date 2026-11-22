@@ -1,7 +1,7 @@
 #Do not use this file directly, it is included in the device yaml files. Put common configuration here.
 # Enable logging
 logger:
-  level: VERBOSE
+  level: DEBUG
 
 api:
   encryption:
@@ -64,6 +64,8 @@ number:
     levoit: levoitvital100
     name: "Auto Mode Room Size"
     type: efficiency_room_size
+    min_value: 9
+    max_value: 52
   - platform: levoit
     levoit: levoitvital100
     name: "Auto Mode Room Size Preset"
@@ -92,6 +94,10 @@ sensor:
     levoit: levoitvital100
     name: "Filter %"
     type: filter_life_left
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Efficiency Counter"
+    type: efficiency_counter
 
 select:
   - platform: levoit
@@ -144,3 +150,7 @@ binary_sensor:
     levoit: levoitvital100
     name: "Filter Low"
     type: filter_low
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Dark Detected"
+    type: dark_detected

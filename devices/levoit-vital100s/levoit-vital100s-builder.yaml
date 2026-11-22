@@ -15,11 +15,8 @@ esp32:
   board: esp32-c3-devkitm-1
   variant: esp32c3
   flash_size: 4MB
-  # Stock ESP32-C3-SOLO-1 module: DIO at 40 MHz. esp32: flash_mode /
-  # flash_frequency work with both build toolchains (ESPHome 2026.6.0+);
-  # platformio_options are ignored by the native ESP-IDF build.
+  # Stock ESP32-C3-SOLO-1 module: DIO at default 80 MHz (matches stock firmware).
   flash_mode: dio
-  flash_frequency: 40MHz
   cpu_frequency: 160Mhz
   framework:
     type: esp-idf
@@ -34,7 +31,7 @@ external_components:
     components: [levoit]
     refresh: always
 logger:
-  level: VERBOSE
+  level: DEBUG
 
 api:
   encryption:
@@ -97,6 +94,8 @@ number:
     levoit: levoitvital100
     name: "Auto Mode Room Size"
     type: efficiency_room_size
+    min_value: 9
+    max_value: 52
   - platform: levoit
     levoit: levoitvital100
     name: "Auto Mode Room Size Preset"
@@ -125,6 +124,10 @@ sensor:
     levoit: levoitvital100
     name: "Filter %"
     type: filter_life_left
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Efficiency Counter"
+    type: efficiency_counter
 
 select:
   - platform: levoit
@@ -177,3 +180,7 @@ binary_sensor:
     levoit: levoitvital100
     name: "Filter Low"
     type: filter_low
+  - platform: levoit
+    levoit: levoitvital100
+    name: "Dark Detected"
+    type: dark_detected
