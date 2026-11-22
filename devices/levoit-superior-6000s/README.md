@@ -1,12 +1,13 @@
 [← Back](../../README.md)
 # Levoit Superior 6000S — Humidifier
 
-> 🚧 **Ported, compiles, not yet run on hardware.** The protocol work comes from
+> 🚧 **Early support.** The protocol work comes from
 > [Jyers/esphome-projects](https://github.com/Jyers/esphome-projects), ported onto
-> this repo's `levoit` component. Nobody here owns a Superior 6000S, so **none of
-> it has been confirmed against a real device** — the GPIO pins in particular are
-> inherited from the Levoit purifiers and are a guess. Treat this as a starting
-> point, and please report back.
+> this repo's `levoit` component. The ESP module and its MCU link pins are
+> confirmed on an **LEH-S601S-WUS** by egoleos in
+> [discussion #78](https://github.com/tuct/levoit/discussions/78), with initial
+> working tests: an ESP32-C3-SOLO-1, link on GPIO18 / GPIO19. The entities are
+> not all verified yet, so please report back.
 
 The Superior 6000S is an evaporative humidifier, but it speaks the **same MCU
 protocol** as the Levoit air purifiers, so it needs no new component — just
@@ -22,15 +23,16 @@ protocol** as the Levoit air purifiers, so it needs no new component — just
 | Type | Evaporative humidifier |
 | Tank | 6 L |
 | Component | [`levoit`](../../components/levoit/README.md), `model: SUPERIOR6000S` |
-| MCU link | UART, 115200 8N1 — same framing as the purifiers |
+| ESP module | Espressif ESP32-C3-SOLO-1 (LEH-S601S-WUS, [#78](https://github.com/tuct/levoit/discussions/78)) |
+| MCU link | UART, 115200 8N1 — same framing as the purifiers; module pins 27 (IO18, ESP RX) / 28 (IO19, ESP TX) |
 | Fan speeds | **9** (the purifiers have 3–4) |
-| Status | 🚧 compiles; unverified on hardware |
+| Status | 🚧 pins confirmed, initial tests working ([#78](https://github.com/tuct/levoit/discussions/78)) |
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| [`levoit-superior-6000s.yaml`](./levoit-superior-6000s.yaml) | Flash the device's own ESP32; pulls the component from git |
+| [`levoit-superior-6000s.yaml`](./levoit-superior-6000s.yaml) | Flash the device's own ESP32-C3-SOLO-1; pulls the component from git |
 | [`levoit-superior-6000s_dev.yaml`](./levoit-superior-6000s_dev.yaml) | Same, but builds against this repo's local `components/` |
 | [`levoit-superior-6000s-builder.yaml`](./levoit-superior-6000s-builder.yaml) | Everything inlined, for the ESPHome Device Builder (generated, see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)) |
 | [`common.yaml`](./common.yaml) | All the entities — included by both |
@@ -39,10 +41,16 @@ protocol** as the Levoit air purifiers, so it needs no new component — just
 ## Getting started
 
 1. Copy `secrets-example.yaml` to `secrets.yaml` and fill in your Wi-Fi details.
-2. **Check the UART pins.** `rx_pin: GPIO16` / `tx_pin: GPIO17` are carried over
-   from the Levoit purifiers and have not been verified on this board. Open the
-   unit and confirm before flashing.
-3. Flash [`levoit-superior-6000s.yaml`](./levoit-superior-6000s.yaml).
+2. **Back up the stock firmware** (`esptool read-flash 0 ALL backup.bin`).
+3. Flash [`levoit-superior-6000s.yaml`](./levoit-superior-6000s.yaml) over the
+   module's **programming UART pads** (a USB-UART adapter: its TX to the
+   module's RX, its RX to the module's TX, 3.3 V). Hold **GPIO9** low during
+   reset for download mode; the pad marked *IO0* is GPIO9 on the C3. Release
+   it and power-cycle after flashing.
+4. The MCU link (GPIO18 / GPIO19) is separate from the programming pads and
+   needs no extra wiring on the stock module. The config logs on UART0 (the
+   programming pads); ESPHome warns that GPIO18/19 are the USB pins, which is
+   expected.
 
 ## Entities
 

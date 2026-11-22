@@ -7,6 +7,9 @@
 
 logger:
   level: DEBUG
+  # GPIO18/19 (the C3's USB pins) carry the MCU link: log on UART0, the
+  # module's programming pads, like the stock firmware
+  hardware_uart: UART0
 
 api:
   encryption:

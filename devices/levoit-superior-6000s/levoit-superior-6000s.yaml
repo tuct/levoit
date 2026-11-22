@@ -1,22 +1,32 @@
-# Levoit Superior 6000S — flashing the device's own ESP32.
+# Levoit Superior 6000S — flashing the device's own ESP32-C3-SOLO-1 module.
 #
-# ⚠️ The GPIO pins below are inherited from the Levoit air purifiers and have
-#    NOT been confirmed on Superior 6000S hardware. Verify before flashing.
+# The ESP <-> MCU link (115200 8N1) is on module pins 27 (IO18, ESP RX) and
+# 28 (IO19, ESP TX), the same module and pins as the Vital 100S / 200S and the
+# Eleva 300X. Confirmed on an LEH-S601S-WUS (github.com/tuct/levoit/discussions/78).
+# GPIO18/19 are the C3's USB pins, so ESPHome warns that USB-Serial-JTAG uses
+# them; that is expected, the log runs on UART0 (common.yaml).
+#
+# Flash it over the module's programming UART pads (not the MCU link), with
+# GPIO9 held low during reset for download mode (the pad marked IO0 is GPIO9 on
+# the C3). Back up the stock firmware first (esptool read-flash 0 ALL).
 substitutions:
   device_name: levoit-superior-6000s
   wifi_ap_ssid: "Levoit-Superior6000S"
-  rx_pin: GPIO16
-  tx_pin: GPIO17
+  rx_pin: GPIO18 # ESP RX <- MCU TX (module pin 27)
+  tx_pin: GPIO19 # ESP TX -> MCU RX (module pin 28)
 
 esphome:
   name: ${device_name}
+  min_version: 2026.6.0
 
 esp32:
-  board: esp32dev
+  board: esp32-c3-devkitm-1
+  flash_size: 4MB
+  # Stock ESP32-C3-SOLO-1 module: DIO at the default 80 MHz, like the Vital and
+  # Eleva (needs ESPHome 2026.6.0+ for flash_mode).
+  flash_mode: dio
   framework:
     type: esp-idf
-    sdkconfig_options:
-      CONFIG_FREERTOS_UNICORE: y
 
 packages:
   common: !include common.yaml
