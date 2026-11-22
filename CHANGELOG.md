@@ -10,6 +10,9 @@ Project-level changes. Component releases have their own log:
 * **Device configs report their model**: every device config and builder file
   has the `model` text sensor (component 1.7.1); the Philips configs also get
   the `esp_version` sensor. The Levoit ESPHome integration reads both
+* **Eleva 300X: flash at 80 MHz** (DIO, as before). The stock firmware's image
+  header sets DIO at 80 MHz; 40 MHz was taken over from the Vital 100S, which
+  moves to 80 MHz as well
 
 ### 2026.11.22
 

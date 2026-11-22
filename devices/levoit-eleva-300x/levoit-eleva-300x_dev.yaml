@@ -18,11 +18,9 @@ esphome:
 esp32:
   board: esp32-c3-devkitm-1
   flash_size: 4MB
-  # Stock ESP32-C3-SOLO-1 module (as on the Vital 100S): DIO at 40 MHz. esp32: flash_mode /
-  # flash_frequency work with both build toolchains (ESPHome 2026.6.0+);
-  # platformio_options are ignored by the native ESP-IDF build.
+  # Stock ESP32-C3-SOLO-1 module: DIO at the default 80 MHz, as the stock
+  # firmware's image header sets it (needs ESPHome 2026.6.0+ for flash_mode).
   flash_mode: dio
-  flash_frequency: 40MHz
   framework:
     type: esp-idf
 
