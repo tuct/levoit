@@ -23,6 +23,10 @@
 #
 # Output is UTF-8 without BOM with LF line endings, the same on Windows and
 # Linux, so -Check gives the same answer locally and in CI.
+#
+# It also writes devices/templates.json: the builder files the Levoit ESPHome
+# integration offers for new devices (variant original, xiao_c3 or c3; S3
+# builder files are not offered), with model, title, board and default name.
 
 param(
     [string]$Target = "",   # single device yaml to process; empty = all
@@ -164,6 +168,80 @@ function New-BuilderYaml([string]$DeviceYaml) {
            $header.Body.Trim() + "`n`n" + $source + "`n" + ($bodies -join "`n`n") + "`n"
 }
 
+# Titles shown by the Levoit ESPHome integration, per device folder.
+$Titles = @{
+    "levoit-core200s"       = "Levoit Core 200S"
+    "levoit-core300s"       = "Levoit Core 300S"
+    "levoit-core400s"       = "Levoit Core 400S"
+    "levoit-core600s"       = "Levoit Core 600S"
+    "levoit-eleva-300x"     = "Levoit Eleva 300X"
+    "levoit-everest-air"    = "Levoit Everest Air"
+    "levoit-superior-6000s" = "Levoit Superior 6000S"
+    "levoit-vital100s"      = "Levoit Vital 100S"
+    "levoit-vital200s"      = "Levoit Vital 200S"
+    "philips-600-series"    = "Philips 600 series"
+    "philips-900-series"    = "Philips 900 series"
+}
+
+function Get-TemplateEntry([string]$DeviceYaml, [string]$OutputPath, [string]$Text) {
+    # A builder file the integration offers for new devices, or $null.
+    $folder = Split-Path (Split-Path $OutputPath -Parent) -Leaf
+    $file = Split-Path $OutputPath -Leaf
+    if ($file -match '-builder-s3\.yaml$') { return $null }
+    $board = ([regex]::Match($Text, '(?m)^  board:\s*(\S+)')).Groups[1].Value
+    $name = ([regex]::Match($Text, '(?m)^  device_name:\s*(\S+)')).Groups[1].Value
+    $m = [regex]::Match($Text, '(?m)^(levoit|philips):[ \t]*\n(?:[ \t]+.*\n)*?[ \t]+model:\s*(\S+)')
+    if (-not $m.Success) { return $null }
+    $component = $m.Groups[1].Value
+    $model = $m.Groups[2].Value
+    if ($model -match '^\$\{(\w+)\}$') {
+        $model = ([regex]::Match($Text, "(?m)^  $($Matches[1]):\s*(\S+)")).Groups[1].Value
+    }
+    if ($board -eq "seeed_xiao_esp32c3") {
+        $variant = "xiao_c3"
+    } elseif ($component -eq "levoit" -and $file -eq "$folder-builder.yaml") {
+        $variant = "original"
+    } elseif ($board -match 'c3') {
+        $variant = "c3"
+    } else {
+        return $null
+    }
+    $title = $Titles[$folder]
+    if (-not $title) { $title = $folder }
+    $source = "devices/" + $folder + "/" + (Split-Path $DeviceYaml -Leaf)
+    return [pscustomobject]@{
+        title = $title; model = $model; variant = $variant; board = $board
+        name = $name; file = "devices/$folder/$file"; source = $source
+    }
+}
+
+function ConvertTo-TemplatesJson($Entries) {
+    # Written by hand, not ConvertTo-Json: the same bytes on PowerShell 5.1 and 7.
+    $sorted = @($Entries | Sort-Object title, variant, file)
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add("{")
+    $lines.Add('  "version": 1,')
+    $lines.Add('  "templates": [')
+    for ($i = 0; $i -lt $sorted.Count; $i++) {
+        $e = $sorted[$i]
+        $fields = @("title", "model", "variant", "board", "name", "file", "source") |
+            ForEach-Object {
+                # no JSON escaping below: refuse values that would need it
+                $value = [string]$e.$_
+                if ($value.Contains('"') -or $value.Contains([string][char]92)) {
+                    throw "templates.json: unexpected character in $($_): $value"
+                }
+                '"' + $_ + '": "' + $e.$_ + '"'
+            }
+        $comma = ","
+        if ($i -eq $sorted.Count - 1) { $comma = "" }
+        $lines.Add("    {" + ($fields -join ", ") + "}" + $comma)
+    }
+    $lines.Add("  ]")
+    $lines.Add("}")
+    return ($lines -join "`n") + "`n"
+}
+
 # --- collect targets ---
 if ($Target -ne "") {
     $files = @((Resolve-Path $Target).Path)
@@ -181,11 +259,13 @@ if ($Target -ne "") {
 }
 
 $stale = New-Object System.Collections.Generic.List[string]
+$templates = New-Object System.Collections.Generic.List[object]
 Write-Host ""
 foreach ($f in $files) {
     $text = New-BuilderYaml $f
     if ($null -eq $text) { continue }
     $out = Get-OutputPath $f
+    if (($entry = Get-TemplateEntry $f $out $text) -ne $null) { $templates.Add($entry) }
     $exists = Test-Path $out
     $current = $null
     if ($exists) { $current = (Read-Text $out) }
@@ -201,6 +281,24 @@ foreach ($f in $files) {
         $verb = "Updated"
         if (-not $exists) { $verb = "Created" }
         Write-Host "  $verb`: $out" -ForegroundColor Green
+    }
+}
+
+if ($Target -eq "") {
+    $json = ConvertTo-TemplatesJson $templates
+    $index = Join-Path $ScriptDir "templates.json"
+    $currentIndex = $null
+    if (Test-Path $index) { $currentIndex = Read-Text $index }
+    if ($currentIndex -ne $json) {
+        if ($Check) {
+            $stale.Add($index)
+            Write-Host "  OUT OF DATE: $index" -ForegroundColor Red
+        } else {
+            [System.IO.File]::WriteAllText($index, $json, $Utf8NoBom)
+            Write-Host "  Updated: $index" -ForegroundColor Green
+        }
+    } else {
+        Write-Host "  up to date: $index"
     }
 }
 
