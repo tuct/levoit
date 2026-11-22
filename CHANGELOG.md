@@ -5,11 +5,16 @@
 Project-level changes. Component releases have their own log:
 [levoit](./components/levoit/README.md#change-log).
 
-### Unreleased
+### 2026.11.22
 
+* **Levoit component [1.7.1](./components/levoit/README.md#change-log)**: the
+  version carries the build commit, a new `model` text sensor, the Everest Air
+  set-speed fix, no ESP32-C3 compiler warnings; ESPHome 2026.6.0 or newer
 * **`model` text sensor** for `levoit` and `philips`, reporting the configured
-  model; added to the device configs once released
+  model ([#104](https://github.com/tuct/levoit/pull/104)); the device configs
+  get it in the next PR, now that it is released
 * **Minimum ESPHome is now 2026.6.0** (CI, READMEs, the esphome-devices configs)
+  ([#105](https://github.com/tuct/levoit/pull/105))
 * **Vital 100S / Eleva 300X on the stock ESP32-C3-SOLO-1: DIO at 40 MHz again
   with current ESPHome.** The override was set through `platformio_options`,
   which ESPHome's native ESP-IDF build ignores, leaving the board default
@@ -22,17 +27,25 @@ Project-level changes. Component releases have their own log:
   deprecation / ignored warnings
 * **One version for the repo.** `philips` now reports the same version as
   `levoit` (from `components/levoit/VERSION`) and has an `esp_version` text
-  sensor, e.g. `1.7.0+3fa21c4 esphome`
+  sensor, e.g. `1.7.1+3fa21c4 esphome` ([#100](https://github.com/tuct/levoit/pull/100))
 * **`stable` branch**: a release workflow moves it to every published release,
   so a config can pull the component with `ref: stable` and get releases only
+  ([#100](https://github.com/tuct/levoit/pull/100))
 * **Builder files follow `stable`** and are checked by CI: the `Builder files`
   workflow fails when one does not match its device yaml / `common.yaml`, and
   compiles every one. New builder files for the Eleva 300X, Everest Air,
   Superior 6000S and Philips AC0650 / AC0950; `make-builder-yaml.ps1` no
   longer garbles `—`, handles the Philips configs and has a `-Check` mode
+  ([#101](https://github.com/tuct/levoit/pull/101)). They fetch the component on
+  every build (`refresh: always`), so a build right after a release gets it
+  ([#102](https://github.com/tuct/levoit/pull/102))
+* **Everest Air on a Seeed XIAO ESP32-C3**: `levoit-everest-air-c3.yaml` and its
+  builder file, pins D4 / D3 as on a tested unit
+  ([#103](https://github.com/tuct/levoit/pull/103))
 * **Core 600S:** the README pointed original-ESP users at
   `levoit-core600s-builder-solo-1c.yaml`, which has no `esphome:` section and
   does not validate. It is removed; use `levoit-core600s-builder.yaml`
+  ([#101](https://github.com/tuct/levoit/pull/101))
 
 ### 2026.11.21
 

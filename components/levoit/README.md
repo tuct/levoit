@@ -527,28 +527,34 @@ Auto mode options per model:
 
 ## Change Log
 
-#### Unreleased
+#### ESP Version: 1.7.1 - 2026.11.22
 
+**Firmware updates from Home Assistant, step one: the version tells the build,
+and the device tells its model.** Plus an Everest Air fix and clean ESP32-C3
+builds. Needs ESPHome **2026.6.0** or newer.
+
+* **Minimum ESPHome 2026.6.0** (was 2026.5.3)
+  ([#105](https://github.com/tuct/levoit/pull/105))
 * No compiler warnings on ESP32-C3 / RISC-V builds any more: `uint32_t` log
   values use `PRIu32`, and the number command switch has a `default`
+  ([#106](https://github.com/tuct/levoit/pull/106))
 * **New `model` text sensor** (`type: model`): reports the configured `model:`,
   e.g. `CORE300S`, so Home Assistant (the Levoit ESPHome integration) can tell
-  the device type without its config. The device configs get it with the next
-  release, as builder files pull `stable`
+  the device type without its config ([#104](https://github.com/tuct/levoit/pull/104))
 * The component version has one source now, `components/levoit/VERSION`. The
   build compiles it in and the `esp_version` sensor reports it as before
   (`1.7.0 esphome`); a new `Version check` workflow keeps it in step with this
-  change log and with release tags. First step of the
-  [firmware update plan](../../docs/firmware-updates.md)
+  change log and with release tags ([#98](https://github.com/tuct/levoit/pull/98))
 * **The version now includes the commit it was built from**, e.g.
   `1.7.0+3fa21c4 esphome` on the `esp_version` sensor (`.dirty` for a local
   checkout with uncommitted changes). Builds from `main` between two releases
   can now be told apart from the release. Without git around the component
-  it stays `1.7.0`
+  it stays `1.7.1` ([#100](https://github.com/tuct/levoit/pull/100))
 * **Everest Air: one "set speed" action now leaves Auto/Sleep/Turbo**, like on
   the other models; no need to set the Manual preset first
   ([#92](https://github.com/tuct/levoit/issues/92)). The Manual mode frame
   (`02 02 55`) is now sent before the fan level (`02 03 55`) on this model
+  ([#99](https://github.com/tuct/levoit/pull/99))
 * Everest Air: fan level `0xFF` (reported while off) no longer reads as speed 3,
   so setting 100% on a unit that is off also sends the level
 
