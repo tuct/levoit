@@ -40,8 +40,8 @@ with everything filled in except the name and the Wi-Fi.
   component version is published
 * Setting up an original ESP means picking the model and entering a name and
   Wi-Fi credentials, with no YAML editing
-* **Upload a `.bin`** to a device, at the user's own risk (for example a stock
-  app image)
+* Later: **upload a `.bin`** to a device, at the user's own risk (for example a
+  stock app image)
 * A **channel** per device: `stable` (tagged releases) or `main` (every merge)
 * **One version number** everywhere: the release tag, the component, the
   `ESP Version` sensor and the Home Assistant integration
@@ -180,7 +180,7 @@ Two parts with one name and one release number:
 
 | Part | Does | Runs on |
 |------|------|---------|
-| **Add-on** | The device page: list, configs, recompile and upload, `.bin` upload | Home Assistant OS / Supervised, next to the ESPHome add-on |
+| **Add-on** | The device page: list, configs, recompile and upload | Home Assistant OS / Supervised, next to the ESPHome add-on |
 | **Integration** (HACS) | Home Assistant update entities, install through the add-on | Every install; without the add-on it only shows that an update exists |
 
 Both live in this repo: the add-on in `levoit_esphome/` with a
@@ -193,7 +193,7 @@ one repo can be an add-on repository and a HACS repository at the same time.
 
 A sidebar page (ingress). The add-on talks to Home Assistant (device registry
 and entity states, through the Supervisor), to the Device Builder (its API, see
-above), and ships the `esphome` CLI for `.bin` uploads.
+above).
 
 **Device list** — every device running `levoit` or `philips`:
 
@@ -228,20 +228,7 @@ channel, or when the Device Builder runs a newer ESPHome than the device. Then:
 2. **Upload** — per device or all compiled ones, after a confirmation. Compile
    and upload are separate steps, so a failed build never touches a device
 
-**Upload a `.bin` — at your own risk.** Pick a device and an app image, and the
-add-on sends it with `esphome upload --file` over native OTA (key / password
-from the device's config). For example the stock app image from the user's own
-backup, or one from VeSync's server with the package header stripped. Limits
-the page states before the upload:
-
-* app images only; ESPHome refuses factory images. A full flash dump
-  (bootloader, partition table, `nvs`, `fac_data`) goes back over USB
-  (phase 5)
-* after the upload the device runs whatever the image is; if it is not
-  ESPHome, the add-on cannot reach it any more
-* a stock app on ESPHome's partition table does not find its `nvs` /
-  `fac_data` where it expects them, so it may not work. It is meant for
-  devices that kept the stock partition table (the DNS route, phase 6)
+Uploading an arbitrary `.bin` is not part of 4a; see phase 8.
 
 #### 4b. Integration
 
@@ -341,6 +328,23 @@ For the DNS route, the ESPHome build has to keep the stock partition table
 (two 1.5 MB slots) rather than bring its own, so the stock slot and `fac_data`
 stay untouched.
 
+### 8. Later: upload a `.bin` — at your own risk
+
+A page in the add-on: pick a device and an app image, and the add-on sends it
+with `esphome upload --file` over native OTA (key / password from the device's
+config). For example the stock app image from the user's own backup, or one
+from VeSync's server with the package header stripped. Limits the page states
+before the upload:
+
+* app images only; ESPHome refuses factory images. A full flash dump
+  (bootloader, partition table, `nvs`, `fac_data`) goes back over USB
+  (phase 5)
+* after the upload the device runs whatever the image is; if it is not
+  ESPHome, the add-on cannot reach it any more
+* a stock app on ESPHome's partition table does not find its `nvs` /
+  `fac_data` where it expects them, so it may not work. It is meant for
+  devices that kept the stock partition table (the DNS route, phase 6)
+
 ### Help wanted: stock firmware URLs per model
 
 Both the DNS route and "back to stock" need the stock firmware's download URL
@@ -388,11 +392,12 @@ Only the current version of each file stays on the server; older ones answer
 | 1 | `components/levoit/VERSION`, component define, CI consistency check ([#98](https://github.com/tuct/levoit/pull/98)) — **done** | — |
 | 2 | Commit in the version string; `philips` reports the same version; release workflow (`stable` branch) | 1 |
 | 3 | Ready-made package per original-ESP device, short adopt config, CI compiles them | 2 |
-| 4a | Add-on "Levoit ESPHome": device list, connect / create / manage configs, recompile and upload, `.bin` upload | 2, 3 |
+| 4a | Add-on "Levoit ESPHome": device list, connect / create / manage configs, recompile and upload | 2, 3 |
 | 4b | Integration "Levoit ESPHome" (HACS): update entities, install through the add-on | 4a |
 | 5 | Backup and restore page | — |
 | 6 | DNS add-on (research first) | 3 |
 | 7 | Back to stock: restore on the page, slot switch for DNS installs | 5, 6 |
+| 8 | `.bin` upload in the add-on, at the user's own risk | 4a |
 
 Phases 2 and 3 can ship before the add-on: the Device Builder already
 offers adoption, and users on `@stable` get releases with their next install.
@@ -407,5 +412,5 @@ offers adoption, and users on `@stable` get releases with their next install.
   folder
 * **Both keep the name "Levoit ESPHome"**, although they also cover the
   Philips devices
-* **`.bin` upload is allowed, at the user's own risk**, with the limits stated
-  on the page (phase 4a)
+* **`.bin` upload comes later** (phase 8), at the user's own risk, with the
+  limits stated on the page
