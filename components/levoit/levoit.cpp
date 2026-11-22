@@ -883,9 +883,15 @@ namespace esphome
             this->set_timeout("wifi_led_init", 2000, [this]() {
                 this->sendCommand(CommandType::setWifiLedBlinking);
             });
-            this->sendCommand(CommandType::setFilterLedOn);
-            filter_led_on_ = true;
-            filter_blinking_ = true;
+            // Core models: blink the filter LED until Wi-Fi connects. The other
+            // protocols have no filter LED command (on Vital the same code is
+            // tag 0x06 DisplayIlluminated, which toggled the display).
+            if (this->is_core_model())
+            {
+                this->sendCommand(CommandType::setFilterLedOn);
+                filter_led_on_ = true;
+                filter_blinking_ = true;
+            }
 
             // EverestAir: push the computed filter % to the MCU panel on boot
             // (delay so the MCU has finished booting), then keep it in sync
@@ -1076,7 +1082,8 @@ namespace esphome
                         ESP_LOGD(TAG, "WiFi connected - setting LED solid");
                         wifi_led_solid_ = true;
                         wifi_led_blink_sent_ = false;
-                        this->sendCommand(CommandType::setFilterLedOff);
+                        if (this->is_core_model())
+                            this->sendCommand(CommandType::setFilterLedOff);
                         filter_led_on_ = false;
                         filter_blinking_ = false;
                         // Ensure any blinking is cleared before setting solid LED
