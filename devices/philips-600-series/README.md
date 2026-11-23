@@ -93,7 +93,7 @@ are **not** on the pin header — use the test pads near the original ESP32.
 **Park the stock module.** Pull the original ESP32's `EN` pin to `GND` so it stops
 driving the UART bus, otherwise it will collide with your new module.
 
-### AC0650 
+### AC0650
 ![AC0650 Connect EN to GND](./images/ac0650_pcb_uart_en_to_gnd.jpg)
 ![AC0650 PCB - Close up tagged](./images/ac0650_wiring_closer.jpg)
 
@@ -118,9 +118,9 @@ UART and park the stock module.
 - Seeed XIAO ESP32-S3
 
 **Wiring:** 4 wires — `+5V`, `GND`, `RX`, `TX`. In the example configs the C3 uses
-`GPIO20` = RX (MCU TX → ESP RX) and `GPIO21` = TX (ESP TX → MCU RX). 
+`GPIO20` = RX (MCU TX → ESP RX) and `GPIO21` = TX (ESP TX → MCU RX).
 In S3's example config the module uses `GPIO44` = RX (MCU TX → ESP RX) and
-`GPIO43` = TX (ESP TX → MCU RX). In Seeed XIAO ESP32-S3, GPIO44 is D7 and GPIO43 is D6.  
+`GPIO43` = TX (ESP TX → MCU RX). In Seeed XIAO ESP32-S3, GPIO44 is D7 and GPIO43 is D6.
 
 > The RX/TX pads are **not** on the pin header — use the test pads near the original ESP32 on the board.
 > Pull the `EN` pin of the original ESP32 to GND to disable it so it stops driving the bus.
