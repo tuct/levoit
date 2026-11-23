@@ -56,6 +56,16 @@ Carbon filter options: Essential (90 g, ~6 months), Pet (200 g), Smoke & Cooking
 
 Measured CADR: 165 CFM (PM1) at Turbo, 115 CFM (PM1) below 45 dBA.
 
+## Disassembly
+
+Start with the hexagon grille side up: the outer grille, a middle ring and the
+round centre cover.
+
+1. **Remove the middle ring:** turn it **counter-clockwise**, with a bit of
+   force, and lift it off.
+
+   ![Eleva 300X: turning the middle ring counter-clockwise to remove it](images/disassembly-1-ring.jpg)
+
 ## Hardware
 
 ### PCB A — main board
@@ -220,7 +230,7 @@ Standard Vital timer: set `02 19 50` + `01 04 <seconds> 02 01 00` (0 = cancel); 
 
 The Saleae Logic 2 captures behind this section are in [uart/saleae/](uart/saleae/), with an index of what each one shows.
 
-## ESPHome (WIP, not tested on hardware)
+## ESPHome (works on a Seeed XIAO ESP32-C3; stock module untested)
 
 `model: ELEVA300X` in the levoit component. Configs: [levoit-eleva-300x.yaml](levoit-eleva-300x.yaml) (GitHub source) and [levoit-eleva-300x_dev.yaml](levoit-eleva-300x_dev.yaml) (local component), both for the stock ESP32-C3 module; the logger stays on J3 (UART0). For the ESPHome Device Builder: [levoit-eleva-300x-builder.yaml](levoit-eleva-300x-builder.yaml), everything inlined (see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)). For a replacement Seeed XIAO ESP32-S3 instead of the stock module (RX GPIO5 = pad D4 to module pin 27, TX GPIO4 = pad D3 to pin 28, stock EN held low): [levoit-eleva-300x-s3.yaml](levoit-eleva-300x-s3.yaml), [_dev](levoit-eleva-300x-s3_dev.yaml) and [builder-s3](levoit-eleva-300x-builder-s3.yaml); untested. Or a Seeed XIAO ESP32-C3 (RX GPIO5 = pad D3, TX GPIO4 = pad D2, same module pins 27 / 28; see the photo below): [levoit-eleva-300x-c3.yaml](levoit-eleva-300x-c3.yaml), [_dev](levoit-eleva-300x-c3_dev.yaml), [builder-c3](levoit-eleva-300x-builder-c3.yaml); **works on hardware** (fan speed, PM / AQI).
 
