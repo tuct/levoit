@@ -62,7 +62,8 @@ Start with the hexagon grille side up: the outer grille, a middle ring and the
 round centre cover.
 
 1. **Remove the middle ring:** turn it **counter-clockwise**, with a bit of
-   force, and lift it off.
+   force, and lift it off. It sits on four bayonet hooks; when refitting, line
+   them up and turn it clockwise.
 
    ![Eleva 300X: turning the middle ring counter-clockwise to remove it](images/disassembly-1-ring.jpg)
 
