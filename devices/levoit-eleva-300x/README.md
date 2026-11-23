@@ -71,6 +71,13 @@ round centre cover.
 
    <img src="images/disassembly-1-ring-removed.jpg" width="600" alt="The Eleva 300X middle ring, removed, with its four bayonet hooks">
 
+2. **Release the latches:** find the notches around the grille (circled
+   below). At each one, push a flat screwdriver in and lever it **up**,
+   carefully but with some force, until it **clicks**. Keep that one open and
+   move on to the next.
+
+   <img src="images/disassembly-2-latch.jpg" width="600" alt="Eleva 300X: one of the latch notches, circled in red, where the screwdriver goes in">
+
 ## Hardware
 
 ### PCB A — main board
