@@ -61,11 +61,15 @@ Measured CADR: 165 CFM (PM1) at Turbo, 115 CFM (PM1) below 45 dBA.
 Start with the hexagon grille side up: the outer grille, a middle ring and the
 round centre cover.
 
+<img src="images/disassembly-0-start.jpg" width="400" alt="Eleva 300X before disassembly: outer grille, middle ring and centre cover">
+
 1. **Remove the middle ring:** turn it **counter-clockwise**, with a bit of
    force, and lift it off. It sits on four bayonet hooks; when refitting, line
    them up and turn it clockwise.
 
-   ![Eleva 300X: turning the middle ring counter-clockwise to remove it](images/disassembly-1-ring.jpg)
+   <img src="images/disassembly-1-ring.jpg" width="400" alt="Eleva 300X: turning the middle ring counter-clockwise to remove it">
+
+   <img src="images/disassembly-1-ring-removed.jpg" width="600" alt="The Eleva 300X middle ring, removed, with its four bayonet hooks">
 
 ## Hardware
 
@@ -242,6 +246,10 @@ The working XIAO ESP32-C3 install: the two MCU link wires soldered to the stock 
 The XIAO end, fitted in the base: the cable from the board's connector lands on **D2 (blue, GPIO4, TX)** and **D3 (yellow, GPIO5, RX)**, with red / black for power. The wire colours change at the connector, so go by the pads, not the colours. The stock module's EN is held to GND (a dupont jumper on this unit), so the stock ESP32-C3 stays off the link:
 
 ![XIAO ESP32-C3 in the Eleva 300X base: blue wire on D2 (GPIO4, TX), yellow wire on D3 (GPIO5, RX)](images/xiao-c3-wiring.jpg)
+
+And the board end, back on the unit: the four-wire cable from the XIAO (top left) plugs into the connector soldered to the board, and a dupont jumper holds the stock module's EN to GND:
+
+![Eleva 300X main board with the XIAO ESP32-C3 cable connected and the stock module's EN held to GND by a dupont jumper](images/xiao-c3-pcb.jpg)
 
 Before flashing:
 
