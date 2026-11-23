@@ -134,6 +134,10 @@ Read with `esptool read-flash 0 ALL`. Secure Boot and flash encryption are **dis
 
 115200 8N1 on module pins 27 / 28 of the **ESP32-C3-SOLO-1** (FCC ID 2AC7Z-ESPC3SOLO), measured with a logic analyzer on the pads.
 
+Where these and the J3 pins are on the board, labelled for a replacement ESP:
+
+![Eleva 300X main board pins: MCU TX and MCU RX at the stock module, J3 EN, GND, +3V3, TXD0, RXD0 and IO0](images/xiao-c3-pins.jpg)
+
 | Signal | Module pin | ESP32-C3-SOLO-1 pin name | ESPHome pin | Saleae |
 |--------|-----------|---------------------------|-------------|--------|
 | MCU TX → ESP RX | 27 | IO18 | `rx_pin: GPIO18` | ch 0 |
