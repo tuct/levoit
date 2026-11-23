@@ -87,6 +87,13 @@ round centre cover.
 
    <img src="images/disassembly-2-clip.jpg" width="600" alt="Eleva 300X: the centre cover lifted, one of its clips released from the grille">
 
+3. **Lift the cover off:** with all clips free, the centre cover comes up with
+   the main board mounted underneath it. The board stays connected to the base
+   by its cables, so lift it gently and set it aside. The pins for the ESP are
+   [below](#esphome-works-on-a-seeed-xiao-esp32-c3-stock-module-untested).
+
+   <img src="images/disassembly-3-open.jpg" width="400" alt="Eleva 300X opened: the main board under the lifted centre cover, still cabled to the base">
+
 ## Hardware
 
 ### PCB A — main board
@@ -262,6 +269,10 @@ The working XIAO ESP32-C3 install: the two MCU link wires soldered to the stock 
 The XIAO end, fitted in the base: the cable from the board's connector lands on **D2 (blue, GPIO4, TX)** and **D3 (yellow, GPIO5, RX)**, with red / black for power. The wire colours change at the connector, so go by the pads, not the colours. The stock module's EN is held to GND (a dupont jumper on this unit), so the stock ESP32-C3 stays off the link:
 
 ![XIAO ESP32-C3 in the Eleva 300X base: blue wire on D2 (GPIO4, TX), yellow wire on D3 (GPIO5, RX)](images/xiao-c3-wiring.jpg)
+
+Where everything goes on the main board (shown without wires): the MCU link on two pads at the stock module, power and EN on the J3 header (pin 1 is EN):
+
+![Eleva 300X main board pins for a XIAO ESP32-C3: MCU TX to XIAO D3 and MCU RX from XIAO D2 at the stock module, J3 EN, GND, +3V3, TXD0, RXD0 and IO0](images/xiao-c3-pins.jpg)
 
 And the board end, back on the unit: the four-wire cable from the XIAO (top left) plugs into a small connector whose wires are soldered to the board, and a dupont jumper holds the stock module's EN to GND:
 
