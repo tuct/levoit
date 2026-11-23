@@ -247,7 +247,7 @@ The XIAO end, fitted in the base: the cable from the board's connector lands on 
 
 ![XIAO ESP32-C3 in the Eleva 300X base: blue wire on D2 (GPIO4, TX), yellow wire on D3 (GPIO5, RX)](images/xiao-c3-wiring.jpg)
 
-And the board end, back on the unit: the four-wire cable from the XIAO (top left) plugs into the connector soldered to the board, and a dupont jumper holds the stock module's EN to GND:
+And the board end, back on the unit: the four-wire cable from the XIAO (top left) plugs into a small connector whose wires are soldered to the board, and a dupont jumper holds the stock module's EN to GND:
 
 ![Eleva 300X main board with the XIAO ESP32-C3 cable connected and the stock module's EN held to GND by a dupont jumper](images/xiao-c3-pcb.jpg)
 
