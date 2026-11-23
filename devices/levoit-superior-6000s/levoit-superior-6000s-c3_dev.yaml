@@ -7,7 +7,7 @@ substitutions:
   device_name: levoit-superior-6000s-c3
   wifi_ap_ssid: "Levoit-Superior6000S"
   rx_pin: GPIO05  # XIAO ESP32-C3 pad D3 <- MCU TX (module pin 27)
-  tx_pin: GPIO04  # XIAO ESP32-C3 pad D2 -> MCU RX (module pin 28)
+  tx_pin: GPIO06  # XIAO ESP32-C3 pad D4 -> MCU RX (module pin 28)
 
 esphome:
   name: ${device_name}

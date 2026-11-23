@@ -23,7 +23,8 @@ Project-level changes. Component releases have their own log:
 * **Seeed XIAO ESP32-C3 replacement configs for the Eleva 300X and Superior
   6000S**, the two models that had the original (stock C3 module) and a XIAO
   ESP32-S3 replacement but no XIAO C3 one. Wired to the stock module's MCU link
-  (pins 27 / 28), RX GPIO5 / TX GPIO4, with builder files and Add device
+  (pins 27 / 28), RX GPIO5 / TX GPIO6 like the Vital XIAO configs (same stock
+  module), with builder files and Add device
   templates. Untested on hardware. Every Levoit model now offers original,
   XIAO ESP32-C3 and XIAO ESP32-S3
 
