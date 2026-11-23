@@ -228,6 +228,10 @@ The working XIAO ESP32-C3 install: the two MCU link wires soldered to the stock 
 
 ![XIAO ESP32-C3 on the Eleva 300X MCU link: green wire to XIAO D3 (GPIO5, RX), blue wire to XIAO D2 (GPIO4, TX)](images/xiao-c3-mcu-link.jpg)
 
+The XIAO end, fitted in the base: the cable from the board's connector lands on **D2 (blue, GPIO4, TX)** and **D3 (yellow, GPIO5, RX)**, with red / black for power. The wire colours change at the connector, so go by the pads, not the colours. The stock module's EN is held to GND (a dupont jumper on this unit), so the stock ESP32-C3 stays off the link:
+
+![XIAO ESP32-C3 in the Eleva 300X base: blue wire on D2 (GPIO4, TX), yellow wire on D3 (GPIO5, RX)](images/xiao-c3-wiring.jpg)
+
 Before flashing:
 
 1. Back up the stock flash (`esptool --chip esp32c3 read-flash 0 ALL backup.bin`, IO0 held low during reset).
