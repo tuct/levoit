@@ -2,7 +2,9 @@
 
 # Levoit Eleva 300X - Custom Firmware (ESPHome)
 
-> **Work in progress** — research and UART capture phase. No firmware yet.
+> **Runs on hardware with a replacement Seeed XIAO ESP32-C3** (2026-11-23): fan
+> speed and PM / AQI confirmed; the other features are not checked yet. The
+> config for the stock ESP32-C3-SOLO-1 module is still untested.
 
 ## Quick Facts
 
@@ -22,7 +24,7 @@
 | Room Size | up to 250 ft² (~23 m²) at 4.8 ACH |
 | Power | up to 25.5 W, 100–240 V 50/60 Hz |
 | Dimensions | 23.8 × 23.8 × 38.3 cm (9.4 × 9.4 × 15.1 in), 4.5 kg (9.9 lb) |
-| ESPHome | TBD |
+| ESPHome | ✅ Seeed XIAO ESP32-C3 replacement working (RX GPIO5 = D3 / TX GPIO4 = D2); stock module untested |
 
 ## Stock Features (from manufacturer / reviews)
 
@@ -54,11 +56,53 @@ Carbon filter options: Essential (90 g, ~6 months), Pet (200 g), Smoke & Cooking
 
 Measured CADR: 165 CFM (PM1) at Turbo, 115 CFM (PM1) below 45 dBA.
 
+## Disassembly
+
+Start with the hexagon grille side up: the outer grille, a middle ring and the
+round centre cover.
+
+<img src="images/disassembly-0-start.jpg" width="400" alt="Eleva 300X before disassembly: outer grille, middle ring and centre cover">
+
+1. **Remove the middle ring:** turn it **counter-clockwise**, with a bit of
+   force, and lift it off. It sits on four bayonet hooks; when refitting, line
+   them up and turn it clockwise.
+
+   <img src="images/disassembly-1-ring.jpg" width="400" alt="Eleva 300X: turning the middle ring counter-clockwise to remove it">
+
+   <img src="images/disassembly-1-ring-removed.jpg" width="600" alt="The Eleva 300X middle ring, removed, with its four bayonet hooks">
+
+2. **Unclip the centre cover:** it is held by clips that sit in notches in the
+   grille, next to the cover's edge (circled below). At each notch, push a flat
+   screwdriver in and lever **up**, carefully but with some force, until the
+   clip **clicks** free. Keep it open (an opening pick wedged under the cover
+   works) and move on to the next.
+
+   <img src="images/disassembly-2-latch.jpg" width="600" alt="Eleva 300X: one of the clip notches, circled in red, where the screwdriver goes in">
+
+   <img src="images/disassembly-2-screwdriver.jpg" width="600" alt="Eleva 300X: screwdriver in a notch at the centre cover's edge, levering up">
+
+   <img src="images/disassembly-2-picks.jpg" width="600" alt="Eleva 300X: opening picks keep the released clips open while the screwdriver works on the next one">
+
+   A released clip, with the cover lifted:
+
+   <img src="images/disassembly-2-clip.jpg" width="600" alt="Eleva 300X: the centre cover lifted, one of its clips released from the grille">
+
+3. **Lift the cover off:** with all clips free, the centre cover comes up with
+   the main board mounted underneath it. The board stays connected to the base
+   by its cables, so lift it gently and set it aside. The pins for the ESP are
+   [below](#esphome-works-on-a-seeed-xiao-esp32-c3-stock-module-untested).
+
+   <img src="images/disassembly-3-open.jpg" width="400" alt="Eleva 300X opened: the main board under the lifted centre cover, still cabled to the base">
+
 ## Hardware
 
 ### PCB A — main board
 
 ![PCB A](images/pcb_a.png)
+
+The pins for a replacement ESP (here a Seeed XIAO ESP32-C3): the MCU link on two pads at the stock module, power and EN on the J3 header (pin 1 is EN):
+
+![Eleva 300X main board pins for a XIAO ESP32-C3: MCU TX to XIAO D3 and MCU RX from XIAO D2 at the stock module, J3 EN, GND, +3V3, TXD0, RXD0 and IO0](images/xiao-c3-pins.jpg)
 
 | Ref | Part / Pins (from silkscreen) | Notes |
 |-----|------------------------------|-------|
@@ -93,6 +137,7 @@ Read with `esptool read-flash 0 ALL`. Secure Boot and flash encryption are **dis
 ### ESP ↔ MCU UART pins
 
 115200 8N1 on module pins 27 / 28 of the **ESP32-C3-SOLO-1** (FCC ID 2AC7Z-ESPC3SOLO), measured with a logic analyzer on the pads.
+Where they are on the board: see the [labelled pins](#pcb-a--main-board) under PCB A.
 
 | Signal | Module pin | ESP32-C3-SOLO-1 pin name | ESPHome pin | Saleae |
 |--------|-----------|---------------------------|-------------|--------|
@@ -218,9 +263,29 @@ Standard Vital timer: set `02 19 50` + `01 04 <seconds> 02 01 00` (0 = cancel); 
 
 The Saleae Logic 2 captures behind this section are in [uart/saleae/](uart/saleae/), with an index of what each one shows.
 
-## ESPHome (WIP, not tested on hardware)
+## ESPHome (works on a Seeed XIAO ESP32-C3; stock module untested)
 
-`model: ELEVA300X` in the levoit component. Configs: [levoit-eleva-300x.yaml](levoit-eleva-300x.yaml) (GitHub source) and [levoit-eleva-300x_dev.yaml](levoit-eleva-300x_dev.yaml) (local component), both for the stock ESP32-C3 module; the logger stays on J3 (UART0). For the ESPHome Device Builder: [levoit-eleva-300x-builder.yaml](levoit-eleva-300x-builder.yaml), everything inlined (see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)). For a replacement Seeed XIAO ESP32-S3 instead of the stock module (RX GPIO5 = pad D4 to module pin 27, TX GPIO4 = pad D3 to pin 28, stock EN held low): [levoit-eleva-300x-s3.yaml](levoit-eleva-300x-s3.yaml), [_dev](levoit-eleva-300x-s3_dev.yaml) and [builder-s3](levoit-eleva-300x-builder-s3.yaml); untested. Or a Seeed XIAO ESP32-C3 (RX GPIO5 = pad D3, TX GPIO4 = pad D2, same module pins 27 / 28): [levoit-eleva-300x-c3.yaml](levoit-eleva-300x-c3.yaml), [_dev](levoit-eleva-300x-c3_dev.yaml), [builder-c3](levoit-eleva-300x-builder-c3.yaml); untested.
+`model: ELEVA300X` in the levoit component. Configs: [levoit-eleva-300x.yaml](levoit-eleva-300x.yaml) (GitHub source) and [levoit-eleva-300x_dev.yaml](levoit-eleva-300x_dev.yaml) (local component), both for the stock ESP32-C3 module; the logger stays on J3 (UART0). For the ESPHome Device Builder: [levoit-eleva-300x-builder.yaml](levoit-eleva-300x-builder.yaml), everything inlined (see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)). For a replacement Seeed XIAO ESP32-S3 instead of the stock module (RX GPIO5 = pad D4 to module pin 27, TX GPIO4 = pad D3 to pin 28, stock EN held low): [levoit-eleva-300x-s3.yaml](levoit-eleva-300x-s3.yaml), [_dev](levoit-eleva-300x-s3_dev.yaml) and [builder-s3](levoit-eleva-300x-builder-s3.yaml); untested. Or a Seeed XIAO ESP32-C3 (RX GPIO5 = pad D3, TX GPIO4 = pad D2, same module pins 27 / 28; see the photo below): [levoit-eleva-300x-c3.yaml](levoit-eleva-300x-c3.yaml), [_dev](levoit-eleva-300x-c3_dev.yaml), [builder-c3](levoit-eleva-300x-builder-c3.yaml); **works on hardware** (fan speed, PM / AQI).
+
+The working XIAO ESP32-C3 install: the two MCU link wires soldered to the stock module's pins (the USB-UART on J3 and the logic analyzer on the right were for reverse engineering and flashing, not needed for the XIAO):
+
+![XIAO ESP32-C3 on the Eleva 300X MCU link: green wire to XIAO D3 (GPIO5, RX), blue wire to XIAO D2 (GPIO4, TX)](images/xiao-c3-mcu-link.jpg)
+
+The XIAO end, fitted in the base: the cable from the board's connector lands on **D2 (blue, GPIO4, TX)** and **D3 (yellow, GPIO5, RX)**, with red / black for power. The wire colours change at the connector, so go by the pads, not the colours. The stock module's EN is held to GND (a dupont jumper on this unit), so the stock ESP32-C3 stays off the link:
+
+![XIAO ESP32-C3 in the Eleva 300X base: blue wire on D2 (GPIO4, TX), yellow wire on D3 (GPIO5, RX)](images/xiao-c3-wiring.jpg)
+
+**Where the XIAO goes:** wrap it in insulating tape so nothing can short, and slide it into the gap at the side of the base, under the centre cover, as here (the cable runs from the board's connector down into the side):
+
+<img src="images/xiao-c3-taped.jpg" width="600" alt="Eleva 300X: the XIAO ESP32-C3 wrapped in black insulating tape on its cable, ready to slide into the side">
+
+<img src="images/xiao-c3-placement.jpg" width="600" alt="Eleva 300X: the centre cover lifted, the XIAO cable running from the board down into the gap at the side of the base, where the taped XIAO sits">
+
+Where everything goes on the main board: see the [labelled pins](#pcb-a--main-board) under PCB A (MCU link on two pads at the stock module, power and EN on J3).
+
+And the board end, back on the unit: the four-wire cable from the XIAO (top left) plugs into a small connector whose wires are soldered to the board, and a dupont jumper holds the stock module's EN to GND:
+
+![Eleva 300X main board with the XIAO ESP32-C3 cable connected and the stock module's EN held to GND by a dupont jumper](images/xiao-c3-pcb.jpg)
 
 Before flashing:
 
