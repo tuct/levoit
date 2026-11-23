@@ -100,6 +100,10 @@ round centre cover.
 
 ![PCB A](images/pcb_a.png)
 
+The pins for a replacement ESP (here a Seeed XIAO ESP32-C3): the MCU link on two pads at the stock module, power and EN on the J3 header (pin 1 is EN):
+
+![Eleva 300X main board pins for a XIAO ESP32-C3: MCU TX to XIAO D3 and MCU RX from XIAO D2 at the stock module, J3 EN, GND, +3V3, TXD0, RXD0 and IO0](images/xiao-c3-pins.jpg)
+
 | Ref | Part / Pins (from silkscreen) | Notes |
 |-----|------------------------------|-------|
 | WIFI1 | Espressif ESP32-C3-SOLO-1 module (FCC ID 2AC7Z-ESPC3SOLO) | Same module as the Vital 100S / 200S; MCU UART on module pins 27 / 28 = **IO18 (RX) / IO19 (TX)** |
@@ -133,10 +137,7 @@ Read with `esptool read-flash 0 ALL`. Secure Boot and flash encryption are **dis
 ### ESP ↔ MCU UART pins
 
 115200 8N1 on module pins 27 / 28 of the **ESP32-C3-SOLO-1** (FCC ID 2AC7Z-ESPC3SOLO), measured with a logic analyzer on the pads.
-
-Where these and the J3 pins are on the board, labelled for a replacement ESP:
-
-![Eleva 300X main board pins: MCU TX and MCU RX at the stock module, J3 EN, GND, +3V3, TXD0, RXD0 and IO0](images/xiao-c3-pins.jpg)
+Where they are on the board: see the [labelled pins](#pcb-a--main-board) under PCB A.
 
 | Signal | Module pin | ESP32-C3-SOLO-1 pin name | ESPHome pin | Saleae |
 |--------|-----------|---------------------------|-------------|--------|
@@ -280,9 +281,7 @@ The XIAO end, fitted in the base: the cable from the board's connector lands on 
 
 <img src="images/xiao-c3-placement.jpg" width="600" alt="Eleva 300X: the centre cover lifted, the XIAO cable running from the board down into the gap at the side of the base, where the taped XIAO sits">
 
-Where everything goes on the main board (shown without wires): the MCU link on two pads at the stock module, power and EN on the J3 header (pin 1 is EN):
-
-![Eleva 300X main board pins for a XIAO ESP32-C3: MCU TX to XIAO D3 and MCU RX from XIAO D2 at the stock module, J3 EN, GND, +3V3, TXD0, RXD0 and IO0](images/xiao-c3-pins.jpg)
+Where everything goes on the main board: see the [labelled pins](#pcb-a--main-board) under PCB A (MCU link on two pads at the stock module, power and EN on J3).
 
 And the board end, back on the unit: the four-wire cable from the XIAO (top left) plugs into a small connector whose wires are soldered to the board, and a dupont jumper holds the stock module's EN to GND:
 
