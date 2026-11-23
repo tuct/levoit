@@ -20,6 +20,12 @@ Project-level changes. Component releases have their own log:
   pads (GPIO20 / GPIO21 / GPIO10 are not on the XIAO S3). All untested on
   hardware so far. Philips builder files are named `…-builder-s3.yaml` like the
   Levoit ones
+* **Seeed XIAO ESP32-C3 replacement configs for the Eleva 300X and Superior
+  6000S**, the two models that had the original (stock C3 module) and a XIAO
+  ESP32-S3 replacement but no XIAO C3 one. Wired to the stock module's MCU link
+  (pins 27 / 28), RX GPIO5 / TX GPIO4, with builder files and Add device
+  templates. Untested on hardware. Every Levoit model now offers original,
+  XIAO ESP32-C3 and XIAO ESP32-S3
 
 ### 2026.11.22 (component 1.7.2)
 
