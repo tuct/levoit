@@ -5,31 +5,45 @@
 Project-level changes. Component releases have their own log:
 [levoit](./components/levoit/README.md#change-log).
 
-### Unreleased
+### 2026.11.23 (component 1.7.3)
 
+* **Component [1.7.3](./components/levoit/README.md#change-log)**: the
+  `philips` UART check moves to config validation, ahead of ESPHome 2027.3.0
+  ([#129](https://github.com/tuct/levoit/pull/129)); `levoit` code unchanged
 * **Eleva 300X runs on real hardware**: first install with a replacement Seeed
   XIAO ESP32-C3 (RX GPIO5 = D3 / TX GPIO4 = D2 on the stock module's MCU link), fan speed
-  and PM / AQI confirmed. The stock-module config is still untested
+  and PM / AQI confirmed. The stock-module config is still untested. The guide
+  now has the disassembly steps, the board pins labelled, the wiring at both
+  ends and where the XIAO goes ([#135](https://github.com/tuct/levoit/pull/135))
 * **Superior 6000S on its stock ESP32-C3-SOLO-1**: the configs used `esp32dev`
   with GPIO16 / GPIO17, a guess carried over from the purifiers. They now use
   the C3 module with the MCU link on GPIO18 / GPIO19, as egoleos confirmed on an
   LEH-S601S-WUS ([#78](https://github.com/tuct/levoit/discussions/78)); DIO
   flash, the log on UART0, ESPHome 2026.6.0 or newer. The README has the
   flashing steps (GPIO9 low for download mode)
+  ([#128](https://github.com/tuct/levoit/pull/128))
 * **Seeed XIAO ESP32-S3 configs for the remaining models**: Everest Air,
   Superior 6000S, Eleva 300X, Philips 600 series (AC0650) and 900 series
   (AC0950), with builder files and Add device templates. Everest Air keeps the
   GPIO numbers of its XIAO C3 config; the Philips configs keep the XIAO C3's
   pads (GPIO20 / GPIO21 / GPIO10 are not on the XIAO S3). All untested on
   hardware so far. Philips builder files are named `…-builder-s3.yaml` like the
-  Levoit ones
+  Levoit ones ([#127](https://github.com/tuct/levoit/pull/127))
 * **Seeed XIAO ESP32-C3 replacement configs for the Eleva 300X and Superior
   6000S**, the two models that had the original (stock C3 module) and a XIAO
   ESP32-S3 replacement but no XIAO C3 one. Wired to the stock module's MCU link
   (pins 27 / 28), RX GPIO5 / TX GPIO4, with builder files and Add device
   templates. The Eleva one works on hardware (above); the Superior one is
   untested. Every Levoit model now offers original,
-  XIAO ESP32-C3 and XIAO ESP32-S3
+  XIAO ESP32-C3 and XIAO ESP32-S3 ([#134](https://github.com/tuct/levoit/pull/134))
+* **Docs**: Core 400S CORE400S Ctrl V1.2 pads, 5 V from J4 and opening it
+  without extensions ([#130](https://github.com/tuct/levoit/pull/130)); flashing
+  the Core 400S over the air without opening it, a third-party proof of concept,
+  cross-linked from the Core 300S ([#132](https://github.com/tuct/levoit/pull/132));
+  Core 200S-P flash header photos ([#133](https://github.com/tuct/levoit/pull/133));
+  Philips AC0650 wiring photos and ESP32-S3 pins
+  ([#131](https://github.com/tuct/levoit/pull/131), by fgibertoni); a current
+  screenshot of the Levoit ESPHome sidebar page ([#125](https://github.com/tuct/levoit/pull/125))
 
 ### 2026.11.22 (component 1.7.2)
 
