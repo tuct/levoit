@@ -527,6 +527,21 @@ Auto mode options per model:
 
 ## Change Log
 
+#### ESP Version: 1.7.3 - 2026.11.23
+
+**Philips UART check and new device configs.** The `levoit` component code is
+unchanged from 1.7.2. The version moves because the repo has one version, and
+`stable` brings the new device configs (Eleva 300X on a XIAO ESP32-C3, Superior
+6000S on its stock module, XIAO ESP32-S3 / C3 configs for every model): see the
+[project change log](../../CHANGELOG.md).
+
+* **`philips`: UART settings checked at config validation**: the 115200 8N1
+  check moves from the deprecated `check_uart_settings()` (a warning on every
+  Philips build, removed in ESPHome 2027.3.0) to config validation. A wrong
+  UART setting now fails `esphome config` with "Component philips requires
+  baud rate 115200" instead of a warning in the device log
+  ([#129](https://github.com/tuct/levoit/pull/129))
+
 #### ESP Version: 1.7.2 - 2026.11.22
 
 **Vital fixes from real units.** Timer, filter wear, Wi-Fi LED and the daytime
