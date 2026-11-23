@@ -7,6 +7,9 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
+* **Eleva 300X runs on real hardware**: first install with a replacement Seeed
+  XIAO ESP32-C3 (RX GPIO5 / TX GPIO6 on the stock module's MCU link), fan speed
+  and PM / AQI confirmed. The stock-module config is still untested
 * **Superior 6000S on its stock ESP32-C3-SOLO-1**: the configs used `esp32dev`
   with GPIO16 / GPIO17, a guess carried over from the purifiers. They now use
   the C3 module with the MCU link on GPIO18 / GPIO19, as egoleos confirmed on an

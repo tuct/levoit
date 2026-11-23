@@ -2,7 +2,9 @@
 
 # Levoit Eleva 300X - Custom Firmware (ESPHome)
 
-> **Work in progress** — research and UART capture phase. No firmware yet.
+> **Runs on hardware with a replacement Seeed XIAO ESP32-C3** (2026-11-23): fan
+> speed and PM / AQI confirmed; the other features are not checked yet. The
+> config for the stock ESP32-C3-SOLO-1 module is still untested.
 
 ## Quick Facts
 
@@ -22,7 +24,7 @@
 | Room Size | up to 250 ft² (~23 m²) at 4.8 ACH |
 | Power | up to 25.5 W, 100–240 V 50/60 Hz |
 | Dimensions | 23.8 × 23.8 × 38.3 cm (9.4 × 9.4 × 15.1 in), 4.5 kg (9.9 lb) |
-| ESPHome | TBD |
+| ESPHome | ✅ Seeed XIAO ESP32-C3 replacement working (RX GPIO5 / TX GPIO6); stock module untested |
 
 ## Stock Features (from manufacturer / reviews)
 
@@ -220,7 +222,7 @@ The Saleae Logic 2 captures behind this section are in [uart/saleae/](uart/salea
 
 ## ESPHome (WIP, not tested on hardware)
 
-`model: ELEVA300X` in the levoit component. Configs: [levoit-eleva-300x.yaml](levoit-eleva-300x.yaml) (GitHub source) and [levoit-eleva-300x_dev.yaml](levoit-eleva-300x_dev.yaml) (local component), both for the stock ESP32-C3 module; the logger stays on J3 (UART0). For the ESPHome Device Builder: [levoit-eleva-300x-builder.yaml](levoit-eleva-300x-builder.yaml), everything inlined (see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)). For a replacement Seeed XIAO ESP32-S3 instead of the stock module (RX GPIO5 = pad D4 to module pin 27, TX GPIO6 = pad D5 to pin 28, stock EN held low): [levoit-eleva-300x-s3.yaml](levoit-eleva-300x-s3.yaml), [_dev](levoit-eleva-300x-s3_dev.yaml) and [builder-s3](levoit-eleva-300x-builder-s3.yaml); untested. Or a Seeed XIAO ESP32-C3 (RX GPIO5 = pad D3, TX GPIO6 = pad D4, same module pins 27 / 28, the same pins as the Vital 100S / 200S XIAO configs): [levoit-eleva-300x-c3.yaml](levoit-eleva-300x-c3.yaml), [_dev](levoit-eleva-300x-c3_dev.yaml), [builder-c3](levoit-eleva-300x-builder-c3.yaml); untested.
+`model: ELEVA300X` in the levoit component. Configs: [levoit-eleva-300x.yaml](levoit-eleva-300x.yaml) (GitHub source) and [levoit-eleva-300x_dev.yaml](levoit-eleva-300x_dev.yaml) (local component), both for the stock ESP32-C3 module; the logger stays on J3 (UART0). For the ESPHome Device Builder: [levoit-eleva-300x-builder.yaml](levoit-eleva-300x-builder.yaml), everything inlined (see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)). For a replacement Seeed XIAO ESP32-S3 instead of the stock module (RX GPIO5 = pad D4 to module pin 27, TX GPIO6 = pad D5 to pin 28, stock EN held low): [levoit-eleva-300x-s3.yaml](levoit-eleva-300x-s3.yaml), [_dev](levoit-eleva-300x-s3_dev.yaml) and [builder-s3](levoit-eleva-300x-builder-s3.yaml); untested. Or a Seeed XIAO ESP32-C3 (RX GPIO5 = pad D3, TX GPIO6 = pad D4, same module pins 27 / 28, the same pins as the Vital 100S / 200S XIAO configs): [levoit-eleva-300x-c3.yaml](levoit-eleva-300x-c3.yaml), [_dev](levoit-eleva-300x-c3_dev.yaml), [builder-c3](levoit-eleva-300x-builder-c3.yaml); **works on hardware** (fan speed, PM / AQI).
 
 Before flashing:
 
