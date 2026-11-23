@@ -8,7 +8,7 @@ Project-level changes. Component releases have their own log:
 ### Unreleased
 
 * **Eleva 300X runs on real hardware**: first install with a replacement Seeed
-  XIAO ESP32-C3 (RX GPIO5 / TX GPIO6 on the stock module's MCU link), fan speed
+  XIAO ESP32-C3 (RX GPIO5 = D3 / TX GPIO4 = D2 on the stock module's MCU link), fan speed
   and PM / AQI confirmed. The stock-module config is still untested
 * **Superior 6000S on its stock ESP32-C3-SOLO-1**: the configs used `esp32dev`
   with GPIO16 / GPIO17, a guess carried over from the purifiers. They now use
@@ -26,9 +26,9 @@ Project-level changes. Component releases have their own log:
 * **Seeed XIAO ESP32-C3 replacement configs for the Eleva 300X and Superior
   6000S**, the two models that had the original (stock C3 module) and a XIAO
   ESP32-S3 replacement but no XIAO C3 one. Wired to the stock module's MCU link
-  (pins 27 / 28), RX GPIO5 / TX GPIO6 like the Vital XIAO configs (same stock
-  module), with builder files and Add device
-  templates. Untested on hardware. Every Levoit model now offers original,
+  (pins 27 / 28), RX GPIO5 / TX GPIO4, with builder files and Add device
+  templates. The Eleva one works on hardware (above); the Superior one is
+  untested. Every Levoit model now offers original,
   XIAO ESP32-C3 and XIAO ESP32-S3
 
 ### 2026.11.22 (component 1.7.2)
