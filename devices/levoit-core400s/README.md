@@ -124,15 +124,19 @@ apart.
 | 5 | IO0 |
 | 6 | EN |
 
-## Two routes, two sets of pads
+## Routes onto the device
 
-There are two ways to put ESPHome on this unit, and they use **different serial
-pads**. Pick one before you solder anything.
+Three ways to put ESPHome on this unit. The two soldering routes use
+**different serial pads**, so pick one before you solder anything.
 
-| Route | Serial pads | Original firmware |
-|-------|-------------|-------------------|
-| [Install a new ESP32](#install-new-esp32-recommended) | `RX` / `TX` test pads near the original ESP32: the link between the ESP32 and the MCU | Kept, the stock module is only disabled (`EN` to GND) |
-| [Flash the original ESP32](#flash-original-esp32) | [J1 debug header](#j1-debug-header-pinout) pins 1 (`TX`) and 2 (`RX`): the ESP32's own UART0 | Overwritten, so back it up first |
+| Route | Teardown | Serial pads | Original firmware |
+|-------|----------|-------------|-------------------|
+| [Over the air](#flash-over-the-air--no-disassembly-third-party) | **none** | — | Overwritten (third-party proof of concept, hijacks the stock OTA over the LAN) |
+| [Install a new ESP32](#install-new-esp32-recommended) | full | `RX` / `TX` test pads near the original ESP32: the link between the ESP32 and the MCU | Kept, the stock module is only disabled (`EN` to GND) |
+| [Flash the original ESP32](#flash-original-esp32) | full + soldering | [J1 debug header](#j1-debug-header-pinout) pins 1 (`TX`) and 2 (`RX`): the ESP32's own UART0 | Overwritten, so back it up first |
+
+The two soldering routes are below; the over-the-air route is at the
+[end of this guide](#flash-over-the-air--no-disassembly-third-party).
 
 > **Don't flash through the `RX` / `TX` test pads.** They are the ESP32-to-MCU
 > link, so esptool can't reach the bootloader through them (`No serial data
@@ -238,3 +242,28 @@ Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into th
 esptool erase_flash
 esptool write_flash 0x00 levoit-core400s-backup.bin
 ```
+
+## Flash Over the Air — No Disassembly (third-party)
+
+The same no-soldering trick documented for the Core 300S works on the Core
+400S. [**nico202/levoit-core300s-ota-wifi-flash**](https://github.com/nico202/levoit-core300s-ota-wifi-flash)
+gets ESPHome onto the **stock ESP32 without opening the unit**, by redirecting
+the device's own firmware download over the LAN. See the
+[Core 300S guide](../levoit-core300s/README.md#flash-over-the-air--no-disassembly-third-party)
+for the full walkthrough and the [protocol notes](https://github.com/nico202/levoit-core300s-ota-wifi-flash/blob/main/docs/protocol.md);
+the stock ESP32 has **no Secure Boot**, so any ESPHome image wrapped in VeSync's
+128-byte OTA header is accepted.
+
+Confirmed on a **Core 400S** by [@iNDi](https://github.com/tuct/levoit/issues/76)
+with one change: on that unit's firmware the **region field is at header offset
+76, not 77** (adjust `make_ota.py`). The announced version must still match
+exactly.
+
+> **A third-party proof of concept, not tested by this project, and not part of
+> it.** Redirecting network traffic you do not own may be illegal where you
+> live, and a failed flash can leave the unit needing the soldered route to
+> recover. At your own risk, on your own hardware.
+
+Once ESPHome is running, the device is ordinary: `esphome run` / `upload` work
+over Wi-Fi, and the [Levoit ESPHome Home Assistant integration](https://github.com/tuct/levoit-esphome-ha)
+keeps it updated over the air — no cloud trick ever again.

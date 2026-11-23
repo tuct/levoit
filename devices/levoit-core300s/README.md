@@ -129,10 +129,17 @@ worked on a Core 300S EU with stock `mainFw` 1.1.08, upgraded to 2.0.00.
 * A VeSync account with the device added; `pyvesync` optionally, for CLI cloud
   queries
 
+The same method works on the **Core 400S** (confirmed by
+[@iNDi](https://github.com/tuct/levoit/issues/76)); see the
+[Core 400S guide](../levoit-core400s/README.md#flash-over-the-air--no-disassembly-third-party).
+
 ### Caveats
 
 * **The version string in the header must match exactly** what the cloud
   announces, or the device aborts partway through the update
+* **The header layout can vary by model and firmware.** The region field is at
+  offset 77 here; on a Core 400S [@iNDi](https://github.com/tuct/levoit/issues/76)
+  found it at **offset 76**. Check against your own OTA capture
 * **Intercepting network traffic you do not own may be illegal where you live.**
   Only do this to your own hardware
 * It may void your warranty, and the author offers no warranty of their own
@@ -141,6 +148,12 @@ worked on a Core 300S EU with stock `mainFw` 1.1.08, upgraded to 2.0.00.
 
 MIT licensed. Credits acvigue, mulcmu, tuct, epicRE, and the pyvesync and
 ESPHome communities.
+
+**Not part of this project**, and not built into it — it stays a third-party
+tool you run yourself, at your own risk. Once ESPHome is flashed, the device is
+ordinary: `esphome run` / `upload` work over Wi-Fi, and the
+[Levoit ESPHome Home Assistant integration](https://github.com/tuct/levoit-esphome-ha)
+keeps it updated over the air.
 
 ## Flash Original ESP32
 
