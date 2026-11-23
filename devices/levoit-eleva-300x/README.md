@@ -71,12 +71,21 @@ round centre cover.
 
    <img src="images/disassembly-1-ring-removed.jpg" width="600" alt="The Eleva 300X middle ring, removed, with its four bayonet hooks">
 
-2. **Release the latches:** find the notches around the grille (circled
-   below). At each one, push a flat screwdriver in and lever it **up**,
-   carefully but with some force, until it **clicks**. Keep that one open and
-   move on to the next.
+2. **Unclip the centre cover:** it is held by clips that sit in notches in the
+   grille, next to the cover's edge (circled below). At each notch, push a flat
+   screwdriver in and lever **up**, carefully but with some force, until the
+   clip **clicks** free. Keep it open (an opening pick wedged under the cover
+   works) and move on to the next.
 
-   <img src="images/disassembly-2-latch.jpg" width="600" alt="Eleva 300X: one of the latch notches, circled in red, where the screwdriver goes in">
+   <img src="images/disassembly-2-latch.jpg" width="600" alt="Eleva 300X: one of the clip notches, circled in red, where the screwdriver goes in">
+
+   <img src="images/disassembly-2-screwdriver.jpg" width="600" alt="Eleva 300X: screwdriver in a notch at the centre cover's edge, levering up">
+
+   <img src="images/disassembly-2-picks.jpg" width="600" alt="Eleva 300X: opening picks keep the released clips open while the screwdriver works on the next one">
+
+   A released clip, with the cover lifted:
+
+   <img src="images/disassembly-2-clip.jpg" width="600" alt="Eleva 300X: the centre cover lifted, one of its clips released from the grille">
 
 ## Hardware
 
