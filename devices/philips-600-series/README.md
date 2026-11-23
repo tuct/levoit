@@ -14,7 +14,7 @@ Two variants are supported via the `model:` option — both speak the identical
 
 
 > 🔒 The stock ESP32-C3 module has **secure boot enabled & enforced**, so it
-> cannot be reflashed. Wire your own ESP32-C3 to the MCU UART instead (see
+> cannot be reflashed. Wire your own ESP32-C3 or ESP32-S3 to the MCU UART instead (see
 > [Install New ESP32](#install-new-esp32)). Full protocol notes are below.
 
 ## Quick Facts
@@ -25,7 +25,7 @@ Two variants are supported via the `model:` option — both speak the identical
 | Brand | MUJI (Philips/Versuni OEM) |
 | Tested MCU FW | 0.1.9 / 0.2.1|
 | Stock ESP module | ESP32-C3-WROOM-02U (secure boot — locked) |
-| Replacement module | Seeed XIAO ESP32-C3 (or any ESP32-C3) |
+| Replacement module | Seeed XIAO ESP32-C3 (or any ESP32-C3 or ESP32-S3) |
 | MCU link | UART, 115200 8N1, `FE FF` protocol |
 | Fan speeds | 3 (Sleep / Medium / Turbo) + Auto on 651 |
 | PM sensor | PM1003 (AC0651 only) |
@@ -82,17 +82,28 @@ solder the wires for the new ESP32.
 Solder 4 wires to the PCB test pads: **`+5V`, `GND`, `RX`, `TX`**. The RX/TX pads
 are **not** on the pin header — use the test pads near the original ESP32.
 
+### AC0650
+![AC0650 PCB — all relevant pins](./images/ac0650_wiring.jpg)
+![AC0650 PCB - Close up](./images/ac0650_pcb_closer.jpg)
+
+### AC0651
 ![AC0651 PCB — all relevant pins](./images/ac651_pcb_all_pins.jpg)
 ![UART pads (RX / TX)](./images/uart_pins.jpg)
 
 **Park the stock module.** Pull the original ESP32's `EN` pin to `GND` so it stops
 driving the UART bus, otherwise it will collide with your new module.
 
-![Connect EN to GND](./images/pcb_uart_en_to_gnd.jpg)
-![EN pin location](./images/en_pin.jpg)
+### AC0650
+![AC0650 Connect EN to GND](./images/ac0650_pcb_uart_en_to_gnd.jpg)
+![AC0650 PCB - Close up tagged](./images/ac0650_wiring_closer.jpg)
+
+### AC0651
+![AC0651 Connect EN to GND](./images/pcb_uart_en_to_gnd.jpg)
+![AC0651 EN pin location](./images/en_pin.jpg)
 
 The finished install — new ESP32-C3 wired in alongside the parked stock module:
 
+![AC0650 final wiring](./images/ac0650_full_wiring.jpg)
 ![AC0650 with new ESP installed](./images/ac650_hacked_inside.jpg)
 ![AC0651 with new ESP installed](./images/ac651_hacked_inside.jpg)
 
@@ -108,6 +119,8 @@ UART and park the stock module.
 
 **Wiring:** 4 wires — `+5V`, `GND`, `RX`, `TX`. In the example configs the C3 uses
 `GPIO20` = RX (MCU TX → ESP RX) and `GPIO21` = TX (ESP TX → MCU RX).
+In S3's example config the module uses `GPIO44` = RX (MCU TX → ESP RX) and
+`GPIO43` = TX (ESP TX → MCU RX). In Seeed XIAO ESP32-S3, GPIO44 is D7 and GPIO43 is D6.
 
 > The RX/TX pads are **not** on the pin header — use the test pads near the original ESP32 on the board.
 > Pull the `EN` pin of the original ESP32 to GND to disable it so it stops driving the bus.
@@ -115,7 +128,7 @@ UART and park the stock module.
 ### Flashing ESPHome
 
 1. **Pick your config** by model:
-   - **AC0650** → [`philips-ac0650.yaml`](./philips-ac0650.yaml) (`model: AC0650`)
+   - **AC0650** → [`philips-ac0650.yaml`](./philips-ac0650.yaml) (`model: AC0650`, choose your ESP32 model)
    - **AC0651** → [`philips-ac0651-c3_dev.yaml`](./philips-ac0651-c3_dev.yaml)
      (`model: AC0651` — adds PM2.5, allergen index, Auto preset, standby sensor)
 
