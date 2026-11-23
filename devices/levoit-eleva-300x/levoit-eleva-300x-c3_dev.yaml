@@ -1,0 +1,22 @@
+#example levoit-eleva-300x-c3.yaml for a Seeed XIAO ESP32-C3 (local component)
+# A replacement ESP instead of the stock ESP32-C3-SOLO-1: wire it to the MCU link
+# on module pins 27 (MCU TX) and 28 (MCU RX), and hold the stock module's EN low.
+# The log stays on UART0 (pads D6 / D7 of the XIAO), like on the stock module.
+substitutions:
+  device_name: levoit-eleva-300x-c3
+  wifi_ap_ssid: "Levoit-Eleva300X"
+  rx_pin: GPIO05  # XIAO ESP32-C3 pad D3 <- MCU TX (module pin 27)
+  tx_pin: GPIO04  # XIAO ESP32-C3 pad D2 -> MCU RX (module pin 28)
+
+esphome:
+  name: ${device_name}
+  min_version: 2026.6.0
+
+esp32:
+  board: seeed_xiao_esp32c3
+  framework:
+    type: esp-idf
+
+packages:
+  common: !include common.yaml
+  source: !include ../packages/source_local.yaml
