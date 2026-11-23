@@ -329,6 +329,13 @@ side). Wire converter RX to `TXD` and converter TX to `RXD`. Use **ISP1**, not
 the `RX` / `TX` test pads in the middle of the board; see
 [Two routes, two sets of pads](#two-routes-two-sets-of-pads).
 
+On a Core 200S-P the header is labelled, left to right, `GND` `EN` `TXD` `RXD`
+`IO0` `+5V` (photos by [@fuccimain](https://github.com/tuct/levoit/discussions/54)):
+
+<img src="./images/core200sp-flash-header.jpg" width="49%" alt="Flash header labelled GND, EN, TXD, RXD, IO0, +5V on a Core 200S-P"> <img src="./images/core200sp-board.jpg" width="49%" alt="The Core 200S-P logic board with the flash header soldered in">
+
+(`EN` and `IO0` are broken out here too, handy for the bootloader step below.)
+
 **Power the board from its own +5V pad, not from the 3V3 of the USB-UART
 converter.** The 3V3 output of a CP2102/CH340 adapter is too weak for the
 module: the boot log then shows `Brownout detector was triggered` in a loop and
