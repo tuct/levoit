@@ -272,6 +272,8 @@ The XIAO end, fitted in the base: the cable from the board's connector lands on 
 
 **Where the XIAO goes:** wrap it in insulating tape so nothing can short, and slide it into the gap at the side of the base, under the centre cover, as here (the cable runs from the board's connector down into the side):
 
+<img src="images/xiao-c3-taped.jpg" width="600" alt="Eleva 300X: the XIAO ESP32-C3 wrapped in black insulating tape on its cable, ready to slide into the side">
+
 <img src="images/xiao-c3-placement.jpg" width="600" alt="Eleva 300X: the centre cover lifted, the XIAO cable running from the board down into the gap at the side of the base, where the taped XIAO sits">
 
 Where everything goes on the main board (shown without wires): the MCU link on two pads at the stock module, power and EN on the J3 header (pin 1 is EN):
