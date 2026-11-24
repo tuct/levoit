@@ -37,8 +37,8 @@ and a status request every 5 s. That request and its reply are shown once and
 left out after that; all of them were 01 33 40 answered as below.
 
 This unit never sends 01 30 40 or 01 B0 40. It pushes 01 32 40 on every change
-and once a minute. It acks a 01 31 40 status request with an empty payload (not
-in this capture).
+and once a minute. It acks a 01 31 40 status request with an empty payload and
+answers 01 33 40 with the status (end of the second capture).
 
 The ESP32's ack to a pushed frame is type 12 with its own sequence number and
 byte 4 = FF. The MCU accepts it. Twice in this capture the MCU sent the same
@@ -196,6 +196,14 @@ status ended 00 00 00 00 00 (offsets 14..18).
    63.281  MCU->ESP  A5 12 21 04 00 97 01 E6 A5 00
    63.331  MCU->ESP  A5 22 08 17 00 8D 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 00 AD 01 00
    63.331  ESP->MCU  A5 12 22 04 FF B0 01 32 40 00
+
+# the two status requests, side by side. 01 33 40 is answered with an ack
+# carrying the status. 01 31 40, the request documented for the Core 300S,
+# is acked with no payload
+  101.331  ESP->MCU  A5 22 2A 04 00 96 01 33 40 00
+  101.391  MCU->ESP  A5 12 2A 17 00 7A 01 33 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 00 AD 01 00
+  102.371  ESP->MCU  A5 22 2B 04 00 97 01 31 40 00
+  102.391  MCU->ESP  A5 12 2B 04 00 A7 01 31 40 00
 
 Layout, compared with the 18-byte 01 30 40 status: identical through offset 5,
 one byte inserted at offset 6, every later field one byte further on.
