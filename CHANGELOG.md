@@ -14,6 +14,7 @@ Project-level changes. Component releases have their own log:
   has been decoded yet, and reads the status from the ack. Units on
   `01 30 40` / `01 B0 40` are never sent it. Request and reply are in
   [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
+  ([#141](https://github.com/tuct/levoit/pull/141))
 * **Core 300S units that send status as `01 32 40`** now report state. A
   LAP-C302S-WGC whose MCU reports 1.0.0 sends a 19-byte status under that
   command and never `01 30 40` or `01 B0 40`, so the component acked it and
