@@ -175,6 +175,14 @@ namespace esphome
                 payload = {};
                 break;
 
+            // Core 300S whose MCU sends the 19-byte status (01 32 40): the stock
+            // firmware's purifier_uart_query_device_status. The ACK carries the
+            // status payload.
+            case CommandType::requestCore300sStatus:
+                msg_type = {0x01, 0x33, 0x40};
+                payload = {};
+                break;
+
             // Core600S light detect
             case CommandType::setLightDetectOn:
                 msg_type = {0x01, 0xE9, 0xA5};

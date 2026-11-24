@@ -11,6 +11,9 @@ void decode_core_status(Levoit *self,
                          ModelType model,
                          const uint8_t *payload,
                          size_t payload_len);
+void decode_core300s_status_19(Levoit *self,
+                                const uint8_t *payload,
+                                size_t payload_len);
 void decode_core_timer(Levoit *self,
                          ModelType model,
                          const uint8_t *payload,

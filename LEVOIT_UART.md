@@ -112,6 +112,7 @@ The second byte identifies the function, the third byte is always `0x50` (contro
 | Core 200S | `01 60 40` | `0x22` | MCU pushes status |
 | Core 300S | `01 30 40` | `0x22` | MCU pushes status |
 | Core 300S (FW ≥ 3.x) | `01 B0 40` | `0x22` | Newer MCU firmware |
+| Core 300S (MCU 1.0.0, LAP-C302S-WGC) | `01 32 40` | `0x22` | 19-byte payload, see below |
 | Core 400S | `01 30 40` / `01 B0 40` | `0x22` | Same as 300S |
 | Core 600S | `01 40 41` | `0x22` | MCU pushes status |
 | Vital 100/200S, Sprout | `02 00 55` | `0x22` | Flat-TLV payload |
@@ -168,6 +169,33 @@ Payload starts at frame byte **[10]** (offset 0 in payload arrays below).
 | 14 | B.24 | Auto mode | `0x00`=Default, `0x01`=Quiet, `0x02`=Room Size |
 | 15–16 | B.25–B.26 | Efficiency area | LE16 raw (see [Room Size Encoding](#room-size-encoding)) |
 | 17 | B.27 | Error | `0x00`=ok, non-zero=sensor error |
+
+### Core 300S — CMD `01 32 40` (19 bytes)
+
+Seen on a LAP-C302S-WGC whose MCU reports 1.0.0. It sends this and never
+`01 30 40` or `01 B0 40`. The 18-byte layout with one byte inserted at offset 6.
+Payloads: [`devices/levoit-core300s/uart/status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt).
+
+| Offset | Frame byte | Field | Values |
+|--------|------------|-------|--------|
+| 5 | B.15 | Selected manual speed | `0x01`–`0x03`, kept while off and in auto |
+| 6 | B.16 | Unknown | `0x00` |
+| 7 | B.17 | Display backlight right now | `0x00` / `0x64`. Lights for ~3 s on a button press even with the display set to off |
+| 8 | B.18 | Display setting | `0x00`=off, `0x01`=on |
+| 9 | B.19 | Running speed | the speed in manual, `0x00` in sleep and in auto with clean air, `0xFF` when off. The component reports this as the fan speed in auto |
+| 10 | B.20 | Filter LED | `0x00`=off, `0x01`=on |
+| 11 | B.21 | AQI | `0x01`–`0x04` |
+| 12–13 | B.22–B.23 | PM2.5 | LE16 µg/m³ |
+| 14 | B.24 | Child lock | `0x00`=off, `0x01`=on |
+| 15 | B.25 | Auto mode | `0x00`=Default, `0x01`=Quiet, `0x02`=Room Size. Follows `01 E6 A5` |
+| 16–17 | B.26–B.27 | Efficiency area | LE16 raw, as sent in `01 E6 A5`. Kept after the mode returns to Default |
+| 18 | B.28 | Unknown | `0x00` / `0x01`. Not an error flag: `0x01` appears in normal running |
+
+This MCU acks the status request `01 31 40` with an empty payload and answers
+`01 33 40` with an ack carrying the 19-byte status. Pushed frames arrive only
+on a change and once a minute, so three seconds after boot the component sends
+`01 33 40` once if no status has been decoded yet. MCUs on `01 30 40` /
+`01 B0 40` push several times a second and are never sent it.
 
 ### On/Off button hold — CMD `01 02 D1`
 

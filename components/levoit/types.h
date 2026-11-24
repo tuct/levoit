@@ -306,6 +306,7 @@ namespace esphome
             requestElevaAutoConfig,   // CMD=02 21 55 PAY=0C 01 00, MCU answers with the block in its ACK
             setElevaLocalTime,        // CMD=02 22 55 PAY=01 04 <local epoch LE32>
             setElevaFilterNotGenuine, // CMD=02 05 55 PAY=04 01 00, sent after resetFilter like the stock app
+            requestCore300sStatus,    // CMD=01 33 40, no payload; MCU answers with the 19-byte status in its ACK
             COMMAND_TYPE_MAX
 
             // dedicated command for setSleepModeCustom
@@ -387,6 +388,7 @@ namespace esphome
                 "requestElevaAutoConfig",
                 "setElevaLocalTime",
                 "setElevaFilterNotGenuine",
+                "requestCore300sStatus",
             };
             static_assert(
                 sizeof(names) / sizeof(names[0]) == COMMAND_TYPE_MAX,

@@ -7,12 +7,24 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
-* **On/Off button held** (Core models): new `power_button_held` binary
-  sensor. The MCU sends `01 02 D1` with `02` once a hold of the On/Off button
-  registers, a few seconds in, and `03` on release. The Core 300S manual uses
-  that hold to set up Wi-Fi, and a 15-second hold to disconnect it and restore
-  defaults (pages 5 and 7). Use it for the same long-press reset. Seen on a
-  Core 300S ([#143](https://github.com/tuct/levoit/pull/143))
+* **Core 300S on the `01 32 40` status: state right after boot.** That MCU
+  pushes status only on a change and once a minute, so entities could stay
+  unknown for up to a minute after a restart. The component now sends the
+  stock status request `01 33 40` three seconds after boot if nothing has
+  been decoded yet (up to three tries, 3 s apart), and reads the status from
+  the ack. Units on
+  `01 30 40` / `01 B0 40` are never sent it. Request and reply are in
+  [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
+  ([#141](https://github.com/tuct/levoit/pull/141))
+* **Core 300S units that send status as `01 32 40`** now report state. A
+  LAP-C302S-WGC whose MCU reports 1.0.0 sends a 19-byte status under that
+  command and never `01 30 40` or `01 B0 40`, so the component acked it and
+  decoded nothing: fan, display, child lock, AQI and PM2.5 stayed unknown and
+  the panel buttons were never reflected. It is the 18-byte layout with one
+  byte inserted at offset 6. Decode verified against payloads from the unit,
+  not yet run on it
+  ([`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt),
+  [#140](https://github.com/tuct/levoit/pull/140))
 * **Room size: one number to set** (Core 300S / 400S / 600S, Vital 100S /
   200S). Changing *Auto Mode Room Size Preset* while Room Size is the active
   auto mode now sends it to the purifier at once; before, it only took effect
