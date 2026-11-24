@@ -10,10 +10,11 @@
 > **New: [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha), a Home Assistant integration for these purifiers.**
 > It finds every device running the `levoit` or `philips` component and shows its installed and latest component version.
 > When a new release is out, it appears under *Settings → Updates*, and *Install* compiles and uploads it through the ESPHome Device Builder.
-> *Add device* makes a ready-to-flash config from a template (original ESP or ESP32-C3), and an optional sidebar page lists all devices with their versions, channel and filter %.
+> *Add device* makes a ready-to-flash config from a template (original ESP, Seeed XIAO ESP32-C3 / ESP32-S3, or your own board).
+> Its optional sidebar page shows every purifier as a card to use it (power, mode, speed, PM2.5, AQI, CADR), a page per device with its settings grouped and its air quality history, and a tab with versions, channel and filter %.
 > Install it from the Marketplace as a custom repository: [setup steps](https://github.com/tuct/levoit-esphome-ha#installation).
 
-![The Levoit ESPHome sidebar page in Home Assistant: each device with model, ESP, channel, installed and latest version, filter %, status, Update, Compile and Compile & upload](./docs/images/levoit-esphome-ha-panel.png)
+![The Levoit ESPHome sidebar page in Home Assistant: seven purifiers as cards, each with power, mode and speed buttons, PM2.5, AQI and CADR, and an Update chip](./docs/images/levoit-esphome-ha-overview.png)
 
 I like Wi-Fi enabled air purifiers! But I hate the fact that they all depend on a cloud service.
 
