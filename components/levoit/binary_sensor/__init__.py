@@ -21,7 +21,7 @@ TYPE_MAP = {
     # Eleva 300X only below
     "quiet_active": BinarySensorType.QUIET_ACTIVE,
     # Core models
-    "wifi_button_held": BinarySensorType.WIFI_BUTTON_HELD,
+    "power_button_held": BinarySensorType.POWER_BUTTON_HELD,
 }
 
 TYPE_PROPS = {
@@ -42,8 +42,8 @@ TYPE_PROPS = {
     "quiet_active": {
         CONF_ICON: "mdi:volume-low",
     },
-    "wifi_button_held": {
-        CONF_ICON: "mdi:wifi-cog",
+    "power_button_held": {
+        CONF_ICON: "mdi:power",
     },
 }
 

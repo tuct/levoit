@@ -145,7 +145,7 @@ namespace esphome
             DRY_ACTIVE = 4,       // Superior 6000S: drying cycle running
             HUMIDIFYING = 5,      // Superior 6000S: actively misting
             QUIET_ACTIVE = 6,     // Eleva 300X: quiet period currently lowering the fan (CMD 02 21 55 REPORT key 09: 7 = start, 8 = end)
-            WIFI_BUTTON_HELD = 7, // Core: Wi-Fi button held (CMD 01 02 D1: 02 = hold registered, 03 = released)
+            POWER_BUTTON_HELD = 7, // Core: On/Off button held (CMD 01 02 D1: 02 = hold registered, 03 = released)
         };
         static constexpr BinarySensorType FILTER_LOW = BinarySensorType::FILTER_LOW;
         static constexpr BinarySensorType COVER_OPEN = BinarySensorType::COVER_OPEN;
@@ -154,7 +154,7 @@ namespace esphome
         static constexpr BinarySensorType DRY_ACTIVE = BinarySensorType::DRY_ACTIVE;
         static constexpr BinarySensorType HUMIDIFYING = BinarySensorType::HUMIDIFYING;
         static constexpr BinarySensorType QUIET_ACTIVE = BinarySensorType::QUIET_ACTIVE;
-        static constexpr BinarySensorType WIFI_BUTTON_HELD = BinarySensorType::WIFI_BUTTON_HELD;
+        static constexpr BinarySensorType POWER_BUTTON_HELD = BinarySensorType::POWER_BUTTON_HELD;
 
         enum class ButtonType : uint8_t {
             RESET_FILTER_STATS = 0,

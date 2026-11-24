@@ -7,10 +7,11 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
-* **Wi-Fi button held** (Core models): new `wifi_button_held` binary sensor.
-  The MCU sends `01 02 D1` with `02` once a hold of the Wi-Fi button
-  registers, a few seconds in, and `03` on release; the stock firmware starts
-  Wi-Fi setup on it. Use it for a long-press action such as a reset. Seen on a
+* **On/Off button held** (Core models): new `power_button_held` binary
+  sensor. The MCU sends `01 02 D1` with `02` once a hold of the On/Off button
+  registers, a few seconds in, and `03` on release. The Core 300S manual uses
+  that hold to set up Wi-Fi, and a 15-second hold to disconnect it and restore
+  defaults (pages 5 and 7). Use it for the same long-press reset. Seen on a
   Core 300S ([#143](https://github.com/tuct/levoit/pull/143))
 * **Room size: one number to set** (Core 300S / 400S / 600S, Vital 100S /
   200S). Changing *Auto Mode Room Size Preset* while Room Size is the active
