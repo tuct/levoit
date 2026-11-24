@@ -308,8 +308,6 @@ built Feb 2025). Never sent to a purifier, and no capture has it.
   `"plasma": "on"` or `"off"`. `"on"` becomes `0x01`. `"off"` is very likely
   `0x00`, but that branch was not traced.
 - The firmware reports it back to the cloud as `plasmaPower`.
-- The Core 300S has no plasma button and its manual does not mention plasma,
-  so this firmware may just share code with a model that has it.
 
 ---
 
