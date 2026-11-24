@@ -31,8 +31,8 @@ frame it sent, as raw bytes, and the log was read over Wi-Fi. Times are seconds
 since the ESP32 booted, at about 10 ms resolution, taken when the frame was
 parsed or queued for sending. Every checksum below verifies.
 
-All state changes were made at the purifier's own panel. The ESP32 sent no
-control commands during the capture: only acks, the Wi-Fi LED command at boot
+In the first capture all state changes were made at the purifier's own panel.
+The ESP32 sent no control commands during it: only acks, the Wi-Fi LED command at boot
 and a status request every 5 s. That request and its reply are shown once and
 left out after that; all of them were 01 33 40 answered as below.
 
@@ -173,6 +173,30 @@ times right after a mode change; cause not established.
   313.100  MCU->ESP  A5 22 EB 05 00 BE 01 E4 A5 00 00
   313.100  ESP->MCU  A5 12 67 04 FF 54 01 E4 A5 00
 
+Second capture, same unit, a later boot: the auto mode command 01 E6 A5
+
+Here the ESP32 sent the commands, with the payloads this component uses. The
+purifier was on in manual speed 1 throughout. Before the first command the
+status ended 00 00 00 00 00 (offsets 14..18).
+
+# set auto mode Quiet: 01 E6 A5, payload 01 00 00. Status offset 15 -> 01
+   48.741  ESP->MCU  A5 22 1B 07 00 89 01 E6 A5 00 01 00 00
+   48.771  MCU->ESP  A5 12 1B 04 00 9D 01 E6 A5 00
+   48.771  MCU->ESP  A5 22 06 17 00 3C 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 01 00 00 00
+   48.771  ESP->MCU  A5 12 1C 04 FF B6 01 32 40 00
+
+# set auto mode Room Size with area raw 0x01AD: payload 02 AD 01. Offset 15 -> 02, offsets 16..17 -> AD 01
+   56.081  ESP->MCU  A5 22 1E 07 00 D7 01 E6 A5 00 02 AD 01
+   56.101  MCU->ESP  A5 12 1E 04 00 9A 01 E6 A5 00
+   56.151  MCU->ESP  A5 22 07 17 00 8C 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 02 AD 01 00
+   56.151  ESP->MCU  A5 12 1F 04 FF B3 01 32 40 00
+
+# set auto mode Default: payload 00 00 00. Offset 15 -> 00; the area stays AD 01
+   63.251  ESP->MCU  A5 22 21 07 00 84 01 E6 A5 00 00 00 00
+   63.281  MCU->ESP  A5 12 21 04 00 97 01 E6 A5 00
+   63.331  MCU->ESP  A5 22 08 17 00 8D 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 00 AD 01 00
+   63.331  ESP->MCU  A5 12 22 04 FF B0 01 32 40 00
+
 Layout, compared with the 18-byte 01 30 40 status: identical through offset 5,
 one byte inserted at offset 6, every later field one byte further on.
 
@@ -189,10 +213,10 @@ one byte inserted at offset 6, every later field one byte further on.
     11      AQI 1..4 (01 throughout this capture)
     12..13  PM2.5, LE16. Reads 5 while the purifier is off, whatever it read before
     14      child lock
-    15      auto mode, meaning the preference (Default / Quiet / Room Size), not
-            the fan mode at offset 4. 00 throughout. Taken by position: it
-            changes only by command 01 E6 A5, which was never sent, and the
-            panel has no control for it
-    16..17  efficiency area. 00 00 throughout. Taken by position, same reason
+    15      auto mode, meaning the preference and not the fan mode at offset 4:
+            00 Default, 01 Quiet, 02 Room Size. Follows command 01 E6 A5
+            (second capture)
+    16..17  efficiency area, LE16, as sent in 01 E6 A5. Kept after the mode
+            goes back to Default (second capture)
     18      00 throughout this capture. 01 was seen on other days in normal
             running, so it is not an error flag. Meaning unconfirmed

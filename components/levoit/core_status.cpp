@@ -203,8 +203,8 @@ namespace esphome
     //   [11] AQI 1-4
     //   [12..13] PM2.5 LE16
     //   [14] child lock
-    //   [15] auto mode
-    //   [16..17] efficiency area LE16
+    //   [15] auto mode, 1:1 with 01 E6 A5
+    //   [16..17] efficiency area LE16, as sent in 01 E6 A5
     //   [18] 0x00/0x01, meaning unconfirmed
     void decode_core300s_status_19(Levoit *self,
                                    const uint8_t *payload,

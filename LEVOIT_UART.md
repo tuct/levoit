@@ -187,8 +187,8 @@ Payloads: [`devices/levoit-core300s/uart/status_32_40.txt`](./devices/levoit-cor
 | 11 | B.21 | AQI | `0x01`–`0x04` |
 | 12–13 | B.22–B.23 | PM2.5 | LE16 µg/m³ |
 | 14 | B.24 | Child lock | `0x00`=off, `0x01`=on |
-| 15 | B.25 | Auto mode (the preference: Default / Quiet / Room Size) | `0x00` in every frame. Taken by position. It changes only by command `01 E6 A5`, which was never sent; the panel has no control for it |
-| 16–17 | B.26–B.27 | Efficiency area | `00 00` in every frame. Taken by position, same reason |
+| 15 | B.25 | Auto mode | `0x00`=Default, `0x01`=Quiet, `0x02`=Room Size. Follows `01 E6 A5` |
+| 16–17 | B.26–B.27 | Efficiency area | LE16 raw, as sent in `01 E6 A5`. Kept after the mode returns to Default |
 | 18 | B.28 | Unknown | `0x00` / `0x01`. Not an error flag: `0x01` appears in normal running |
 
 This MCU acks the status request `01 31 40` with an empty payload and answers
