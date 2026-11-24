@@ -5,6 +5,14 @@
 Project-level changes. Component releases have their own log:
 [levoit](./components/levoit/README.md#change-log).
 
+### Unreleased
+
+* **Statistics for the remaining measurements**: the Superior 6000S humidity,
+  temperature and MCU filter life, and the Philips filter sensors, get
+  `state_class: measurement`, so Home Assistant keeps long-term statistics for
+  them, as it already did for PM, AQI, CADR and filter life. The Superior ones
+  also get their unit and device class (%, °C)
+
 ### 2026.11.23 (component 1.7.3)
 
 * **Component [1.7.3](./components/levoit/README.md#change-log)**: the
