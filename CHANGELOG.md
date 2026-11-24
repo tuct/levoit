@@ -14,7 +14,8 @@ Project-level changes. Component releases have their own log:
   the panel buttons were never reflected. It is the 18-byte layout with one
   byte inserted at offset 6. Decode verified against payloads from the unit,
   not yet run on it
-  ([`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt))
+  ([`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt),
+  [#140](https://github.com/tuct/levoit/pull/140))
 * **Room size: one number to set** (Core 300S / 400S / 600S, Vital 100S /
   200S). Changing *Auto Mode Room Size Preset* while Room Size is the active
   auto mode now sends it to the purifier at once; before, it only took effect
