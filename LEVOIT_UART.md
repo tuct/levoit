@@ -192,9 +192,10 @@ Payloads: [`devices/levoit-core300s/uart/status_32_40.txt`](./devices/levoit-cor
 | 18 | B.28 | Unknown | `0x00` / `0x01`. Not an error flag: `0x01` appears in normal running |
 
 This MCU acks the status request `01 31 40` with an empty payload and answers
-`01 33 40` with an ack carrying the 19-byte status. The component does not send
-either; it decodes the pushed frames, which arrive once a minute and on every
-change.
+`01 33 40` with an ack carrying the 19-byte status. Pushed frames arrive only
+on a change and once a minute, so three seconds after boot the component sends
+`01 33 40` once if no status has been decoded yet. MCUs on `01 30 40` /
+`01 B0 40` push several times a second and are never sent it.
 
 ### Core 400S — CMD `01 30 40` / `01 B0 40`
 

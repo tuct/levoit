@@ -212,6 +212,11 @@ namespace esphome
           {
             decode_core300s_status_19(self, payload, payload_len);
           }
+          // The same status, returned in the ACK to requestCore300sStatus (01 33 40).
+          if (model == ModelType::CORE300S && msg_type == 0x12 && ptype0 == 0x33 && ptype1 == 0x40)
+          {
+            decode_core300s_status_19(self, payload, payload_len);
+          }
           // Timer
           if (msg_type == 0x12 && ptype0 == 0x65 && ptype1 == 0xA2)
           {
