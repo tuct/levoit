@@ -179,7 +179,7 @@ Payloads: [`devices/levoit-core300s/uart/status_32_40.txt`](./devices/levoit-cor
 | Offset | Frame byte | Field | Values |
 |--------|------------|-------|--------|
 | 5 | B.15 | Selected manual speed | `0x01`–`0x03`, kept while off and in auto |
-| 6 | B.16 | Unknown | `0x00` |
+| 6 | B.16 | Plasma | `0x00`=off, `0x01`=on. Follows the panel's plasma button |
 | 7 | B.17 | Display backlight right now | `0x00` / `0x64`. Lights for ~3 s on a button press even with the display set to off |
 | 8 | B.18 | Display setting | `0x00`=off, `0x01`=on |
 | 9 | B.19 | Running speed | the speed in manual, `0x00` in sleep and in auto with clean air, `0xFF` when off. The component reports this as the fan speed in auto |
@@ -304,6 +304,23 @@ Each block: `[tag:1] [len:1] [value:len]`.
 | Timer set | `01 64 A2` | `{sec_b0, sec_b1, sec_b2, sec_b3}` | LE32 seconds |
 | Timer stop | `01 64 A2` | `{0x00, 0x00, 0x00, 0x00}` | |
 | Timer request | `01 65 A2` | — | request current timer |
+| Plasma | `01 E8 A5` | `{0x01}` = on | From stock firmware only, see [below](#plasma-01-e8-a5) |
+
+### Plasma (`01 E8 A5`)
+
+Read from the stock ESP firmware of a Core 300S (`VS_WFON_APR_LAP-C302S-WGC_AE`,
+built Feb 2025). The command has not been sent to a purifier yet.
+
+The state is confirmed on that unit: offset 6 of the [19-byte `01 32 40` status](#core-300s--cmd-01-32-40-19-bytes)
+follows the panel's plasma button. The button sends no frame of its own.
+
+- The function that sends it logs as `purifier_uart_set_plasma`. It sends a
+  1-byte payload, built the same way as child lock (`01 00 D1`) and the filter
+  LED (`01 E2 A5`).
+- It is driven by the VeSync cloud action `alterPlasma`, which takes
+  `"plasma": "on"` or `"off"`. `"on"` becomes `0x01`. `"off"` is very likely
+  `0x00`, but that branch was not traced.
+- The firmware reports it back to the cloud as `plasmaPower`.
 
 ---
 
