@@ -182,7 +182,7 @@ Payloads: [`devices/levoit-core300s/uart/status_32_40.txt`](./devices/levoit-cor
 | 6 | B.16 | Unknown | `0x00` |
 | 7 | B.17 | Display backlight right now | `0x00` / `0x64`. Lights for ~3 s on a button press even with the display set to off |
 | 8 | B.18 | Display setting | `0x00`=off, `0x01`=on |
-| 9 | B.19 | Running speed | the speed in manual, `0x00` in sleep and in auto with clean air, `0xFF` when off |
+| 9 | B.19 | Running speed | the speed in manual, `0x00` in sleep and in auto with clean air, `0xFF` when off. The component reports this as the fan speed in auto |
 | 10 | B.20 | Filter LED | `0x00`=off, `0x01`=on |
 | 11 | B.21 | AQI | `0x01`–`0x04` |
 | 12–13 | B.22–B.23 | PM2.5 | LE16 µg/m³ |
