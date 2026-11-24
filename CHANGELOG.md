@@ -7,11 +7,16 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
-* **Core 300S: filter reset from the panel.** Holding Sleep for 3 seconds
-  resets the filter on the unit and sends `01 E4 A5`, the same message the
-  Core 200S sends from its filter button. The component only handled it on the
-  200S, so on a 300S the filter light went off but filter life kept counting
-  down. It now resets the 300S count too ([#142](https://github.com/tuct/levoit/pull/142))
+* **Core 300S with the `01 32 40` status** (a LAP-C302S-WGC, MCU 1.0.0) now
+  reports its state: the 19-byte status is decoded and asked for at boot, a
+  filter reset on the panel (Sleep held 3 s) resets the filter life, and a
+  new `wifi_button_held` binary sensor (Core models) follows a long press of
+  the Wi-Fi button. Capture in
+  [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
+  ([#140](https://github.com/tuct/levoit/pull/140),
+  [#141](https://github.com/tuct/levoit/pull/141),
+  [#142](https://github.com/tuct/levoit/pull/142),
+  [#143](https://github.com/tuct/levoit/pull/143))
 * **Room size: one number to set** (Core 300S / 400S / 600S, Vital 100S /
   200S). Changing *Auto Mode Room Size Preset* while Room Size is the active
   auto mode now sends it to the purifier at once; before, it only took effect
