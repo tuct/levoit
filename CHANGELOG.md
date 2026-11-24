@@ -17,6 +17,11 @@ Project-level changes. Component releases have their own log:
   [#141](https://github.com/tuct/levoit/pull/141),
   [#142](https://github.com/tuct/levoit/pull/142),
   [#143](https://github.com/tuct/levoit/pull/143))
+* **Core plasma documented** in [LEVOIT_UART.md](./LEVOIT_UART.md#plasma-01-e8-a5):
+  the plasma command `01 E8 A5`, read from the stock firmware of a Core 300S
+  (not sent to a purifier yet), and offset 6 of the `01 32 40` status, which
+  follows the panel's plasma button. Not used by the component yet
+  ([#144](https://github.com/tuct/levoit/pull/144))
 * **Room size: one number to set** (Core 300S / 400S / 600S, Vital 100S /
   200S). Changing *Auto Mode Room Size Preset* while Room Size is the active
   auto mode now sends it to the purifier at once; before, it only took effect
