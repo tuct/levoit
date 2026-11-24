@@ -524,6 +524,7 @@ Auto mode options per model:
 | ESP Version | text_sensor | `esp_version` | Component version and the commit it was built from, e.g. `1.7.0+3fa21c4 esphome` |
 | Model | text_sensor | `model` | The configured `model:`, e.g. `CORE300S`; lets Home Assistant (the Levoit ESPHome integration) tell the device type without the config |
 | Error | text_sensor | `error_message` | Device error status: "Ok" or "Sensor Error" **Not for Core200S** |
+| Wi-Fi Button Held | binary_sensor | `wifi_button_held` | `on` from a few seconds into a hold of the Wi-Fi button until it is released (CMD `01 02 D1`), for a long-press action such as a reset. Seen on a Core 300S **Core models** |
 
 ## Change Log
 
