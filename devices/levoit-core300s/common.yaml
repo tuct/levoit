@@ -68,6 +68,8 @@ number:
     levoit: levoitcore300
     name: "Auto Mode Room Size"
     type: efficiency_room_size
+    # the room size the purifier reports (0 outside Room Size); set it with the Preset below
+    entity_category: diagnostic
   - platform: levoit
     levoit: levoitcore300
     name: "Auto Mode Room Size Preset"
