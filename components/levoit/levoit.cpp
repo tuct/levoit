@@ -336,6 +336,7 @@ namespace esphome
 
         void Levoit::apply_fan_status(int power, int speed, int mode)
         {
+            this->fan_status_seen_ = true;
             if (speed != -1)
                 this->fan_sleep_speed_ = (speed == 0);
 #ifdef USE_LEVOIT_FAN
@@ -915,6 +916,18 @@ namespace esphome
                 if (this->time_ != nullptr)
                     this->time_->add_on_time_sync_callback([this]() { this->send_eleva_local_time(); });
 #endif
+            }
+
+            // Core 300S: an MCU on the 19-byte status (01 32 40) pushes it only on
+            // a change and once a minute, so after a boot every entity can sit
+            // unknown for up to a minute. Ask once if nothing has arrived. MCUs
+            // on 01 30 40 / 01 B0 40 push several times a second, so they have
+            // reported long before this fires and are never sent the request.
+            if (this->model_ == ModelType::CORE300S) {
+                this->set_timeout("core300s_status_req", 3000, [this]() {
+                    if (!this->fan_status_seen_)
+                        this->sendCommand(CommandType::requestCore300sStatus);
+                });
             }
 
             // Track CADR on initial setup

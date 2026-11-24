@@ -7,6 +7,13 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
+* **Core 300S on the `01 32 40` status: state right after boot.** That MCU
+  pushes status only on a change and once a minute, so entities could stay
+  unknown for up to a minute after a restart. The component now sends the
+  stock status request `01 33 40` once, three seconds after boot, if nothing
+  has been decoded yet, and reads the status from the ack. Units on
+  `01 30 40` / `01 B0 40` are never sent it. Request and reply are in
+  [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
 * **Core 300S units that send status as `01 32 40`** now report state. A
   LAP-C302S-WGC whose MCU reports 1.0.0 sends a 19-byte status under that
   command and never `01 30 40` or `01 B0 40`, so the component acked it and

@@ -266,6 +266,7 @@ class Levoit : public Component, public uart::UARTDevice {
   enum class WifiLedState : uint8_t { UNKNOWN, OFF, BLINKING, SOLID };
   WifiLedState wifi_led_state_{WifiLedState::UNKNOWN};
   bool mcu_seen_{false};  // set on first valid RX frame from MCU
+  bool fan_status_seen_{false};  // set on the first decoded status frame
   bool filter_led_on_{false};
   bool filter_blinking_{false};  // Core models only: filter LED blinks until Wi-Fi connects
 
