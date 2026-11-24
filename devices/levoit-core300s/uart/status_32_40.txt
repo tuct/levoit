@@ -189,7 +189,10 @@ one byte inserted at offset 6, every later field one byte further on.
     11      AQI 1..4 (01 throughout this capture)
     12..13  PM2.5, LE16. Reads 5 while the purifier is off, whatever it read before
     14      child lock
-    15      auto mode (by position; not exercised)
-    16..17  efficiency area (by position; not exercised)
+    15      auto mode, meaning the preference (Default / Quiet / Room Size), not
+            the fan mode at offset 4. 00 throughout. Taken by position: it
+            changes only by command 01 E6 A5, which was never sent, and the
+            panel has no control for it
+    16..17  efficiency area. 00 00 throughout. Taken by position, same reason
     18      00 throughout this capture. 01 was seen on other days in normal
             running, so it is not an error flag. Meaning unconfirmed
