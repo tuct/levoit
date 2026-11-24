@@ -20,6 +20,8 @@ TYPE_MAP = {
     "humidifying": BinarySensorType.HUMIDIFYING,
     # Eleva 300X only below
     "quiet_active": BinarySensorType.QUIET_ACTIVE,
+    # Core models
+    "power_button_held": BinarySensorType.POWER_BUTTON_HELD,
 }
 
 TYPE_PROPS = {
@@ -39,6 +41,9 @@ TYPE_PROPS = {
     },
     "quiet_active": {
         CONF_ICON: "mdi:volume-low",
+    },
+    "power_button_held": {
+        CONF_ICON: "mdi:power",
     },
 }
 

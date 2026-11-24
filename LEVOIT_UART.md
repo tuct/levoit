@@ -197,6 +197,16 @@ on a change and once a minute, so three seconds after boot the component sends
 `01 33 40` once if no status has been decoded yet. MCUs on `01 30 40` /
 `01 B0 40` push several times a second and are never sent it.
 
+### On/Off button hold — CMD `01 02 D1`
+
+Sent by the MCU when the On/Off button is held: payload `0x02` once the hold
+registers, a few seconds in, and `0x03` on release. The stock ESP32 firmware
+logs "netcfg is start" on it. The [Core 300S manual](https://files.vesync.com/desc/LEVOIT_Core300S_USER_MANUAL.pdf)
+says to hold On/Off to set up Wi-Fi (page 5), and for 15 seconds to disconnect
+Wi-Fi and restore defaults (page 7). The panel has no Wi-Fi button; the Wi-Fi
+symbol above On/Off is an indicator. Seen on a Core 300S. The component
+publishes it as the `power_button_held` binary sensor.
+
 ### Core 400S — CMD `01 30 40` / `01 B0 40`
 
 Same as Core 300S except:
