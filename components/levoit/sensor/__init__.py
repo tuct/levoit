@@ -3,6 +3,7 @@ import esphome.config_validation as cv
 from esphome.components import sensor
 from esphome.const import (
     CONF_ID,
+    CONF_ACCURACY_DECIMALS,
     CONF_DEVICE_CLASS,
     CONF_UNIT_OF_MEASUREMENT,
     CONF_ICON,
@@ -90,6 +91,23 @@ TYPE_PROPS = {
     "pm10": {
         CONF_DEVICE_CLASS: "pm10",
         CONF_UNIT_OF_MEASUREMENT: "µg/m³",
+        CONF_STATE_CLASS: validate_state_class("measurement"),
+    },
+    # Superior 6000S
+    "humidity": {
+        CONF_DEVICE_CLASS: "humidity",
+        CONF_UNIT_OF_MEASUREMENT: "%",
+        CONF_STATE_CLASS: validate_state_class("measurement"),
+    },
+    "temperature": {
+        CONF_DEVICE_CLASS: "temperature",
+        CONF_UNIT_OF_MEASUREMENT: "°C",
+        CONF_ACCURACY_DECIMALS: 1,
+        CONF_STATE_CLASS: validate_state_class("measurement"),
+    },
+    "filter_life_mcu": {
+        CONF_UNIT_OF_MEASUREMENT: "%",
+        CONF_ICON: "mdi:air-filter",
         CONF_STATE_CLASS: validate_state_class("measurement"),
     },
     "fan_rpm": {

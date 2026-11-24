@@ -33,11 +33,13 @@ TYPE_PROPS = {
         CONF_UNIT_OF_MEASUREMENT: "%",
         CONF_ICON: "mdi:air-filter",
         CONF_ACCURACY_DECIMALS: 0,
+        CONF_STATE_CLASS: validate_state_class("measurement"),
     },
     "filter_lifetime": {
         CONF_UNIT_OF_MEASUREMENT: "%",
         CONF_ICON: "mdi:air-filter",
         CONF_ACCURACY_DECIMALS: 0,
+        CONF_STATE_CLASS: validate_state_class("measurement"),
     },
     "pm2_5": {
         CONF_UNIT_OF_MEASUREMENT: "µg/m³",
