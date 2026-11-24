@@ -215,6 +215,18 @@ namespace esphome
             decode_core_timer(self, model, payload, payload_len);
           }
         }
+        // Wi-Fi button hold (all Core models): the MCU sends 01 02 D1 with 02 once
+        // the hold registers, a few seconds in, and 03 on release. Stock firmware
+        // starts Wi-Fi setup on it ("netcfg is start"). Seen on a Core 300S.
+        if ((model == ModelType::CORE200S || model == ModelType::CORE300S ||
+             model == ModelType::CORE400S || model == ModelType::CORE600S) &&
+            msg_type == 0x22 && ptype0 == 0x02 && ptype1 == 0xD1 && payload_len >= 1)
+        {
+          if (payload[0] == 0x02)
+            self->publish_binary_sensor(BinarySensorType::WIFI_BUTTON_HELD, true);
+          else if (payload[0] == 0x03)
+            self->publish_binary_sensor(BinarySensorType::WIFI_BUTTON_HELD, false);
+        }
         if (model == ModelType::CORE200S)
         {
           // Core200S status: frame bytes {0x01, 0x60, 0x40} → ptype0=0x60, ptype1=0x40

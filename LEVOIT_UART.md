@@ -169,6 +169,13 @@ Payload starts at frame byte **[10]** (offset 0 in payload arrays below).
 | 15–16 | B.25–B.26 | Efficiency area | LE16 raw (see [Room Size Encoding](#room-size-encoding)) |
 | 17 | B.27 | Error | `0x00`=ok, non-zero=sensor error |
 
+### Wi-Fi button hold — CMD `01 02 D1`
+
+Sent by the MCU when the Wi-Fi button is held: payload `0x02` once the hold
+registers, a few seconds in, and `0x03` on release. The stock ESP32 firmware
+logs "netcfg is start" on it. Seen on a Core 300S. The component publishes it as
+the `wifi_button_held` binary sensor.
+
 ### Core 400S — CMD `01 30 40` / `01 B0 40`
 
 Same as Core 300S except:

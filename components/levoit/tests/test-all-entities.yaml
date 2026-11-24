@@ -183,6 +183,10 @@ binary_sensor:
     type: filter_low
   - platform: levoit
     levoit: dev
+    name: "wifi_button_held"
+    type: wifi_button_held
+  - platform: levoit
+    levoit: dev
     name: "cover_open"
     type: cover_open
   - platform: levoit
