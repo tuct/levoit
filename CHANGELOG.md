@@ -10,8 +10,9 @@ Project-level changes. Component releases have their own log:
 * **Core 300S on the `01 32 40` status: state right after boot.** That MCU
   pushes status only on a change and once a minute, so entities could stay
   unknown for up to a minute after a restart. The component now sends the
-  stock status request `01 33 40` once, three seconds after boot, if nothing
-  has been decoded yet, and reads the status from the ack. Units on
+  stock status request `01 33 40` three seconds after boot if nothing has
+  been decoded yet (up to three tries, 3 s apart), and reads the status from
+  the ack. Units on
   `01 30 40` / `01 B0 40` are never sent it. Request and reply are in
   [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
   ([#141](https://github.com/tuct/levoit/pull/141))

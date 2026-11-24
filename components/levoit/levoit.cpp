@@ -923,11 +923,16 @@ namespace esphome
             // unknown for up to a minute. Ask once if nothing has arrived. MCUs
             // on 01 30 40 / 01 B0 40 push several times a second, so they have
             // reported long before this fires and are never sent the request.
+            // Up to three tries, 3 s apart, in case the MCU is still starting.
             if (this->model_ == ModelType::CORE300S) {
-                this->set_timeout("core300s_status_req", 3000, [this]() {
-                    if (!this->fan_status_seen_)
-                        this->sendCommand(CommandType::requestCore300sStatus);
-                });
+                static const char *const STATUS_REQUESTS[] = {
+                    "core300s_status_req1", "core300s_status_req2", "core300s_status_req3"};
+                for (uint32_t i = 0; i < 3; i++) {
+                    this->set_timeout(STATUS_REQUESTS[i], 3000 * (i + 1), [this]() {
+                        if (!this->fan_status_seen_)
+                            this->sendCommand(CommandType::requestCore300sStatus);
+                    });
+                }
             }
 
             // Track CADR on initial setup
