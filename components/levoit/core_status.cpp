@@ -190,5 +190,64 @@ namespace esphome
       self->apply_fan_status(power, fan_speed, fan_mode);
     }
 
+    // Core 300S status CMD 01 32 40: the 18-byte 01 30 40 layout with one byte
+    // inserted at offset 6, so every later field sits one byte further on.
+    //   [5]  selected manual speed 1-3 (kept while off and in auto)
+    //   [6]  unknown, 0x00 in every frame seen
+    //   [7]  display backlight right now, 0x00/0x64 (lights for ~3 s on a
+    //        button press even with the display set to off)
+    //   [8]  display setting, 0x00=off 0x01=on
+    //   [9]  running speed: the speed in manual, 0x00 in sleep and in auto
+    //        with clean air, 0xFF when off
+    //   [10] filter LED
+    //   [11] AQI 1-4
+    //   [12..13] PM2.5 LE16
+    //   [14] child lock
+    //   [15] auto mode, 1:1 with 01 E6 A5
+    //   [16..17] efficiency area LE16, as sent in 01 E6 A5
+    //   [18] 0x00/0x01, meaning unconfirmed
+    void decode_core300s_status_19(Levoit *self,
+                                   const uint8_t *payload,
+                                   size_t payload_len)
+    {
+      if (self == nullptr || !payload || payload_len < 19)
+        return;
+
+      uint8_t patch = payload[0];
+      uint8_t minor = payload[1];
+      uint8_t major = payload[2];
+      bool power = payload[3] != 0;
+      uint32_t fan_mode = payload[4];
+      // In auto, [5] still holds the manual speed the user last picked; the fan
+      // runs at [9]. 0 there is the auto low speed, which apply_fan_status flags
+      // as sleep speed. [9] is 0xFF while off: then keep [5].
+      uint8_t fan_speed = (fan_mode == 2 && power && payload[9] != 0xFF) ? payload[9] : payload[5];
+      bool display_on = payload[8] != 0;
+      uint8_t aqi = payload[11];
+      uint16_t pm25_raw = (payload[13] << 8) | payload[12];
+      float pm25 = static_cast<float>(pm25_raw);
+      bool child_lock = payload[14] != 0;
+      uint8_t fan_auto_mode = payload[15];
+      uint16_t efficency_area = (payload[17] << 8) | payload[16];
+      float efficency_area_m2 = decode_core_room_size_m2(efficency_area);
+
+      self->publish_text_sensor(TextSensorType::MCU_VERSION,
+          std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch));
+      self->publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Ok");
+
+      self->publish_switch(SwitchType::CHILD_LOCK, child_lock);
+      self->publish_switch(SwitchType::DISPLAY, display_on);
+      self->publish_sensor(SensorType::AQI, (unsigned)aqi);
+      if (pm25_raw <= 1000)
+        self->publish_sensor(SensorType::PM25, pm25);
+      else
+        ESP_LOGW(TAG_CORE, "PM2.5 raw value %u out of range, skipping publish", pm25_raw);
+      self->publish_select(SelectType::AUTO_MODE, fan_auto_mode);
+      self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, efficency_area_m2);
+
+      ESP_LOGV(TAG_CORE, "Core300S (19-byte) fan: power=%d speed=%d mode=%d", power, fan_speed, (int)fan_mode);
+      self->apply_fan_status(power, fan_speed, fan_mode);
+    }
+
   } // namespace levoit
 } // namespace esphome

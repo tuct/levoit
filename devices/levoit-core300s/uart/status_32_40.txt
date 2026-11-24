@@ -1,0 +1,230 @@
+Core 300S, status CMD 01 32 40 (19-byte payload): full frames, both directions
+
+The unit
+
+    Model                  Core 300S, LAP-C302S-WGC (as the stock firmware names itself)
+    VeSync config module   VS_WFON_APR_LAP-C302S-WGC_AE (region AE, United Arab Emirates)
+    Wi-Fi module           stock ESP32-SOLO-1C, chip revision v1.1, 4 MB flash
+    MCU firmware           1.0.0 (status payload bytes 0..2 = 00 00 01)
+    Stock ESP32 firmware   1.0.00, compiled Feb 12 2025 16:30:23
+    Stock hardware string  1.0
+    OTA history            running from ota_0; ota_1 blank, so it was never
+                           updated over the air. This is the firmware it shipped with
+    Stock partition table  nvs 0x9000, otadata 0xd000, phy_init 0xf000,
+                           ota_0 0x10000 (0x180000), ota_1 0x190000 (0x180000),
+                           usercfg 0x310000, fac_data 0x330000, storage 0x340000,
+                           historydata 0x360000, log 0x3a0000
+
+All of that is read from a full flash backup taken before the stock firmware was
+replaced. The stock image's log strings name 01 32 40 as the status report and
+01 33 40 as purifier_uart_query_device_status.
+
+For comparison, this project lists MCU firmware 2.0.7 and 2.0.11 as tested on
+the Core 300S, both on the 18-byte 01 30 40 status. This unit reports a lower
+MCU version next to a 2025 build date, so it looks like a separate controller
+line and not an earlier one. Whether that goes with the WGC / AE variant or
+with the manufacturing date cannot be told from one unit.
+
+Source: NOT a logic analyser capture. Replacement firmware on the ESP32
+(github.com/tadhglewis/levoit-matter) logged every frame it received and every
+frame it sent, as raw bytes, and the log was read over Wi-Fi. Times are seconds
+since the ESP32 booted, at about 10 ms resolution, taken when the frame was
+parsed or queued for sending. Every checksum below verifies.
+
+In the first capture all state changes were made at the purifier's own panel.
+The ESP32 sent no control commands during it: only acks, the Wi-Fi LED command at boot
+and a status request every 5 s. That request and its reply are shown once and
+left out after that; all of them were 01 33 40 answered as below.
+
+This unit never sends 01 30 40 or 01 B0 40. It pushes 01 32 40 on every change
+and once a minute. It acks a 01 31 40 status request with an empty payload and
+answers 01 33 40 with the status (end of the second capture).
+
+The ESP32's ack to a pushed frame is type 12 with its own sequence number and
+byte 4 = FF. The MCU accepts it. Twice in this capture the MCU sent the same
+frame again about 500 ms later with the same sequence number (E0, E1), both
+times right after a mode change; cause not established.
+
+# status request 01 33 40 from the ESP32, and the ack carrying the status
+    2.000  ESP->MCU  A5 22 10 04 00 B0 01 33 40 00
+    2.050  MCU->ESP  A5 12 10 17 00 41 01 33 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 01 00 00 00 00
+
+# Wi-Fi LED command from the ESP32, and its ack
+    3.030  ESP->MCU  A5 22 11 0A 00 57 01 29 A1 00 01 7D 00 7D 00 00
+    3.100  MCU->ESP  A5 12 11 04 00 68 01 29 A1 00
+
+# on, manual speed 1, display on, child lock ON
+   57.470  MCU->ESP  A5 22 CE 17 00 74 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 01 00 00 00 00
+   57.470  ESP->MCU  A5 12 1C 04 FF B6 01 32 40 00
+  117.320  MCU->ESP  A5 22 CF 17 00 73 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 01 00 00 00 00
+  117.320  ESP->MCU  A5 12 28 04 FF AA 01 32 40 00
+
+# PM2.5 1 -> 2
+  158.730  MCU->ESP  A5 22 D0 17 00 71 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 02 00 01 00 00 00 00
+  158.730  ESP->MCU  A5 12 31 04 FF A1 01 32 40 00
+
+# PM2.5 2 -> 1
+  159.230  MCU->ESP  A5 22 D1 17 00 71 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 01 00 00 00 00
+  159.230  ESP->MCU  A5 12 32 04 FF A0 01 32 40 00
+  177.190  MCU->ESP  A5 22 D2 17 00 70 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 01 00 00 00 00
+  177.190  ESP->MCU  A5 12 36 04 FF 9C 01 32 40 00
+
+# child lock off, at the panel
+  182.380  MCU->ESP  A5 22 D3 17 00 70 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 00 00 00 00
+  182.380  ESP->MCU  A5 12 38 04 FF 9A 01 32 40 00
+
+# power off, at the panel
+  189.370  MCU->ESP  A5 22 D4 17 00 D6 01 32 40 00 00 00 01 00 00 01 00 00 01 FF 00 01 01 00 00 00 00 00 00
+  189.370  ESP->MCU  A5 12 3A 04 FF 98 01 32 40 00
+
+# (off) PM2.5 field goes to 5
+  189.670  MCU->ESP  A5 22 D5 17 00 D1 01 32 40 00 00 00 01 00 00 01 00 00 01 FF 00 01 05 00 00 00 00 00 00
+  189.670  ESP->MCU  A5 12 3B 04 FF 97 01 32 40 00
+
+# power on
+  198.050  MCU->ESP  A5 22 D6 17 00 69 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 05 00 00 00 00 00 00
+  198.050  ESP->MCU  A5 12 3D 04 FF 95 01 32 40 00
+
+# speed 2
+  208.820  MCU->ESP  A5 22 D7 17 00 66 01 32 40 00 00 00 01 01 00 02 00 64 01 02 00 01 05 00 00 00 00 00 00
+  208.820  ESP->MCU  A5 12 40 04 FF 92 01 32 40 00
+
+# speed 3
+  216.110  MCU->ESP  A5 22 D8 17 00 63 01 32 40 00 00 00 01 01 00 03 00 64 01 03 00 01 05 00 00 00 00 00 00
+  216.110  ESP->MCU  A5 12 42 04 FF 90 01 32 40 00
+
+# speed 1
+  216.410  MCU->ESP  A5 22 D9 17 00 66 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 05 00 00 00 00 00 00
+  216.410  ESP->MCU  A5 12 43 04 FF 8F 01 32 40 00
+
+# speed 2
+  217.500  MCU->ESP  A5 22 DA 17 00 63 01 32 40 00 00 00 01 01 00 02 00 64 01 02 00 01 05 00 00 00 00 00 00
+  217.500  ESP->MCU  A5 12 44 04 FF 8E 01 32 40 00
+
+# speed 3
+  219.000  MCU->ESP  A5 22 DB 17 00 60 01 32 40 00 00 00 01 01 00 03 00 64 01 03 00 01 05 00 00 00 00 00 00
+  219.000  ESP->MCU  A5 12 45 04 FF 8D 01 32 40 00
+
+# sleep. Mode 01, running speed 00, backlight still lit
+  232.370  MCU->ESP  A5 22 DC 17 00 61 01 32 40 00 00 00 01 01 01 03 00 64 01 00 00 01 05 00 00 00 00 00 00
+  232.370  ESP->MCU  A5 12 49 04 FF 89 01 32 40 00
+
+# (sleep) backlight goes out. Display setting byte stays 01
+  235.070  MCU->ESP  A5 22 DD 17 00 C4 01 32 40 00 00 00 01 01 01 03 00 00 01 00 00 01 05 00 00 00 00 00 00
+  235.070  ESP->MCU  A5 12 4A 04 FF 88 01 32 40 00
+  237.060  MCU->ESP  A5 22 DE 17 00 C3 01 32 40 00 00 00 01 01 01 03 00 00 01 00 00 01 05 00 00 00 00 00 00
+  237.060  ESP->MCU  A5 12 4C 04 FF 86 01 32 40 00
+
+# button pressed in sleep: backlight lights
+  243.650  MCU->ESP  A5 22 DF 17 00 5E 01 32 40 00 00 00 01 01 01 03 00 64 01 00 00 01 05 00 00 00 00 00 00
+  243.650  ESP->MCU  A5 12 4E 04 FF 84 01 32 40 00
+
+# auto. Mode 02, running speed 00
+  245.650  MCU->ESP  A5 22 E0 17 00 5C 01 32 40 00 00 00 01 01 02 03 00 64 01 00 00 01 05 00 00 00 00 00 00
+  245.650  ESP->MCU  A5 12 4F 04 FF 83 01 32 40 00
+
+# same frame again, same sequence number E0
+  246.140  MCU->ESP  A5 22 E0 17 00 5C 01 32 40 00 00 00 01 01 02 03 00 64 01 00 00 01 05 00 00 00 00 00 00
+  246.140  ESP->MCU  A5 12 50 04 FF 82 01 32 40 00
+
+# fan button: manual, back at the selected speed 3
+  254.630  MCU->ESP  A5 22 E1 17 00 5A 01 32 40 00 00 00 01 01 00 03 00 64 01 03 00 01 05 00 00 00 00 00 00
+  254.630  ESP->MCU  A5 12 52 04 FF 80 01 32 40 00
+
+# same frame again, same sequence number E1
+  255.120  MCU->ESP  A5 22 E1 17 00 5A 01 32 40 00 00 00 01 01 00 03 00 64 01 03 00 01 05 00 00 00 00 00 00
+  255.120  ESP->MCU  A5 12 53 04 FF 7F 01 32 40 00
+
+# speed 1
+  255.230  MCU->ESP  A5 22 E2 17 00 5D 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 05 00 00 00 00 00 00
+  255.230  ESP->MCU  A5 12 54 04 FF 7E 01 32 40 00
+
+# PM2.5 5 -> 1
+  257.520  MCU->ESP  A5 22 E3 17 00 60 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 00 00 00 00
+  257.520  ESP->MCU  A5 12 55 04 FF 7D 01 32 40 00
+
+# display off. Offsets 7 and 8 both 00
+  264.310  MCU->ESP  A5 22 E4 17 00 C4 01 32 40 00 00 00 01 01 00 01 00 00 00 01 00 01 01 00 00 00 00 00 00
+  264.310  ESP->MCU  A5 12 58 04 FF 7A 01 32 40 00
+
+# button pressed with display off: offset 7 lights, offset 8 stays 00
+  271.390  MCU->ESP  A5 22 E5 17 00 5F 01 32 40 00 00 00 01 01 00 01 00 64 00 01 00 01 01 00 00 00 00 00 00
+  271.390  ESP->MCU  A5 12 5A 04 FF 78 01 32 40 00
+
+# backlight out again
+  273.990  MCU->ESP  A5 22 E6 17 00 C2 01 32 40 00 00 00 01 01 00 01 00 00 00 01 00 01 01 00 00 00 00 00 00
+  273.990  ESP->MCU  A5 12 5B 04 FF 77 01 32 40 00
+
+# display on. Offset 7 = 64, offset 8 = 01
+  277.780  MCU->ESP  A5 22 E7 17 00 5C 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 00 00 00 00
+  277.780  ESP->MCU  A5 12 5C 04 FF 76 01 32 40 00
+
+# child lock on
+  292.250  MCU->ESP  A5 22 E8 17 00 5A 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 01 00 00 00 00
+  292.250  ESP->MCU  A5 12 60 04 FF 72 01 32 40 00
+  296.940  MCU->ESP  A5 22 E9 17 00 59 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 01 00 00 00 00
+  296.940  ESP->MCU  A5 12 61 04 FF 71 01 32 40 00
+
+# child lock off
+  297.740  MCU->ESP  A5 22 EA 17 00 59 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 00 00 00 00
+  297.740  ESP->MCU  A5 12 63 04 FF 6F 01 32 40 00
+
+# Sleep held 3 s: filter reset, CMD 01 E4 A5
+  313.100  MCU->ESP  A5 22 EB 05 00 BE 01 E4 A5 00 00
+  313.100  ESP->MCU  A5 12 67 04 FF 54 01 E4 A5 00
+
+Second capture, same unit, a later boot: the auto mode command 01 E6 A5
+
+Here the ESP32 sent the commands, with the payloads this component uses. The
+purifier was on in manual speed 1 throughout. Before the first command the
+status ended 00 00 00 00 00 (offsets 14..18).
+
+# set auto mode Quiet: 01 E6 A5, payload 01 00 00. Status offset 15 -> 01
+   48.741  ESP->MCU  A5 22 1B 07 00 89 01 E6 A5 00 01 00 00
+   48.771  MCU->ESP  A5 12 1B 04 00 9D 01 E6 A5 00
+   48.771  MCU->ESP  A5 22 06 17 00 3C 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 01 00 00 00
+   48.771  ESP->MCU  A5 12 1C 04 FF B6 01 32 40 00
+
+# set auto mode Room Size with area raw 0x01AD: payload 02 AD 01. Offset 15 -> 02, offsets 16..17 -> AD 01
+   56.081  ESP->MCU  A5 22 1E 07 00 D7 01 E6 A5 00 02 AD 01
+   56.101  MCU->ESP  A5 12 1E 04 00 9A 01 E6 A5 00
+   56.151  MCU->ESP  A5 22 07 17 00 8C 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 02 AD 01 00
+   56.151  ESP->MCU  A5 12 1F 04 FF B3 01 32 40 00
+
+# set auto mode Default: payload 00 00 00. Offset 15 -> 00; the area stays AD 01
+   63.251  ESP->MCU  A5 22 21 07 00 84 01 E6 A5 00 00 00 00
+   63.281  MCU->ESP  A5 12 21 04 00 97 01 E6 A5 00
+   63.331  MCU->ESP  A5 22 08 17 00 8D 01 32 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 00 AD 01 00
+   63.331  ESP->MCU  A5 12 22 04 FF B0 01 32 40 00
+
+# the two status requests, side by side. 01 33 40 is answered with an ack
+# carrying the status. 01 31 40, the request documented for the Core 300S,
+# is acked with no payload
+  101.331  ESP->MCU  A5 22 2A 04 00 96 01 33 40 00
+  101.391  MCU->ESP  A5 12 2A 17 00 7A 01 33 40 00 00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 00 AD 01 00
+  102.371  ESP->MCU  A5 22 2B 04 00 97 01 31 40 00
+  102.391  MCU->ESP  A5 12 2B 04 00 A7 01 31 40 00
+
+Layout, compared with the 18-byte 01 30 40 status: identical through offset 5,
+one byte inserted at offset 6, every later field one byte further on.
+
+    0..2    MCU version: patch, minor, major
+    3       power
+    4       mode: 0 manual, 1 sleep, 2 auto
+    5       selected manual speed 1..3 (kept while off, in sleep and in auto)
+    6       unknown, 00 in every frame
+    7       display backlight right now: 00 / 64
+    8       display setting: 00 off / 01 on
+    9       running speed: the speed in manual, 00 in sleep and in auto with
+            clean air, FF when off
+    10      filter LED (00 throughout this capture)
+    11      AQI 1..4 (01 throughout this capture)
+    12..13  PM2.5, LE16. Reads 5 while the purifier is off, whatever it read before
+    14      child lock
+    15      auto mode, meaning the preference and not the fan mode at offset 4:
+            00 Default, 01 Quiet, 02 Room Size. Follows command 01 E6 A5
+            (second capture)
+    16..17  efficiency area, LE16, as sent in 01 E6 A5. Kept after the mode
+            goes back to Default (second capture)
+    18      00 throughout this capture. 01 was seen on other days in normal
+            running, so it is not an error flag. Meaning unconfirmed
