@@ -91,6 +91,7 @@ namespace esphome
              (ptype0 == 0x30 && ptype1 == 0x55) || // Superior 6000S
              (ptype0 == 0x30 && ptype1 == 0x40) || // Core 300S / 400S
              (ptype0 == 0xB0 && ptype1 == 0x40) || // Core 300S / 400S alt
+             (ptype0 == 0x32 && ptype1 == 0x40) || // Core 300S, 19-byte status
              (ptype0 == 0x60 && ptype1 == 0x40) || // Core 200S
              (ptype0 == 0x40 && ptype1 == 0x41);   // Core 600S
     }
@@ -204,6 +205,12 @@ namespace esphome
           if (msg_type == 0x22 && ((ptype0 == 0x30 && ptype1 == 0x40) || (ptype0 == 0xB0 && ptype1 == 0x40)))
           {
             decode_core_status(self, model, payload, payload_len);
+          }
+          // Core300S 19-byte status: ptype 0x32 0x40. Seen on a LAP-C302S-WGC
+          // whose MCU reports 1.0.0; it never sends 0x30 0x40 or 0xB0 0x40.
+          if (model == ModelType::CORE300S && msg_type == 0x22 && ptype0 == 0x32 && ptype1 == 0x40)
+          {
+            decode_core300s_status_19(self, payload, payload_len);
           }
           // Timer
           if (msg_type == 0x12 && ptype0 == 0x65 && ptype1 == 0xA2)

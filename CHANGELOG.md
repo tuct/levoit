@@ -7,6 +7,14 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
+* **Core 300S units that send status as `01 32 40`** now report state. A
+  LAP-C302S-WGC whose MCU reports 1.0.0 sends a 19-byte status under that
+  command and never `01 30 40` or `01 B0 40`, so the component acked it and
+  decoded nothing: fan, display, child lock, AQI and PM2.5 stayed unknown and
+  the panel buttons were never reflected. It is the 18-byte layout with one
+  byte inserted at offset 6. Decode verified against payloads from the unit,
+  not yet run on it
+  ([`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt))
 * **Room size: one number to set** (Core 300S / 400S / 600S, Vital 100S /
   200S). Changing *Auto Mode Room Size Preset* while Room Size is the active
   auto mode now sends it to the purifier at once; before, it only took effect

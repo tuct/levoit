@@ -1,0 +1,82 @@
+Core 300S status frames with CMD 01 32 40 (19-byte payload)
+
+Unit:     LAP-C302S-WGC (region AE), stock ESP32-SOLO-1C module
+MCU:      reports 1.0.0 (payload bytes 0..2 = 00 00 01)
+Stock FW: ESP32 image built February 2025; its log strings name 01 32 40 as the
+          status report and 01 33 40 as purifier_uart_query_device_status
+
+Source: NOT a logic analyser capture. These are payloads logged by replacement
+firmware on the ESP32 (github.com/tadhglewis/levoit-matter), which hex-dumps the
+payload of each frame it receives from the MCU. Every line is the payload
+(frame bytes 10..28) of a frame of the form
+
+    A5 22 <seq> 17 00 <chk> 01 32 40 00 <19 payload bytes>
+
+sent by the MCU. This unit never sends 01 30 40 or 01 B0 40. It pushes status
+once a minute and on every change. It acks the documented status request
+01 31 40 with an empty payload, and answers 01 33 40 with an ack (0x12)
+carrying this same 19-byte payload.
+
+The state named on each line is what the purifier was doing, as set from its
+own panel or by command.
+
+off, selected speed 1, display setting on
+    00 00 01 00 00 01 00 00 01 FF 00 01 05 00 00 00 00 00 01
+
+off, selected speed 3, display setting off
+    00 00 01 00 00 03 00 00 00 FF 00 01 05 00 00 00 00 00 00
+
+off, mode byte still auto
+    00 00 01 00 02 01 00 00 01 FF 00 01 01 00 00 00 00 00 01
+
+manual speed 1, display on
+    00 00 01 01 00 01 00 64 01 01 00 01 01 00 00 00 00 00 00
+
+manual speed 1, display on, PM2.5 5
+    00 00 01 01 00 01 00 64 01 01 00 01 05 00 00 00 00 00 01
+
+manual speed 1, display on, filter LED on
+    00 00 01 01 00 01 00 64 01 01 01 01 01 00 00 00 00 00 00
+
+manual speed 3, display on, filter LED on
+    00 00 01 01 00 03 00 64 01 03 01 01 01 00 00 00 00 00 00
+
+sleep, selected speed 3, filter LED on (backlight still lit, just after the change)
+    00 00 01 01 01 03 00 64 01 00 01 01 01 00 00 00 00 00 00
+
+sleep, same, backlight now off (display setting byte unchanged)
+    00 00 01 01 01 03 00 00 01 00 01 01 01 00 00 00 00 00 00
+
+auto, selected speed 1, clean air (running speed 0)
+    00 00 01 01 02 01 00 64 01 00 00 01 01 00 00 00 00 00 00
+
+auto, selected speed 2
+    00 00 01 01 02 02 00 64 01 00 00 01 01 00 00 00 00 00 00
+
+auto, selected speed 3, PM2.5 3
+    00 00 01 01 02 03 00 64 01 00 00 01 03 00 00 00 00 00 00
+
+Layout, compared with the 18-byte 01 30 40 status: identical through offset 5,
+one byte inserted at offset 6, every later field one byte further on.
+
+    0..2    MCU version: patch, minor, major
+    3       power
+    4       mode: 0 manual, 1 sleep, 2 auto
+    5       selected manual speed 1..3 (kept while off and in auto)
+    6       unknown, 00 in every frame
+    7       display backlight right now: 00 / 64
+    8       display setting: 00 off / 01 on
+    9       running speed: the speed in manual, 00 in sleep and in auto with
+            clean air, FF when off
+    10      filter LED
+    11      AQI 1..4
+    12..13  PM2.5, LE16
+    14      child lock (confirmed on hardware; no frame with it set is in this file)
+    15      auto mode (by position; not exercised)
+    16..17  efficiency area (by position; not exercised)
+    18      00 / 01, meaning unconfirmed. Not an error: 01 was present while the
+            purifier ran normally
+
+With the display set to off, pressing any button lights the backlight for about
+three seconds: offset 7 goes to 64 and back while offset 8 stays 00. Offset 8 is
+the one that follows the display command 01 05 A1.
