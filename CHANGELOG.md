@@ -11,7 +11,7 @@ Project-level changes. Component releases have their own log:
   resets the filter on the unit and sends `01 E4 A5`, the same message the
   Core 200S sends from its filter button. The component only handled it on the
   200S, so on a 300S the filter light went off but filter life kept counting
-  down. It now resets the 300S count too
+  down. It now resets the 300S count too ([#142](https://github.com/tuct/levoit/pull/142))
 * **Room size: one number to set** (Core 300S / 400S / 600S, Vital 100S /
   200S). Changing *Auto Mode Room Size Preset* while Room Size is the active
   auto mode now sends it to the purifier at once; before, it only took effect
