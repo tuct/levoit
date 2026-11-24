@@ -13,7 +13,8 @@ Project-level changes. Component releases have their own log:
   decoded nothing: fan, display, child lock, AQI and PM2.5 stayed unknown and
   the panel buttons were never reflected. It is the 18-byte layout with one
   byte inserted at offset 6. Decode verified against payloads from the unit,
-  not yet run on it
+  not yet run on it. A filter reset with the button on the unit (Sleep held
+  3 s) now resets the filter life on the Core 300S too
   ([`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt),
   [#140](https://github.com/tuct/levoit/pull/140))
 * **Room size: one number to set** (Core 300S / 400S / 600S, Vital 100S /
