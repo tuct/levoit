@@ -64,6 +64,8 @@ number:
     levoit: levoitvital100
     name: "Auto Mode Room Size"
     type: efficiency_room_size
+    # the room size the purifier reports (0 outside Room Size); set it with the Preset below
+    entity_category: diagnostic
     min_value: 9
     max_value: 52
   - platform: levoit

@@ -501,9 +501,21 @@ namespace esphome
                 break;
 
             case NumberType::AUTO_PROFILE_ROOM_SIZE_INPUT:
-                // Just save — the MCU command fires when Room Size/Efficient
-                // is selected via the Auto Mode select, not on every edit.
+            {
+                // Saved on the ESP (by the number), and sent when Room Size /
+                // Efficient is picked in the Auto Mode select. When Room Size is
+                // already the active auto mode, send it now too: otherwise the
+                // change would only reach the MCU the next time Room Size is
+                // picked. The fan mode stays as it is.
+                size_t auto_mode;
+                if (this->model_ != ModelType::EVERESTAIR &&
+                    this->try_get_select_index(SelectType::AUTO_MODE, auto_mode) && auto_mode == 2)
+                {
+                    this->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, value);
+                    this->sendCommand(setAutoModeEfficient); // takes value from number: Room Size
+                }
                 break;
+            }
 
             case NumberType::QUIET_START:
             case NumberType::QUIET_END:

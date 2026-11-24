@@ -485,14 +485,14 @@ The MCU runs the quiet period itself. For the Timer trigger it needs the local t
 | Feature | Type | Config Key | Description |
 |---------|----|------------|-------------|
 | Auto Mode | select | `auto_mode` | Auto mode type — options vary by model (see below) **Not for Core200S** |
-| Auto Mode Room Size | number | `efficiency_room_size` | MCU-reported room area for efficient auto mode in m² — reflects device status **Not for Core200S / EverestAir** |
-| Auto Mode Room Size Preset | number | `auto_profile_room_size_input` | Remembered Room Size target, automatically sent when selecting Room Size/Efficient auto profile. Persists across reboots so Default/Quiet status resets don't wipe the target. **Not for Core200S / EverestAir** |
+| Auto Mode Room Size | number | `efficiency_room_size` | MCU-reported room area for efficient auto mode in m² — reflects device status (`0` outside Room Size). Setting it sends it at once and switches the fan to Auto. In the Core 300S / 400S / 600S and Vital configs it is a **diagnostic** entity: set the Preset instead **Not for Core200S / EverestAir** |
+| Auto Mode Room Size Preset | number | `auto_profile_room_size_input` | The room size to use: sent when Room Size/Efficient is selected, and **at once when Room Size is already active**. Persists across reboots so Default/Quiet status resets don't wipe the target. **Not for Core200S / EverestAir** |
 | Efficiency Counter | sensor | `efficiency_counter` | Seconds remaining at high fan speed in efficient auto mode **Vital only** |
 | Auto Mode High Fan Time | text_sensor | `auto_mode_room_size_high_fan` | Time still running at high speed in efficient auto mode, human readable **Vital only** |
 
 Auto Mode configures the purifier's automatic behavior and is distinct from the active fan preset/mode. On models with fan Auto support, changing Auto Mode enters the fan's Auto preset; direct fan speed changes switch the fan preset to Manual.
 
-When Room Size/Efficient is selected, the purifier uses **Auto Mode Room Size Preset** (`auto_profile_room_size_input`) as the coverage target and sends it to the MCU automatically. The **Auto Mode Room Size** number (`efficiency_room_size`) still reflects what the MCU reports back in status payloads — Default and Quiet profiles report `0`, which is normal.
+When Room Size/Efficient is selected, the purifier uses **Auto Mode Room Size Preset** (`auto_profile_room_size_input`) as the coverage target and sends it to the MCU automatically. Changing the Preset while Room Size is the active auto mode sends the new size right away; the fan mode stays as it is. The **Auto Mode Room Size** number (`efficiency_room_size`) still reflects what the MCU reports back in status payloads — Default and Quiet profiles report `0`, which is normal. So the Preset is the one to set; the device configs show Auto Mode Room Size under *Diagnostic* in Home Assistant (`entity_category: diagnostic`), except on the Sprout, which has no Preset.
 
 Auto mode options per model:
 
