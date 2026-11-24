@@ -7,24 +7,16 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
-* **Core 300S on the `01 32 40` status: state right after boot.** That MCU
-  pushes status only on a change and once a minute, so entities could stay
-  unknown for up to a minute after a restart. The component now sends the
-  stock status request `01 33 40` three seconds after boot if nothing has
-  been decoded yet (up to three tries, 3 s apart), and reads the status from
-  the ack. Units on
-  `01 30 40` / `01 B0 40` are never sent it. Request and reply are in
+* **Core 300S with the `01 32 40` status** (a LAP-C302S-WGC, MCU 1.0.0) now
+  reports its state: the 19-byte status is decoded and asked for at boot, a
+  filter reset on the panel (Sleep held 3 s) resets the filter life, and a
+  new `power_button_held` binary sensor (Core models) follows a long press of
+  the On/Off button. Capture in
   [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
-  ([#141](https://github.com/tuct/levoit/pull/141))
-* **Core 300S units that send status as `01 32 40`** now report state. A
-  LAP-C302S-WGC whose MCU reports 1.0.0 sends a 19-byte status under that
-  command and never `01 30 40` or `01 B0 40`, so the component acked it and
-  decoded nothing: fan, display, child lock, AQI and PM2.5 stayed unknown and
-  the panel buttons were never reflected. It is the 18-byte layout with one
-  byte inserted at offset 6. Decode verified against payloads from the unit,
-  not yet run on it
-  ([`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt),
-  [#140](https://github.com/tuct/levoit/pull/140))
+  ([#140](https://github.com/tuct/levoit/pull/140),
+  [#141](https://github.com/tuct/levoit/pull/141),
+  [#142](https://github.com/tuct/levoit/pull/142),
+  [#143](https://github.com/tuct/levoit/pull/143))
 * **Room size: one number to set** (Core 300S / 400S / 600S, Vital 100S /
   200S). Changing *Auto Mode Room Size Preset* while Room Size is the active
   auto mode now sends it to the purifier at once; before, it only took effect

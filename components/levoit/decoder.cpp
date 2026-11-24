@@ -159,10 +159,11 @@ namespace esphome
         self->send_eleva_local_time();
       }
 
-      // Core200S: the MCU pushes 01 E4 A5 when the filter is reset with the
-      // button on the unit itself (captured in
-      // devices/levoit-core200s/uart/filter_from_device.txt). The same message
-      // travels the other way with payload 0x00 as the reset command.
+      // Core200S / Core300S: the MCU pushes 01 E4 A5 when the filter is reset
+      // with the button on the unit itself (captured in
+      // devices/levoit-core200s/uart/filter_from_device.txt; on a Core 300S,
+      // holding Sleep for 3 s sends the same frame with payload 0x00). The same
+      // message travels the other way with payload 0x00 as the reset command.
       //
       // The payload is NOT a reliable marker: MCU 2.0.11 pushes 0x01, while
       // 4.0.34 on the Core 200S Plus pushes 0x00 (issue #60). Any inbound 0x22
@@ -172,10 +173,10 @@ namespace esphome
       // Handled ahead of the dedup gate below, because two panel resets in a
       // row carry an identical payload and the second would otherwise be
       // skipped.
-      if (model == ModelType::CORE200S && msg_type == 0x22 &&
-          ptype0 == 0xE4 && ptype1 == 0xA5)
+      if ((model == ModelType::CORE200S || model == ModelType::CORE300S) &&
+          msg_type == 0x22 && ptype0 == 0xE4 && ptype1 == 0xA5)
       {
-        ESP_LOGI(TAG_DEC, "Filter reset from the unit's button (Core200S)");
+        ESP_LOGI(TAG_DEC, "Filter reset from the unit's button");
         self->set_used_cadr(0);
         self->set_total_runtime(0);
         self->publish_filter_stats_now();
