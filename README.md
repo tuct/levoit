@@ -144,6 +144,8 @@ Not my projects, but worth checking out:
 * [levoit-vital-200s + levoit-vital-200s pro, levoit-vital-100s?](https://github.com/targor/levoit_vital/?tab=readme-ov-file)
 * https://github.com/mulcmu/esphome-levoit-core300s
 * https://github.com/acvigue/esphome-levoit-air-purifier
+* [levoit-matter](https://github.com/tadhglewis/levoit-matter) – Local Matter firmware for Levoit Core air purifiers, without ESPHome
+* [esphome-levoit-matter](https://github.com/tadhglewis/esphome-levoit-matter) – Local Matter firmware for Levoit Core air purifiers, built with ESPHome and the `levoit` component
 
 ## Helpful links
 * [How to open Levoit's](https://www.youtube.com/watch?v=6wxHpUVcGFc)
