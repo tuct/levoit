@@ -800,3 +800,14 @@ and the byte maps.
 #### 2026.01.15 ESPHome 2025.12.5+ Compatibility
 
 * The component has been updated for ESPHome 2025.12.5
+
+### Unreleased: UART integrity
+
+The receive loop now decodes both length bytes, bounds the full frame and drops a
+partial frame after 250 ms of silence. Ordinary ACKs echo the incoming sequence
+and encode the high length byte as zero; the independent transmit counter is
+unchanged. Core 600S and Vital 100S reject error/foreign-version envelopes.
+`tests/test_uart_integrity.py` exercises the actual C++ methods with synthetic
+corrupt/truncated streams and a known Core ACK from this repo's Core 600S trace.
+These changes ran on a separate older fork; this revision is host/compile-tested,
+not newly installed on hardware. The component release number is unchanged.
