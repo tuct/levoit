@@ -804,7 +804,8 @@ and the byte maps.
 ### Unreleased: UART integrity
 
 The receive loop now decodes both length bytes, bounds the full frame and drops a
-partial frame after 250 ms of silence. Ordinary ACKs echo the incoming sequence
+partial frame after 250 ms of silence. It also processes bursts longer than
+the receive buffer without discarding already complete frames. Ordinary ACKs echo the incoming sequence
 and encode the high length byte as zero; the independent transmit counter is
 unchanged. Core 600S and Vital 100S reject error/foreign-version envelopes.
 `tests/test_uart_integrity.py` exercises the actual C++ methods with synthetic

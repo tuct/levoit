@@ -96,6 +96,11 @@ int main(){
  }
  auto corrupt=good;corrupt[5]^=1;corrupt.insert(corrupt.end(),good.begin(),good.end());
  auto old=d.frames.size();feed(d,corrupt);assert(d.frames.size()==old+1);
+ // A driver may hand the loop more than 512 bytes in one burst.
+ Levoit burst; std::vector<uint8_t> bytes;
+ for (unsigned i=0; i<30; ++i) bytes.insert(bytes.end(),good.begin(),good.end());
+ feed(burst,bytes); assert(burst.frames.size()==30);
+ for(const auto &received:burst.frames) assert(received==good);
  Levoit wrap;wrap.now=0xfffffff0;feed(wrap,{0xa5,0x22});wrap.now=300;feed(wrap,good);assert(wrap.frames.size()==1);
 }
 ''')
