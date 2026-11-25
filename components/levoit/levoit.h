@@ -126,7 +126,7 @@ class Levoit : public Component, public uart::UARTDevice {
   // 02 05 55 + 03 00, the frame its stock app sends.
   bool has_mcu_filter_reset() const { return this->model_ == ModelType::CORE200S || this->model_ == ModelType::ELEVA300X; }
   void sendCommand(CommandType commandType);   // if CommandType exists in your project
-  void ackMessage(uint8_t ptype0, uint8_t ptype1);
+  void ackMessage(uint8_t ptype0, uint8_t ptype1, uint8_t sequence);
   void ackFilterReset(uint8_t ptype0, uint8_t ptype1);   // Superior 6000S: filter reset pressed on the panel
   void mirror_eleva_sensor_report(const uint8_t *payload, size_t payload_len);   // Eleva 300X: echo CMD 02 23 55 back to the MCU
   // Eleva 300X auto-mode config (02 21 55) and local time (02 22 55)
@@ -258,6 +258,7 @@ class Levoit : public Component, public uart::UARTDevice {
 
   uint16_t cadr = 235;
   uint8_t buffer_[512];
+  uint32_t last_rx_byte_ms_{0};
   size_t buf_len_{0};
 
   bool timer_active_{true};

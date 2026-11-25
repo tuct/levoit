@@ -1221,11 +1221,16 @@ namespace esphome
                 ESP_LOGD(TAG, "Polling timer status (stop pending)");
                 this->sendCommand(requestTimerStatus);
             }
-            // 1) Read incoming bytes into buffer_
+            // 1) Read incoming bytes into buffer_. Abandon an interrupted frame
+            // before consuming a new burst, so a corrupt length cannot hold the
+            // next status reports hostage until the whole buffer fills.
+            if (buf_len_ && uint32_t(now - last_rx_byte_ms_) > 250)
+                buf_len_ = 0;
             while (available())
             {
                 uint8_t b;
-                read_byte(&b);
+                if (!read_byte(&b)) break;
+                last_rx_byte_ms_ = now;
 
                 if (buf_len_ < sizeof(buffer_))
                 {
@@ -1267,11 +1272,11 @@ namespace esphome
                 if (buf_len_ < 6)
                     break;
 
-                const uint8_t size_after_checksum = buffer_[3];
+                const uint16_t size_after_checksum = uint16_t(buffer_[3]) | (uint16_t(buffer_[4]) << 8);
                 const size_t expected_len = 6 + size_after_checksum;
 
                 // sanity guard (avoid insane lengths)
-                if (expected_len > sizeof(buffer_))
+                if (size_after_checksum < 4 || expected_len > sizeof(buffer_))
                 {
                     ESP_LOGW(TAG, "RX length too big (%u) -> resync", (unsigned)expected_len);
                     memmove(buffer_, buffer_ + 1, buf_len_ - 1);
@@ -1372,9 +1377,16 @@ namespace esphome
             if (msg[0] != 0xA5)
                 return;
 
+            // Byte 6 is the model's protocol version, byte 9 the result code.
+            // A checksum alone does not make an error response valid status.
+            if ((this->model_ == ModelType::CORE600S && msg[6] != 0x01) ||
+                (this->model_ == ModelType::VITAL100S && msg[6] != 0x02) ||
+                ((this->model_ == ModelType::CORE600S || this->model_ == ModelType::VITAL100S) && msg[9] != 0))
+                return;
+
             const uint8_t msg_type = msg[1];
             const uint8_t seq = msg[2];
-            const uint8_t size_af = msg[3];
+            const uint16_t size_af = uint16_t(msg[3]) | (uint16_t(msg[4]) << 8);
             const uint8_t cmd_sz = msg[6];
             const uint8_t ptype0 = msg[7];
             const uint8_t ptype1 = msg[8];
@@ -1644,7 +1656,7 @@ namespace esphome
 #endif
         }
 
-        void Levoit::ackMessage(uint8_t ptype0, uint8_t ptype1)
+        void Levoit::ackMessage(uint8_t ptype0, uint8_t ptype1, uint8_t sequence)
         {
 
             uint8_t pv = 0x01;
@@ -1657,22 +1669,20 @@ namespace esphome
             // Core600S state push (ptype 0x40/0x41) uses 0x52 with trailing 0x01, not a standard ACK
             if (this->model_ == ModelType::CORE600S && ptype0 == 0x40 && ptype1 == 0x41)
             {
-                std::vector<uint8_t> message = {0xA5, 0x52, 0xFF, 0x04, 0xFF, 0x00, 0x01, ptype0, ptype1, 0x01};
-                levoit_finalize_message(message, messageUpCounter);
+                std::vector<uint8_t> message = {0xA5, 0x52, 0xFF, 0x04, 0x00, 0x00, 0x01, ptype0, ptype1, 0x01};
+                levoit_finalize_message(message, sequence);
                 if (message.size() > 0)
                 {
                     ESP_LOGI(TAG, ">>> Sending 0x52 recv for: 0x%02X 0x%02X", ptype0, ptype1);
                     this->write_array(message.data(), message.size());
                     this->flush();
-                    if (messageUpCounter == 255) messageUpCounter = 16;
-                    else messageUpCounter++;
                 }
                 return;
             }
 
-            std::vector<uint8_t> message = {0xA5, 0x12, 0xFF, 0x04, 0xFF, 0x00, pv, ptype0, ptype1, 0x00};
+            std::vector<uint8_t> message = {0xA5, 0x12, 0xFF, 0x04, 0x00, 0x00, pv, ptype0, ptype1, 0x00};
 
-            levoit_finalize_message(message, messageUpCounter);
+            levoit_finalize_message(message, sequence);
 
             if (message.size() > 0)
             {
@@ -1680,11 +1690,6 @@ namespace esphome
 
                 this->write_array(message.data(), message.size());
                 this->flush();
-                // update the message counter
-                if (messageUpCounter == 255)
-                    messageUpCounter = 16;
-                else
-                    messageUpCounter++;
             }
         }
 
