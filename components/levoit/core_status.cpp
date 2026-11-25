@@ -1,4 +1,5 @@
 #include "core_status.h"
+#include <cmath>
 #include "esphome/core/defines.h"
 #include "esphome/core/log.h"
 #include "tlv.h" // <- TLV extraction
@@ -237,11 +238,19 @@ namespace esphome
 
       self->publish_switch(SwitchType::CHILD_LOCK, child_lock);
       self->publish_switch(SwitchType::DISPLAY, display_on);
-      self->publish_sensor(SensorType::AQI, (unsigned)aqi);
-      if (pm25_raw <= 1000)
-        self->publish_sensor(SensorType::PM25, pm25);
+      if (!power)
+      {
+        self->publish_sensor(SensorType::AQI, NAN);
+        self->publish_sensor(SensorType::PM25, NAN);
+      }
       else
-        ESP_LOGW(TAG_CORE, "PM2.5 raw value %u out of range, skipping publish", pm25_raw);
+      {
+        self->publish_sensor(SensorType::AQI, (unsigned)aqi);
+        if (pm25_raw <= 1000)
+          self->publish_sensor(SensorType::PM25, pm25);
+        else
+          ESP_LOGW(TAG_CORE, "PM2.5 raw value %u out of range, skipping publish", pm25_raw);
+      }
       self->publish_select(SelectType::AUTO_MODE, fan_auto_mode);
       self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, efficency_area_m2);
 

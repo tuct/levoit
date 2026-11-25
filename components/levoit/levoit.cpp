@@ -6,6 +6,7 @@
 #include "esphome/core/util.h"
 #include "esphome/components/network/util.h"
 
+#include <cmath>
 #include <stdio.h>
 #include <string.h>
 #include <cinttypes>
@@ -131,7 +132,7 @@ namespace esphome
             auto *se = sensors_[st_idx_(type)];
             if (!se)
                 return;
-            if (se->has_state() && se->state == value)
+            if (se->has_state() && (se->state == value || (std::isnan(se->state) && std::isnan(value))))
                 return;
             se->publish_state(value);
 #endif

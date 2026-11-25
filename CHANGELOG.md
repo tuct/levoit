@@ -7,6 +7,11 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
+* **Core 300S on the `01 32 40` status: no air quality reading while off.**
+  With the fan stopped the MCU keeps sending its last AQI and moves PM2.5 to
+  5, though nothing is measured. *AQI* and *PM2.5* now read unknown until it
+  is on again. Frames in [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
+  ("power off", "(off) PM2.5 field goes to 5")
 * **Core 300S with the `01 32 40` status** (a LAP-C302S-WGC, MCU 1.0.0) now
   reports its state: the 19-byte status is decoded and asked for at boot, a
   filter reset on the panel (Sleep held 3 s) resets the filter life, and a
