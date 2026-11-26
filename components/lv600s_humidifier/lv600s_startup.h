@@ -1,9 +1,51 @@
 #pragma once
 
+#include <cmath>
 #include <cstdint>
 
 namespace lv600s_startup {
 constexpr int16_t unset = -1;
+
+template<class Device>
+float timer_duration(const Device &device, int16_t preset) {
+  if (!device.has_status()) return NAN;
+  if (!device.is_power_on()) {
+    if (preset > 0) return preset * 60.0f;
+    if (!device.has_timer_report()) return 0;
+  }
+  return device.get_timer_duration();
+}
+
+template<class Device>
+float timer_remaining(const Device &device) {
+  if (!device.has_status()) return NAN;
+  if (!device.is_power_on() && !device.has_timer_report()) return 0;
+  return device.get_timer_remaining();
+}
+
+template<class Device>
+float timer_minutes(const Device &device, int16_t preset) {
+  if (device.has_status() && !device.is_power_on() && preset > 0) return preset;
+  return std::ceil(timer_remaining(device) / 60.0f);
+}
+
+template<class Device>
+void set_timer_minutes(Device &device, int16_t &preset, float value) {
+  if (!(value >= 0 && value <= 720)) return;
+  const auto minutes = static_cast<int16_t>(std::lround(value));
+  if (minutes == 0) {
+    preset = unset;
+    if (device.has_status() && (device.is_power_on() || device.get_timer_remaining() > 0))
+      device.set_timer_seconds(0);
+    return;
+  }
+  if (!device.has_status()) return;
+  if (!device.is_power_on()) {
+    preset = minutes;
+  } else if (device.set_timer_seconds(uint32_t(minutes) * 60)) {
+    preset = unset;
+  }
+}
 
 class Settings {
  public:

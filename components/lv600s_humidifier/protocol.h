@@ -206,14 +206,14 @@ class Protocol {
       status.size = n;
       status.seen = true; status.received = now; ++revision;
       discard_unsafe_(now);
-      confirm_(now, false);
+      confirm_status_();
     } else if ((code == uint16_t(Command::TIMER_QUERY) && (send || reply) && (n == 2 || n == 4)) ||
                (code == uint16_t(Command::TIMER_REPORT) && send && n == 8)) {
       const uint32_t seconds = n == 2 ? uint32_t(p[0]) | (uint32_t(p[1]) << 8) : le32(p);
       const auto total = n == 8 ? std::optional{le32(p + 4)} : std::nullopt;
       if (seconds > 43200 || (total && (*total > 43200 || seconds > *total))) return;
       if (!status.fresh(now)) return;
-      const bool confirms_write = timer_matches_(seconds, now);
+      const bool confirms_write = timer_matches_(seconds, total, now);
       const bool total_changed = total && total != timer_total_;
       if (!timer_seen_ || seconds != timer_seconds_ || total_changed || confirms_write)
         timer_received_ = now;
@@ -228,41 +228,43 @@ class Protocol {
       else if (!timer_seen_ || seconds > timer_seconds_)
         timer_total_.reset();
       timer_seconds_ = seconds; timer_seen_ = true;
-      confirm_(now, true);
+      if (confirms_write) confirm_pending_();
     }
     // ACKs alone do not prove that the appliance has applied a state change.
   }
-  bool timer_matches_(uint32_t seconds, uint32_t now) const {
-    if (!active_ || pending_.front().code != Command::TIMER) return false;
+  bool timer_matches_(uint32_t seconds, std::optional<uint32_t> total, uint32_t now) const {
+    if (!active_ || pending_.empty() || pending_.front().code != Command::TIMER) return false;
     const uint32_t target = le32(pending_.front().payload.data());
     if (target == 0) return seconds == 0;
+    if (total && *total != target) return false;
     const uint32_t elapsed = uint32_t(now - sent_) / 1000;
     const uint32_t expected = target > elapsed ? target - elapsed : 0;
     return seconds > 0 && std::abs(int(seconds) - int(expected)) <= 2;
   }
-  void confirm_(uint32_t now, bool timer) {
+  void confirm_status_() {
     if (!active_ || pending_.empty()) return;
     const auto &c = pending_.front(); const auto &p = c.payload;
     bool matches = false;
-    if (timer) {
-      matches = timer_matches_(timer_seconds_, now);
-    } else {
-      switch (c.code) {
-        case Command::POWER: matches = status.power() == (p[0] != 0); break;
-        case Command::DISPLAY: matches = status.raw[6] == p[0]; break;
-        case Command::TARGET: matches = status.raw[8] == p[1]; break;
-        case Command::MIST: matches = status.raw[12] == p[0]; break;
-        case Command::WARM: matches = status.raw[13] == p[0]; break;
-        case Command::HUMIDITY: matches = status.raw[11] == 3 && status.raw[8] == p[0]; break;
-        case Command::SLEEP:
-          // MCU 1.0.56 can keep the unconfigured RH value (100) when entering Sleep.
-          matches = status.raw[11] == 2 && (status.raw[8] == p[0] || status.raw[8] == 100);
-          break;
-        case Command::MANUAL: matches = status.raw[11] == 1 && (!p[1] || status.raw[12] == p[2]) && (!p[0] || status.raw[13] == p[2]); break;
-        default: break;
-      }
+    switch (c.code) {
+      case Command::POWER: matches = status.power() == (p[0] != 0); break;
+      case Command::DISPLAY: matches = status.raw[6] == p[0]; break;
+      case Command::TARGET: matches = status.raw[8] == p[1]; break;
+      case Command::MIST: matches = status.raw[12] == p[0]; break;
+      case Command::WARM: matches = status.raw[13] == p[0]; break;
+      case Command::HUMIDITY: matches = status.raw[11] == 3 && status.raw[8] == p[0]; break;
+      case Command::SLEEP:
+        // MCU 1.0.56 can keep the unconfigured RH value (100) when entering Sleep.
+        matches = status.raw[11] == 2 && (status.raw[8] == p[0] || status.raw[8] == 100);
+        break;
+      case Command::MANUAL: matches = status.raw[11] == 1 && (!p[1] || status.raw[12] == p[2]) && (!p[0] || status.raw[13] == p[2]); break;
+      default: break;
     }
-    if (matches) { active_ = false; pending_.pop_front(); result = "Target confirmed by MCU"; }
+    if (matches) confirm_pending_();
+  }
+  void confirm_pending_() {
+    active_ = false;
+    pending_.pop_front();
+    result = "Target confirmed by MCU";
   }
 };
 }  // namespace esphome::lv600s_humidifier

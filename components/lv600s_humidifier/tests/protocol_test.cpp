@@ -154,6 +154,21 @@ void verify_timer_restart_with_same_remaining() {
   assert(device.remaining(32000) == 59);
 }
 
+void verify_timer_confirmation_checks_total() {
+  Protocol device;
+  feed(device, packet(Command::STATUS, state(), 0, 0x12), 1000);
+  assert(device.enqueue(Command::TIMER, {60, 0, 0, 0}, 1100));
+  feed(device, packet(Command::TIMER_REPORT, {60, 0, 0, 0, 120, 0, 0, 0}, 1), 1200);
+  assert(!device.commands_idle());
+  assert(device.timer_duration(1200) == 120);
+  feed(device, packet(Command::TIMER_REPORT, {59, 0, 0, 0, 60, 0, 0, 0}, 2), 2200);
+  assert(device.commands_idle() && device.timer_duration(2200) == 60);
+
+  assert(device.enqueue(Command::TIMER, {0, 0, 0, 0}, 2300));
+  feed(device, packet(Command::TIMER_REPORT, {0, 0, 0, 0, 60, 0, 0, 0}, 3), 2400);
+  assert(device.commands_idle() && device.remaining(2400) == 0);
+}
+
 int main() {
   verify_recorded_water_depletion();
   verify_observed_standby_reply_shapes();
@@ -161,6 +176,7 @@ int main() {
   verify_observed_tank_removal();
   verify_observed_level_write_shapes();
   verify_timer_restart_with_same_remaining();
+  verify_timer_confirmation_checks_total();
   Protocol d; std::vector<Bytes> sent; d.transmit = [&](const Bytes &f) { sent.push_back(f); };
   feed(d, packet(Command::STATUS, state(), 0, 0x12));
   assert(d.status.fresh(100) && d.status.raw[9] == 42 && d.status.heating_enabled());
