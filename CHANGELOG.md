@@ -7,6 +7,10 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
+* **LV600S development support** adds fixed-layout UART control, an original-ESP32
+  example, and a wiring and protocol guide. Verified on one EU unit with MCU 1.0.56
+  using the secure owner profile. The development YAML uses the local component.
+
 * **Core 300S with the `01 32 40` status** (a LAP-C302S-WGC, MCU 1.0.0) now
   reports its state: the 19-byte status is decoded and asked for at boot, a
   filter reset on the panel (Sleep held 3 s) resets the filter life, and a

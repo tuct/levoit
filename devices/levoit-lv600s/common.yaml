@@ -1,0 +1,141 @@
+# Fixed-layout LV600S protocol; not the Superior 6000S TLV protocol.
+logger:
+  baud_rate: 0
+  level: INFO
+api:
+  encryption:
+    key: !secret api_key
+ota:
+  - platform: esphome
+    password: !secret ota_password
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: ${wifi_ap_ssid}
+    password: !secret wifi_ap_password
+captive_portal:
+uart:
+  id: mcu_uart
+  rx_pin: ${rx_pin}
+  tx_pin: ${tx_pin}
+  baud_rate: 9600
+lv600s_humidifier:
+  id: humidifier
+  uart_id: mcu_uart
+  model: LV600S
+  current_humidity:
+    name: Humidity
+  current_temperature:
+    name: Temperature
+  target_humidity:
+    name: Target Humidity Reported
+  water_lacks:
+    name: Water Tank Empty
+  tank_removed:
+    name: Tank Removed
+  humidifying:
+    name: Humidifying
+  warm_enabled:
+    name: Heating Enabled
+  online:
+    name: MCU Connection
+  fault:
+    name: MCU Fault
+  other_exception:
+    name: MCU Fault Raw
+  fault_message:
+    name: Error
+  command_result:
+    name: Command Result
+  mcu_version:
+    name: MCU Version
+  esp_version:
+    name: ESP Version
+  model_sensor:
+    name: Model
+  timer_remaining:
+    name: Timer Remaining Seconds
+switch:
+  - platform: template
+    name: Power
+    id: humidifier_power
+    lambda: |-
+      if (!id(humidifier).has_status()) return {};
+      return id(humidifier).is_power_on();
+    turn_on_action:
+      - lambda: id(humidifier).set_power(true);
+    turn_off_action:
+      - lambda: id(humidifier).set_power(false);
+  - platform: template
+    name: Display
+    id: humidifier_display
+    lambda: |-
+      if (!id(humidifier).has_status()) return {};
+      return id(humidifier).is_display_on();
+    turn_on_action:
+      - lambda: id(humidifier).set_display(true);
+    turn_off_action:
+      - lambda: id(humidifier).set_display(false);
+select:
+  - platform: template
+    name: Operating Mode
+    id: humidifier_mode
+    options: [Manual, Humidity, Humidity Sleep, Auto (read only), Unknown]
+    optimistic: false
+    update_interval: 1s
+    lambda: return id(humidifier).get_mode_name();
+    set_action:
+      - lambda: |-
+          if (x == "Manual") id(humidifier).set_manual_mode();
+          else if (x == "Humidity") id(humidifier).set_target_humidity_mode();
+          else if (x == "Humidity Sleep") id(humidifier).set_sleep_mode();
+number:
+  - platform: template
+    name: Target Humidity
+    id: humidifier_target
+    min_value: 40
+    max_value: 80
+    step: 1
+    unit_of_measurement: '%'
+    update_interval: 1s
+    lambda: return id(humidifier).get_target_humidity();
+    set_action:
+      - lambda: id(humidifier).set_target_humidity(x);
+  - platform: template
+    name: Mist Level
+    id: humidifier_mist
+    min_value: 1
+    max_value: 9
+    step: 1
+    update_interval: 1s
+    lambda: |-
+      return id(humidifier).has_status() ? id(humidifier).get_mist_level() : NAN;
+    set_action:
+      - lambda: id(humidifier).set_mist_level(x);
+  - platform: template
+    name: Warm Level
+    id: humidifier_warm
+    min_value: 0
+    max_value: 3
+    step: 1
+    update_interval: 1s
+    lambda: |-
+      return id(humidifier).has_status() ? id(humidifier).get_warm_level() : NAN;
+    set_action:
+      - lambda: id(humidifier).set_warm_level(x);
+  - platform: template
+    name: Timer (min)
+    id: humidifier_timer
+    min_value: 0
+    max_value: 720
+    step: 1
+    update_interval: 1s
+    lambda: return id(humidifier).get_timer_remaining() / 60.0f;
+    set_action:
+      - lambda: id(humidifier).set_timer_seconds(uint32_t(x * 60));
+button:
+  - platform: template
+    name: Cancel Timer
+    on_press:
+      - lambda: id(humidifier).clear_timer();

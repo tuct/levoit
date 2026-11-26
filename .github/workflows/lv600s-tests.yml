@@ -1,0 +1,15 @@
+name: LV600S regressions
+on:
+  pull_request:
+    paths: ['components/lv600s_humidifier/**', 'devices/levoit-lv600s/**', '.github/workflows/lv600s-tests.yml']
+  push:
+    branches: [main]
+jobs:
+  protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python components/lv600s_humidifier/tests/test_protocol.py
