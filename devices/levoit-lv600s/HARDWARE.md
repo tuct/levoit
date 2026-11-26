@@ -60,10 +60,12 @@ operating conditions](https://documentation.espressif.com/esp32-solo-1_datasheet
 
 ## Power and first read
 
-- Power the display board from an **external isolated, regulated 5 V supply**
-  connected to the board's verified 5 V input and GND. Check that the supply
-  holds under load and that the board's regulator provides a stable 3.3 V at
-  the module during startup. Apply 5 V at the verified board input only.
+- Unplug the appliance's wiring harness from the display board before
+  connecting the external supply. Power the isolated display board from an
+  **external isolated, regulated 5 V supply** at the verified 5 V input and
+  GND. Check that the supply holds under load and that the board's regulator
+  provides a stable 3.3 V at the module during startup. Apply 5 V at the
+  verified board input only.
 - Set the USB–UART adapter's **TX/RX logic to 3.3 V**. Connect TX, RX and GND
   as shown above. For the power connections, the adapter shares GND with the
   board and external supply. Leave the adapter's VCC/3.3 V lead disconnected.

@@ -68,6 +68,7 @@ unit. The native test replays the recorded water-depletion transition with
 synthetic envelopes. The separate
 [bidirectional standby capture](PROTOCOL.md#bidirectional-standby-capture)
 contains 63 complete checksum-valid frames. All 32 received frames passed
-local replay through the current decoder. It supports the status poll,
-empty timer reply and OFF confirmation tests. Stock ESP startup and a
-wet-run trace remain outside this evidence.
+local replay through the current decoder. The four runtime component source
+files in this branch match the diagnostic build byte for byte. The capture
+supports the status poll, empty timer reply and OFF confirmation tests.
+Stock ESP startup and a wet-run trace remain outside this evidence.
