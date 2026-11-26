@@ -92,12 +92,61 @@ The byte layout and commands were compared with an owner's previously working
 LV600S deployment and analysis of that owner's firmware. This new implementation
 is independently written; it does not vendor the separate, unlicensed
 wdm230/levoit-lv600s-esphome source. That project is credited as prior work.
-The committed fixtures are synthetic. The initial component ran on the
+The initial component ran on the
 assembled EU unit through the encrypted owner firmware. That run confirmed
 power, display, mist, warmth, modes, target humidity, timer start and cancel.
 The newer queue safety correction passed synthetic fault and recovery tests
 and the real empty-tank check. Filled-tank and physical reset checks of this
 build remain open. [Release review](RELEASE-REVIEW.md)
+
+### Recorded command events and water-depletion payloads
+
+The owner's EU unit ran the original appliance MCU (1.0.56) with ESPHome
+on the Wi-Fi module. The two recordings are distinct sessions on the same
+9600-baud, 8N1 MCU link. RX and TX are from the ESP's point of view.
+The archive matched all three checksums in its manifest.
+
+| Source on 14 November 2026 | ESPHome application | Contents |
+|---|---|---|
+| `command-events.txt` | `1.1.06-panel-reset` | 33 events over 2 min 55.082 s. Each event has a log timestamp, direction, opcode and payload size. |
+| `status-payloads.json` | `1.1.08-mcu-feedback` | 144 samples over 2 h 13 min 33.219 s, including repeated snapshots. Each carries a 20-byte MCU-to-ESP payload, a sample timestamp, and decoded power, humidifying, water-shortage and tank flags. |
+
+| Direction | Opcode | Payload bytes | Count |
+|---|---|---:|---:|
+| RX | `0x4111` | 20 | 18 |
+| TX | `0xA000` | 1 | 5 |
+| RX | `0xA000` | 0 | 5 |
+| TX | `0xA264` | 4 | 1 |
+| RX | `0xA264` | 0 | 1 |
+| RX | `0xA266` | 8 | 3 |
+
+Each logged power write was followed by an empty same-opcode reply after
+15–27 ms and a status push after 59–75 ms, measured from the log timestamps.
+The timer write had an empty reply after 37 ms. The three timer reports
+followed the write by 39 ms, 2.950 s and 60.247 s. The event log establishes
+the shapes and order of these messages. Their payload values, sequence
+numbers, result codes and measured wire timings are unavailable in that log.
+
+All 144 samples (69 distinct payloads) matched the current status decoder.
+Of these, 140 report power on, 138 report humidifying and 5 report water
+shortage. Each payload starts with `38 00 01` (MCU 1.0.56). All show the tank installed, Manual
+mode, the retained display setting and manual target at 100, warm level 0,
+and zero at offsets 14–19. Reported humidity spans 36–74% and temperature
+14–18 °C. The first sample reports mist level 5 and the other 143 report
+level 9. These are device-reported readings and settings.
+
+On the first observed water-shortage sample, offsets 5 and 7 changed to 1
+and humidifying became false while power remained on. The first standby
+sample arrived 10.044 s later with power off, the tank still installed,
+water shortage still set, and fault byte 0. The retained mist and display
+settings stayed at 9 and 100. The observations cover depletion with the
+tank installed. Tank removal and refill are separate tests.
+
+The event log and the status samples do not identify complete wire frames.
+In the water-depletion file the source opcode of each sample is unknown.
+Neither file preserves the original headers or checksums. The native test
+replays four observed status payloads inside synthetic test envelopes. A
+labelled capture of complete TX and RX frames remains open.
 
 ## Observations from the assembled EU unit
 

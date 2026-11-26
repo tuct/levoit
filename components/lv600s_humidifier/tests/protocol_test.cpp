@@ -8,7 +8,33 @@ Bytes state(bool on = true) {
   s[9] = 42; s[10] = 23; s[11] = 3; s[12] = 4; s[13] = 2;
   return s;
 }
+void verify_recorded_water_depletion() {
+  // MCU payloads from the 1.1.08-mcu-feedback water-depletion run. The API
+  // samples did not retain the opcode or header, so packet() provides a
+  // synthetic envelope. The intervals below are for replay, not wire timing.
+  Protocol device;
+  const Bytes connected{0x38, 0x00, 0x01, 0x00, 0x00, 0x00, 0x64, 0x01, 0x64, 0x24,
+                        0x12, 0x01, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  const Bytes misting{0x38, 0x00, 0x01, 0x01, 0x00, 0x00, 0x64, 0x00, 0x64, 0x24,
+                        0x12, 0x01, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  const Bytes low_water{0x38, 0x00, 0x01, 0x01, 0x00, 0x01, 0x64, 0x01, 0x64, 0x46,
+                        0x10, 0x01, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  const Bytes standby{0x38, 0x00, 0x01, 0x00, 0x00, 0x01, 0x64, 0x01, 0x64, 0x46,
+                        0x10, 0x01, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  feed(device, packet(Command::REPORT, connected, 0), 100);
+  assert(device.status.size == 20 && device.status.safe() && !device.status.power());
+  assert(!device.status.humidifying() && !device.status.display());
+  feed(device, packet(Command::REPORT, misting, 1), 200);
+  assert(device.status.power() && device.status.humidifying() && device.status.display());
+  feed(device, packet(Command::REPORT, low_water, 2), 300);
+  assert(device.status.power() && !device.status.tank_removed() && device.status.water_empty());
+  assert(!device.status.humidifying() && !device.status.safe());
+  feed(device, packet(Command::REPORT, standby, 3), 400);
+  assert(!device.status.power() && !device.status.display() && device.status.water_empty());
+  assert(device.status.raw[6] == 100 && device.status.raw[12] == 9 && device.status.raw[15] == 0);
+}
 int main() {
+  verify_recorded_water_depletion();
   Protocol d; std::vector<Bytes> sent; d.transmit = [&](const Bytes &f) { sent.push_back(f); };
   feed(d, packet(Command::STATUS, state(), 0, 0x12));
   assert(d.status.fresh(100) && d.status.raw[9] == 42 && d.status.heating_enabled());

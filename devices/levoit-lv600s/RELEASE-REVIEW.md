@@ -62,6 +62,7 @@ a custom local builder config, which avoids automatic template rewrites.
 - The development YAML uses the default ESPHome partition table. The already
   converted EU device uses the secure owner profile with its original table. [Secure owner build and live verification](https://github.com/mvs90/levoit-lv600s-local/blob/codex/tuct-alignment/docs/UPSTREAM-ALIGNMENT.md)
 
-The protocol table includes observations from the previously assembled unit.
-The repository fixtures are synthetic. A labelled, bidirectional UART capture
-from this model is still missing.
+The [protocol evidence](PROTOCOL.md#recorded-command-events-and-water-depletion-payloads)
+includes 33 command events and 144 observed MCU status payloads from the EU
+unit. The native test replays the recorded water-depletion transition with
+synthetic envelopes. Complete bidirectional wire frames remain open.
