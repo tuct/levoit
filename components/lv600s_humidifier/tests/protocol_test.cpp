@@ -99,11 +99,40 @@ void verify_observed_tank_removal() {
   feed(device, packet(Command::REPORT, refilled, 1, 0x02), 200);
   assert(!device.status.tank_removed() && !device.status.water_empty() && device.status.safe());
 }
+void verify_observed_level_write_shapes() {
+  // Use synthetic frames with the observed payload lengths and reply order.
+  Protocol device;
+  std::vector<Bytes> sent;
+  device.transmit = [&](const Bytes &frame) { sent.push_back(frame); };
+  auto status = state();
+  status[11] = 1;
+  status[12] = 5;
+  status[13] = 0;
+  feed(device, packet(Command::STATUS, status, 0, 0x12), 100);
+
+  assert(device.enqueue(Command::MIST, {1, 0, 0, 0}, 200));
+  assert(sent.back() == packet(Command::MIST, {1, 0, 0, 0}, 0, 0x22));
+  feed(device, packet(Command::MIST, {}, 0, 0x12), 230);
+  assert(std::string(device.result) == "Sent: waiting for MCU target state");
+  status[12] = 1;
+  feed(device, packet(Command::REPORT, status, 1, 0x02), 285);
+  assert(std::string(device.result) == "Target confirmed by MCU");
+
+  assert(device.enqueue(Command::WARM, {1, 0, 0, 0, 0}, 300));
+  assert(sent.back() == packet(Command::WARM, {1, 0, 0, 0, 0}, 1, 0x22));
+  feed(device, packet(Command::WARM, {}, 1, 0x12), 330);
+  assert(std::string(device.result) == "Sent: waiting for MCU target state");
+  status[13] = 1;
+  feed(device, packet(Command::REPORT, status, 2, 0x02), 380);
+  assert(std::string(device.result) == "Target confirmed by MCU");
+  assert(device.command_failures == 0 && device.status.raw[12] == 1 && device.status.heating_enabled());
+}
 int main() {
   verify_recorded_water_depletion();
   verify_observed_standby_reply_shapes();
   verify_observed_sleep_confirmation();
   verify_observed_tank_removal();
+  verify_observed_level_write_shapes();
   Protocol d; std::vector<Bytes> sent; d.transmit = [&](const Bytes &f) { sent.push_back(f); };
   feed(d, packet(Command::STATUS, state(), 0, 0x12));
   assert(d.status.fresh(100) && d.status.raw[9] == 42 && d.status.heating_enabled());

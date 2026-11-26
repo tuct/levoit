@@ -226,6 +226,45 @@ windows, 440 consecutive chunks (per connection) contained 724 records with
 valid frame lengths and checksums. One record carried an unrecognised opcode
 and nonzero result, so it was excluded from command interpretation.
 
+### Bidirectional mist and warmth writes
+
+The owner used the encrypted ESPHome API on the assembled EU unit to set
+mist to 1 and back to 5, and warmth to 1 and back to 0. The ESP recorded the
+complete `0x4113` and `0x4112` requests at 9600 baud. Each request received an
+empty acknowledgement with the same opcode and sequence, followed by an
+unsolicited `0x4111` report with the requested value in byte 12 (mist) or 13
+(warmth) of the status payload. The acknowledgement alone left the command
+pending. The matching reports followed the request logs by 80–85 ms.
+This interval is based on ESPHome log timestamps. The appliance returned
+to its initial settings and standby.
+
+| Command | Observed level transitions | Request payload |
+|---|---|---|
+| Mist `0x4113` | 5 → 1 → 5 | Level, then three zero bytes |
+| Warmth `0x4112` | 0 → 1 → 0 | Level, then four zero bytes |
+
+The regression constructs small synthetic TX, acknowledgement and status
+frames to test these observations. Complete owner captures remain private.
+
+### UART during Wi-Fi provisioning
+
+A temporary diagnostic image based on secure owner build 1.2.04 recorded
+both directions in RAM. The last pre-reboot capture includes the physical
+`D103/04` reset and the owner's reset handler. After reboot, the earliest
+complete UART frame captured by ESPHome was logged at 404 ms. The diagnostic
+image first reported the AP active at 465 ms on its own uptime clock, from
+a 50 ms poll. The owner first saw the SSID on a phone roughly 20 s after
+releasing the button.
+
+The encrypted API retrieved 42 retained records for the new boot with no
+reported drops or missing indices. They yielded 71 checksum-valid UART
+frames (35 TX and 36 RX), 70 logged before the AP was observed inactive.
+The capture covers ESPHome-visible serial traffic across the period with
+no station connection. The ESP reboot interval and traffic before the UART
+debugger starts require an external capture. This does not record the original
+ESP firmware's power-up handshake. Production 1.2.04 was restored over
+encrypted OTA, and the saved operating settings matched the initial values.
+
 ## Observations from the assembled EU unit
 
 | Check | Observation with the earlier local firmware |

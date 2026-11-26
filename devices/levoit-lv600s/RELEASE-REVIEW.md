@@ -69,7 +69,13 @@ a custom local builder config, which avoids automatic template rewrites.
   reset and accepted the setup indication. Firmware logs show the pairing
   pattern was requested. The encrypted API reconnected after an 87.4 s
   interruption that included manual reprovisioning. Time to first SSID
-  visibility was not independently measured.
+  visibility was not independently measured in that run.
+- The follow-up diagnosis recovered 71 bidirectional frames from the ESP's
+  RAM after reprovisioning, including 70 before the setup AP closed. The AP
+  first read active at 465 ms of ESP uptime, and the owner saw the SSID on a
+  phone roughly 20 s after releasing the button. Four complete mist and warmth
+  writes were acknowledged and confirmed by the MCU. Production 1.2.04 was
+  restored and the initial operating settings matched.
 - HA integration 0.6.8 identified the real device and mapped all 20 controls
   and diagnostics in an isolated HA 2026.10.4 instance. The native encrypted
   ESPHome connection supplied the states. The test used a simulated Device
@@ -99,9 +105,11 @@ Stock ESP startup remains outside this evidence.
 | Standby capture | 63 complete bidirectional frames for polling, empty timer replies and OFF. |
 | Tank, wet operation and reset capture | 724 checksum-valid records across two connected windows. Includes tank changes, mode and humidity writes, panel mist and warmth reports, a complete timer cycle and physical pairing/reset events. One unknown record with a nonzero result was excluded from command interpretation. |
 | Corrected owner image | Live MCU status and command confirmation for Sleep without a humidity target, followed by normal Manual operation and standby. The reset retest combines encrypted API logs with the owner's observation. This image has no full UART logger. |
+| Buffered diagnostic capture | 108 checksum-valid frames before reboot. Includes full `0x4113` and `0x4112` writes, acknowledgements and matching status reports. Another 71 frames were recovered from the setup boot with no reported drops or missing snapshot records. |
 
 The public tests use small synthetic envelopes around selected observed
-payloads. Full owner traces are retained privately. They contain no
-uninterrupted UART record while the ESP was off the network, no stock
-ESP startup trace and no full TX frames for then unrecorded mist/warmth
-writes. Panel reports and prior functional tests establish those settings.
+payloads. Full owner traces are retained privately. The two remaining
+capture boundaries are the ESP reboot and pre-UART interval, and the
+power-up handshake of the original ESP firmware. The earlier original
+UART0 console observation identifies the stock firmware version and uses
+a different serial port from the MCU link.
