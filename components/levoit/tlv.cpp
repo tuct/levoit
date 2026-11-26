@@ -1,6 +1,6 @@
 
 #include "tlv.h"
-#include "esphome/core/log.h"
+#include "levoit_log.h"
 
 namespace esphome {
 namespace levoit {

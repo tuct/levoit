@@ -1,6 +1,5 @@
 #include "vital_status.h"
-#include "esphome/core/defines.h"
-#include "esphome/core/log.h"
+#include "levoit_log.h"
 #include "tlv.h" // <- TLV extraction
 #include "types.h"
 #include "decoder_helpers.h"
