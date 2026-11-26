@@ -7,6 +7,9 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
+* **Auto room size**: the Core 600S diagnostic control uses the same 147 m²
+  upper limit as its preset. The Vital 100S rounds reported and restored room
+  sizes to the nearest m² when configured with a 1 m² step.
 * **Core 300S on the `01 32 40` status: Display reads off in Sleep and while
   off.** The panel is dark then, but the display setting byte stays on, so
   *Display* showed on. It now shows what the panel does. The setting is

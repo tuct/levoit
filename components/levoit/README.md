@@ -528,6 +528,11 @@ Auto mode options per model:
 
 ## Change Log
 
+#### Unreleased
+
+* For Vital 100S room size numbers configured with a 1 m² step, round MCU
+  reports and normalize saved presets to whole square metres.
+
 #### ESP Version: 1.7.3 - 2026.11.23
 
 **Philips UART check and new device configs.** The `levoit` component code is
