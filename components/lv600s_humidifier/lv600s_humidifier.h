@@ -1,4 +1,5 @@
 #pragma once
+#include "lv600s_startup.h"
 #include "protocol.h"
 #include "esphome/core/component.h"
 #include "esphome/core/hal.h"
@@ -22,6 +23,10 @@ class LV600SHumidifier : public Component, public uart::UARTDevice {
   void register_text_sensor(size_t kind, text_sensor::TextSensor *s) { texts_[kind] = s; }
   bool has_status() const { return protocol_.status.fresh(millis()); }
   bool has_timer() const { return protocol_.timer_known(millis()); }
+  bool has_timer_report() const { return protocol_.has_timer_report(); }
+  bool can_apply_startup_setting() const {
+    return has_status() && is_power_on() && protocol_.status.safe() && protocol_.commands_idle();
+  }
   bool is_power_on() const { return protocol_.status.power(); }
   bool is_display_on() const { return protocol_.status.display(); }
   bool water_lacks() const { return protocol_.status.water_empty(); }
@@ -46,14 +51,28 @@ class LV600SHumidifier : public Component, public uart::UARTDevice {
   void query_status() { protocol_.query(); }
   void set_power(bool on) { send_(Command::POWER, {uint8_t(on)}); }
   void set_display(bool on) { send_(Command::DISPLAY, {uint8_t(on ? 100 : 0)}); }
-  void set_target_humidity(uint8_t target) { send_(Command::TARGET, {0, target}); }
-  void set_mist_level(uint8_t level) { send_(Command::MIST, {level, 0, 0, 0}); }
-  void set_warm_level(uint8_t level) { send_(Command::WARM, {level, 0, 0, 0, 0}); }
-  void set_timer_seconds(uint32_t seconds) {
-    send_(Command::TIMER, {uint8_t(seconds), uint8_t(seconds >> 8), uint8_t(seconds >> 16), uint8_t(seconds >> 24)});
+  bool can_set_target_humidity() const {
+    return has_status() && is_power_on() && get_mode() == 3 && protocol_.status.safe();
+  }
+  bool set_target_humidity(uint8_t target) {
+    return protocol_.enqueue(Command::TARGET, {0, target}, millis());
+  }
+  float get_timer_duration() const { return protocol_.timer_duration(millis()); }
+  static std::string format_timer_duration(float seconds) {
+    if (!std::isfinite(seconds)) return "Unknown";
+    if (seconds == 0) return "Off";
+    const auto minutes = static_cast<unsigned>(std::ceil(seconds / 60.0f));
+    if (minutes < 60) return std::to_string(minutes) + " min";
+    return std::to_string(minutes / 60) + "h " + std::to_string(minutes % 60) + " min";
+  }
+  bool set_mist_level(uint8_t level) { return send_(Command::MIST, {level, 0, 0, 0}); }
+  bool set_warm_level(uint8_t level) { return send_(Command::WARM, {level, 0, 0, 0, 0}); }
+  bool set_timer_seconds(uint32_t seconds) {
+    return send_(Command::TIMER, {uint8_t(seconds), uint8_t(seconds >> 8), uint8_t(seconds >> 16), uint8_t(seconds >> 24)});
   }
   void clear_timer() { set_timer_seconds(0); }
-  void set_manual_mode() { send_(Command::MANUAL, {0, 1, uint8_t(std::max(1.0f, std::min(9.0f, get_mist_level())))}); }
+  void set_manual_mode() { set_manual_mist_level(uint8_t(std::max(1.0f, std::min(9.0f, get_mist_level())))); }
+  bool set_manual_mist_level(uint8_t level) { return send_(Command::MANUAL, {0, 1, level}); }
   void set_target_humidity_mode() { send_(Command::HUMIDITY, {target_(), 0, 0, 0}); }
   void set_sleep_mode() { send_(Command::SLEEP, {target_(), 0, 0, 0, 0, 0}); }
   void set_panel_button_callback(void (*callback)(uint8_t)) { protocol_.panel_event = callback; }
@@ -67,7 +86,7 @@ class LV600SHumidifier : public Component, public uart::UARTDevice {
   std::array<text_sensor::TextSensor *, 6> texts_{};
   uint32_t interval_{5000}, poll_at_{0}, publish_at_{0};
   uint8_t target_() const { auto t = protocol_.status.raw[8]; return t >= 40 && t <= 80 ? t : 55; }
-  void send_(Command command, Bytes payload) { protocol_.enqueue(command, std::move(payload), millis()); }
+  bool send_(Command command, Bytes payload) { return protocol_.enqueue(command, std::move(payload), millis()); }
   void publish_();
 };
 }  // namespace esphome::lv600s_humidifier

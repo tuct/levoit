@@ -135,6 +135,7 @@ void verify_timer_restart_with_same_remaining() {
   feed(device, status, 1000);
   feed(device, initial, 1000);
   assert(device.remaining(1000) == 60);
+  assert(device.timer_duration(1000) == 120);
 
   // Keep status fresh for the next snapshot, which has the same remaining time.
   feed(device, status, 11000);
@@ -145,8 +146,10 @@ void verify_timer_restart_with_same_remaining() {
   feed(device, packet(Command::TIMER_QUERY, {60, 0, 0, 0}, 3, 0x12), 31000);
   assert(device.remaining(31000) == 30);
 
+  assert(device.timer_duration(31000) == 120);
   feed(device, restarted, 31000);
   assert(device.remaining(31000) == 60);
+  assert(device.timer_duration(31000) == 60);
   feed(device, restarted, 32000);
   assert(device.remaining(32000) == 59);
 }
@@ -247,6 +250,13 @@ int main() {
   assert(std::string(countdown.result) == "Sent: waiting for MCU target state");
   feed(countdown, packet(Command::TIMER_QUERY, {1, 0}, 4, 0x12), 92030);
   assert(std::string(countdown.result) == "Target confirmed by MCU");
+  assert(countdown.timer_duration(92030) == 1);
+  assert(countdown.has_timer_report());
+  feed(countdown, packet(Command::TIMER_QUERY, {2, 0}, 5, 0x12), 92040);
+  assert(countdown.remaining(92040) == 2);
+  assert(std::isnan(countdown.timer_duration(92040)));
+  feed(countdown, packet(Command::TIMER_QUERY, {0, 0}, 6, 0x12), 92050);
+  assert(countdown.timer_duration(92050) == 0);
 
   // Safety changes are rechecked before the next queued command is sent.
   Protocol q; std::vector<Bytes> safety_tx;

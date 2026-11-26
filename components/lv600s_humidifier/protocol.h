@@ -65,6 +65,8 @@ class Protocol {
   void query() { write_(Command::STATUS, {}); }
   void query_timer() { write_(Command::TIMER_QUERY, {}); }
   void wifi(const Bytes &payload) { write_(Command::WIFI, payload); }
+  bool has_timer_report() const { return timer_seen_; }
+  bool commands_idle() const { return pending_.empty(); }
   bool timer_known(uint32_t now) const {
     if (!status.fresh(now) || !timer_seen_) return false;
     // The MCU may report only at start and expiry. While its status is fresh,
@@ -78,6 +80,11 @@ class Protocol {
     const uint32_t elapsed = uint32_t(now - timer_received_) / 1000;
     // MCU confirmation is required for expiry, never invent an off/zero state.
     return float(timer_seconds_ > elapsed ? timer_seconds_ - elapsed : 1);
+  }
+  float timer_duration(uint32_t now) const {
+    if (!timer_known(now)) return NAN;
+    if (timer_seconds_ == 0) return 0.0f;
+    return timer_total_ ? float(*timer_total_) : NAN;
   }
   bool enqueue(Command command, Bytes payload, uint32_t now) {
     if (!allowed_(command, payload, now)) return fail_("Rejected: stale/unsafe status or mode");
@@ -207,12 +214,19 @@ class Protocol {
       if (seconds > 43200 || (total && (*total > 43200 || seconds > *total))) return;
       if (!status.fresh(now)) return;
       const bool confirms_write = timer_matches_(seconds, now);
-      const bool total_changed = total && timer_total_ && *total != *timer_total_;
+      const bool total_changed = total && total != timer_total_;
       if (!timer_seen_ || seconds != timer_seconds_ || total_changed || confirms_write)
         timer_received_ = now;
-      // Short replies carry no total. Keep the last known total until the next
-      // valid timer snapshot after a stale link, a confirmed write or expiry.
-      if (total || !timer_seen_ || confirms_write || seconds == 0) timer_total_ = total;
+      // A short reply can confirm our pending duration. A restart with only
+      // remaining time invalidates the total from the previous countdown.
+      if (seconds == 0)
+        timer_total_.reset();
+      else if (total)
+        timer_total_ = total;
+      else if (confirms_write)
+        timer_total_ = le32(pending_.front().payload.data());
+      else if (!timer_seen_ || seconds > timer_seconds_)
+        timer_total_.reset();
       timer_seconds_ = seconds; timer_seen_ = true;
       confirm_(now, true);
     }

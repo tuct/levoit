@@ -4,7 +4,7 @@
 
 Local ESPHome support for the ultrasonic warm/cool-mist LV600S, tested on one
 EU `LUH-A602S-WEUR` with the original ESP32-SOLO-1C and owner firmware through
-`1.2.04-sleep-setup-review`. [Live verification](RELEASE-REVIEW.md)
+`1.2.09-target-preset-startup`. [Live verification](RELEASE-REVIEW.md)
 
 - Module: ESP32-SOLO-1C / ESP32-S0WD, single core, 4 MB on the observed board.
 - MCU UART: GPIO17 TX → MCU RX, GPIO16 RX ← MCU TX, **9600 8N1**.
@@ -46,11 +46,36 @@ Recover over UART0 if the network paths are unavailable.
 
 ## Controls
 
-Power, display, Manual/Humidity/Humidity Sleep, target RH 40–80%, mist
-1–9, warmth 0–3 and a timer up to 12 h with cancel. Original Auto and unknown mode
-are display-only. Tank/water/fault/MCU diagnostics, humidity/temperature and the
-component/model/version sensors support Home Assistant discovery. A native HA
-humidifier entity and full original Auto parity are not implemented.
+Power, display, Manual/Auto/Sleep, target RH 40–80%, mist 1–9, warmth 0–3 and
+a timer up to 720 minutes. Original Auto and unknown mode are display-only.
+The companion Home Assistant integration exposes a native humidifier entity.
+
+**English.** Set mist, warm mist or timer minutes on the ESPHome entities while
+the appliance is in standby. The ESP saves them and applies them after a safe,
+confirmed power-on. A mist preset selects Manual. A queued warm mist level
+waits until the appliance leaves Sleep. The timer starts once and does not
+restart on later power cycles after consumption. Set the timer to `0` to cancel
+a queued or running timer. The two formatted timer entities report `Off` when
+the MCU is online and there is no active timer or queued duration. A queued
+duration is shown separately while the countdown is still off.
+
+**Deutsch.** Nebelstufe, Warmnebelstufe und Timer lassen sich über die
+ESPHome-Entitäten im Standby vormerken. Der ESP speichert sie und überträgt
+sie nach sicher bestätigtem Einschalten. Eine Nebelvorgabe schaltet auf
+**Manuell**. Eine Warmnebelvorgabe wartet, bis der Schlafmodus endet. Der
+Timer startet einmal. Mit `0` lässt sich eine Vormerkung oder ein laufender
+Timer löschen. Ohne Timer melden beide Textsensoren bei erreichbarer MCU
+`Off`. Eine vorgemerkte Dauer erscheint bei weiterhin ausgeschaltetem
+Countdown.
+
+| ESPHome entity | Default icon |
+|---|---|
+| Mist Level / Nebelstufe, Humidifying / Befeuchtet | `mdi:scent` |
+| Warm Level / Warmnebelstufe, Heating Enabled / Wärme aktiv | `mdi:heat-wave` |
+| Water Tank Empty / Wassermangel | `mdi:water-off` |
+| Target Humidity / Zielfeuchte | `mdi:water-percent` |
+| Timer Duration / Timer Dauer | `mdi:timer` |
+| Timer Remaining / Timer Restzeit | `mdi:progress-clock` |
 
 [Wire format, commands, safety and evidence](PROTOCOL.md).
 [Release review and dependencies](RELEASE-REVIEW.md).

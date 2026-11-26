@@ -14,12 +14,32 @@ layout, commands, service codes and evidence limits.
 | ESPHome `components/lv600s_humidifier` | Separate fixed-layout UART transport, bounded framing and write queue, MCU-confirmed controls, timer and diagnostics. The release candidate discards pending setters when status becomes stale or unsafe and retains explicit off | Uses ESPHome UART, sensor, binary-sensor and text-sensor APIs. Reads the existing component version helper. Its parser, queue and status layout are separate from the `levoit` purifier TLV implementation |
 | Development YAML | Adds an original-ESP example that builds against the local checkout | The stable catalogue and builder generator retain their existing scope |
 | Tested secure owner profile | Preserves the original partition table, individual encrypted API and OTA access, stored Wi-Fi and owner reset policy. The mist, app-scale and warmth numbers read MCU values every second | These settings are in the LV600S profile of the owner repository. The original two purifier profiles use their own YAML and component |
-| HA recognition and presentation | Adds the LV600S model and component, maps nested MCU diagnostic entities and German or English names, and renders dedicated controls. The release candidate excludes an auxiliary ESPHome fan from purifier controls and group discovery on a known LV600S | Existing device/entity IDs and the ESPHome transport are reused. Fan matching for other models is covered by a regression assertion. No custom humidifier platform is required |
+| HA recognition and presentation | Adds the LV600S model and component, maps nested MCU diagnostic entities and German or English names, and renders dedicated controls. The release candidate excludes an auxiliary ESPHome fan from purifier controls and group discovery on a known LV600S | Existing device/entity IDs and the ESPHome transport are reused. Fan matching for other models is covered by a regression assertion. The companion integration provides the native HA humidifier entity |
 
 The owner test branches also carry separate purifier UART/ACK validation and
 HA template refresh protection for encrypted OTA. Those cross-model changes
 are separate from the LV600S contribution branches. The HA owner profile uses
 a custom local builder config, which avoids automatic template rewrites.
+
+## Owner follow-up on 26 November 2026
+
+The secure owner profile `1.2.09-target-preset-startup` was built and installed
+by encrypted OTA on the assembled LV600S, retaining its original partition
+table and device keys. Both timer text sensors reported `Off` after the ESP
+restarted. Home Assistant read the eight firmware icon defaults.
+
+The appliance stayed in standby while mist level 5, warmth level 1 and a
+two-minute timer were staged. Its MCU reported the new levels and running
+timer after power-on. Setting zero cancelled the standby preset and the
+active countdown in separate checks. A subsequent start left the cancelled
+timer off. The real device states for standby, queued settings, active mist
+with and without warmth and final standby were rendered in the served panel.
+
+The published example uses the same LV600S preset and timer logic with
+English names and dummy credentials for compile checks. The device evidence
+comes from the secure owner build. No firmware binaries or credentials are
+published. The changes are scoped to the LV600S command queue and example;
+the purifier components and device profiles retain their existing code.
 
 ## Verification and scope
 
