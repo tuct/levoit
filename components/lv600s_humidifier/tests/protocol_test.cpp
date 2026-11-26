@@ -33,8 +33,43 @@ void verify_recorded_water_depletion() {
   assert(!device.status.power() && !device.status.display() && device.status.water_empty());
   assert(device.status.raw[6] == 100 && device.status.raw[12] == 9 && device.status.raw[15] == 0);
 }
+void verify_observed_standby_reply_shapes() {
+  Protocol device;
+  std::vector<Bytes> sent;
+  device.transmit = [&](const Bytes &frame) { sent.push_back(frame); };
+
+  auto dry = state(false);
+  dry[5] = 1;
+  dry[7] = 1;
+  dry[8] = 100;
+  dry[11] = 1;
+  dry[12] = 5;
+  dry[13] = 3;
+
+  device.query();
+  device.query_timer();
+  assert(sent.size() == 2);
+  assert(sent[0] == packet(Command::STATUS, {}, 0, 0x22));
+  assert(sent[1] == packet(Command::TIMER_QUERY, {}, 1, 0x22));
+  // The observed MCU sometimes returned the next sequence for a status reply.
+  feed(device, packet(Command::STATUS, dry, 1, 0x12), 100);
+  assert(device.status.fresh(100) && device.status.size == 20);
+  assert(!device.status.power() && !device.status.display() && device.status.water_empty());
+  assert(!device.status.tank_removed() && !device.status.humidifying() && !device.status.heating_enabled());
+  assert(device.status.raw[12] == 5 && device.status.raw[13] == 3);
+  feed(device, packet(Command::TIMER_QUERY, {}, 1, 0x12), 110);
+  assert(!device.timer_known(110) && std::isnan(device.remaining(110)));
+
+  assert(device.enqueue(Command::POWER, {0}, 200));
+  assert(sent.size() == 3 && sent.back() == packet(Command::POWER, {0}, 2, 0x22));
+  feed(device, packet(Command::POWER, {}, 2, 0x12), 220);
+  assert(std::string(device.result) == "Sent: waiting for MCU target state");
+  feed(device, packet(Command::REPORT, dry, 0x1A, 0x02), 225);
+  assert(std::string(device.result) == "Target confirmed by MCU");
+}
 int main() {
   verify_recorded_water_depletion();
+  verify_observed_standby_reply_shapes();
   Protocol d; std::vector<Bytes> sent; d.transmit = [&](const Bytes &f) { sent.push_back(f); };
   feed(d, packet(Command::STATUS, state(), 0, 0x12));
   assert(d.status.fresh(100) && d.status.raw[9] == 42 && d.status.heating_enabled());
@@ -88,6 +123,8 @@ int main() {
   feed(d, packet(Command::TIMER_REPORT, {59, 0, 0, 0, 60, 0, 0, 0}, 3, 0x02), 3000);
   assert(d.remaining(4000) == 58);
   feed(d, packet(Command::TIMER_REPORT, {59, 0, 0, 0, 60, 0, 0, 0}, 3, 0x02), 4000);
+  feed(d, packet(Command::TIMER_QUERY, {}, 4, 0x12), 4350);
+  assert(d.remaining(4350) == 58); // an empty timer reply leaves the countdown intact
   assert(d.remaining(5000) == 57); // duplicate snapshots do not restart countdown
   feed(d, packet(Command::TIMER_REPORT, {61, 0, 0, 0, 60, 0, 0, 0}, 4, 0x02), 5000);
   assert(d.remaining(5000) == 57);

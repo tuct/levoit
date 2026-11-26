@@ -65,4 +65,9 @@ a custom local builder config, which avoids automatic template rewrites.
 The [protocol evidence](PROTOCOL.md#recorded-command-events-and-water-depletion-payloads)
 includes 33 command events and 144 observed MCU status payloads from the EU
 unit. The native test replays the recorded water-depletion transition with
-synthetic envelopes. Complete bidirectional wire frames remain open.
+synthetic envelopes. The separate
+[bidirectional standby capture](PROTOCOL.md#bidirectional-standby-capture)
+contains 63 complete checksum-valid frames. All 32 received frames passed
+local replay through the current decoder. It supports the status poll,
+empty timer reply and OFF confirmation tests. Stock ESP startup and a
+wet-run trace remain outside this evidence.

@@ -145,8 +145,49 @@ tank installed. Tank removal and refill are separate tests.
 The event log and the status samples do not identify complete wire frames.
 In the water-depletion file the source opcode of each sample is unknown.
 Neither file preserves the original headers or checksums. The native test
-replays four observed status payloads inside synthetic test envelopes. A
-labelled capture of complete TX and RX frames remains open.
+replays four observed status payloads inside synthetic test envelopes.
+
+### Bidirectional standby capture
+
+On 26 November 2026 an assembled EU LUH-A602S-WEUR with MCU firmware 1.0.56
+was recorded for 75 seconds at 9600 baud, 8N1. The ESP ran the temporary
+ESPHome build `1.2.03-uart-trace`. Directions are relative to the ESP. The
+34 consecutive chunks contain 63 complete frames (311 TX bytes, 640 RX bytes).
+The lengths, checksums and recorded byte-stream hashes all validated. The
+timestamps identify when ESPHome emitted each log chunk.
+
+| Command | ESP-to-MCU frame | MCU-to-ESP frame | Count |
+|---|---|---|---:|
+| `0x4110` | `0x22`, empty request | `0x12`, 20-byte status | 15 pairs |
+| `0xA265` | `0x22`, empty request | `0x12`, empty reply | 15 pairs |
+| `0xA000` | `0x22`, one-byte `00` (OFF) | `0x12`, empty reply | 1 pair |
+| `0x4111` | — | `0x02`, 20-byte unsolicited status | 1 report |
+
+All frames used version 1 and result byte 0. Pairing by command and order
+gave a reply for every request. Five `0x4110` replies echoed the request
+sequence and ten used the next sequence value. All `0xA265` and `0xA000`
+replies echoed their request sequence. The decoder accepts a valid status
+report independently of sequence equality.
+
+The empty `0xA265` replies carry no seconds value. Timer state remained
+unknown during this run. The regression also checks that an empty reply
+does not replace a known countdown. The explicit OFF command was sent
+while the device was already in standby. The empty `0xA000` reply was
+followed by a `0x4111` report confirming power off. The regression keeps
+the command pending through the empty reply and confirms it on status.
+
+All 16 status payloads reported an installed tank, water shortage, no
+fault, power off and Manual mode. The retained display, mist and warm
+settings were 100, 5 and 3. The display and derived humidifying and
+heating states are off in this standby state.
+
+The capture supplies wire-frame evidence for standby polling and OFF
+confirmation with ESPHome on the ESP and original firmware on the MCU.
+The local bundle contains both byte streams and the labelled decoded
+frames. Stock ESP startup, wet operation, mode and mist changes, a
+countdown with data and physical reset require separate captures. The
+public regression builds synthetic frames with the observed headers,
+lengths and sequence relationships.
 
 ## Observations from the assembled EU unit
 
