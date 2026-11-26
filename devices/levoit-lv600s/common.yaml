@@ -60,6 +60,7 @@ switch:
   - platform: template
     name: Power
     id: humidifier_power
+    restore_mode: DISABLED
     lambda: |-
       if (!id(humidifier).has_status()) return {};
       return id(humidifier).is_power_on();
