@@ -232,7 +232,10 @@ class Protocol {
         case Command::MIST: matches = status.raw[12] == p[0]; break;
         case Command::WARM: matches = status.raw[13] == p[0]; break;
         case Command::HUMIDITY: matches = status.raw[11] == 3 && status.raw[8] == p[0]; break;
-        case Command::SLEEP: matches = status.raw[11] == 2 && status.raw[8] == p[0]; break;
+        case Command::SLEEP:
+          // MCU 1.0.56 can keep the unconfigured RH value (100) when entering Sleep.
+          matches = status.raw[11] == 2 && (status.raw[8] == p[0] || status.raw[8] == 100);
+          break;
         case Command::MANUAL: matches = status.raw[11] == 1 && (!p[1] || status.raw[12] == p[2]) && (!p[0] || status.raw[13] == p[2]); break;
         default: break;
       }

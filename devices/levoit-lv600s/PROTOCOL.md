@@ -30,7 +30,7 @@ diagnostic shows the actual payload length, including any trailing bytes receive
 | 5 | Water shortage |
 | 6 | Display setting, 0/100 |
 | 7 | Fog state; zero participates in the derived humidifying state |
-| 8 | Target RH. Manual mode reported 100, which is outside the adjustable 40–80% range |
+| 8 | Target RH. Manual and Sleep can report 100 when no adjustable 40–80% target is configured |
 | 9 | Current RH |
 | 10 | Temperature |
 | 11 | Mode: 0 original Auto (read only), 1 Manual, 2 Humidity Sleep, 3 Humidity |
@@ -65,6 +65,9 @@ older than 15 seconds is unavailable and cannot authorize an on/change command.
 
 A bounded eight-command queue confirms setters from later status reports, not
 just ACKs. At most one retry for idempotent setters; timers are never retried.
+The Sleep command requires mode 2 and accepts either the requested target or
+the observed unconfigured value (100). Humidity mode and target writes still
+require agreement with the requested target.
 Explicit off cancels queued setters and remains available with missing status.
 The release candidate discards pending setters when MCU status becomes stale
 or reports a tank, water or fault condition. A subsequent good report does
@@ -96,8 +99,9 @@ The initial component ran on the
 assembled EU unit through the encrypted owner firmware. That run confirmed
 power, display, mist, warmth, modes, target humidity, timer start and cancel.
 The newer queue safety correction passed synthetic fault and recovery tests
-and the real empty-tank check. Filled-tank and physical reset checks of this
-build remain open. [Release review](RELEASE-REVIEW.md)
+and the real empty-tank check. The subsequent diagnostic run covered tank
+removal, refill, wet operation and a Home Assistant timer at the same MCU
+revision. [Release review](RELEASE-REVIEW.md)
 
 ### Recorded command events and water-depletion payloads
 
@@ -184,10 +188,43 @@ heating states are off in this standby state.
 The capture supplies wire-frame evidence for standby polling and OFF
 confirmation with ESPHome on the ESP and original firmware on the MCU.
 The local bundle contains both byte streams and the labelled decoded
-frames. Stock ESP startup, wet operation, mode and mist changes, a
-countdown with data and physical reset require separate captures. The
-public regression builds synthetic frames with the observed headers,
-lengths and sequence relationships.
+frames. The public regression builds synthetic frames with the observed
+headers, lengths and sequence relationships.
+
+### Bidirectional tank and wet-operation capture
+
+On 26 November 2026 the same closed EU unit ran `1.2.03-uart-trace` with
+MCU 1.0.56. Unsolicited `0x4111` reports gave tank/shortage flags of 0/1
+(empty tank installed), 1/0 (tank removed) and 0/0 (refilled tank installed).
+A separate earlier run reported 1/1 with the tank removed. The tank flag
+is authoritative for detecting removal. Both flags gate wet operation.
+
+With water installed, physical power-on produced visible mist and lit the
+display. The panel cycled mist through internal levels 1, 5 and 9 and warmth
+through 0–3. The heater output was not measured. Home Assistant switched to
+Humidity and changed the target to 60%. Selecting Sleep from Manual sent
+`0x4082` with 55 in the payload and produced a status report with mode 2,
+target 100 and a dark display. The earlier candidate timed out despite the
+mode change. The panel Sleep button independently produced mode 2 with
+target 100. Selecting Sleep from Humidity with a 60% target retained 60.
+The native test replays the observed Manual-to-Sleep payloads and verifies
+that the empty ACK alone cannot confirm the mode.
+
+A Home Assistant one-minute timer sent `0xA264` with LE32 60. The MCU
+reported remaining/total 60/60 and then 0/60 about 60.3 seconds later
+with `0xA266`, and the unit switched off. The owner observed the mist stop.
+These are interactions with ESPHome on the ESP, with the original MCU.
+Stock ESP startup was outside the capture.
+
+The owner then held the power button in standby. The UART received
+`D102/02` for pairing and `D103/04` for factory reset 10 seconds later.
+The owner's reset configuration rebooted the ESP and removed its
+stored Wi-Fi connection. The encrypted network capture necessarily
+paused while the ESP was off the configured network. Reprovisioning
+reopened the encrypted API and closed the setup AP. Across the two capture
+windows, 440 consecutive chunks (per connection) contained 724 records with
+valid frame lengths and checksums. One record carried an unrecognised opcode
+and nonzero result, so it was excluded from command interpretation.
 
 ## Observations from the assembled EU unit
 

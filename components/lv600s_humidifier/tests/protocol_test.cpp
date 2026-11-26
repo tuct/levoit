@@ -67,9 +67,43 @@ void verify_observed_standby_reply_shapes() {
   feed(device, packet(Command::REPORT, dry, 0x1A, 0x02), 225);
   assert(std::string(device.result) == "Target confirmed by MCU");
 }
+void verify_observed_sleep_confirmation() {
+  Protocol device;
+  const Bytes manual{0x38, 0x00, 0x01, 0x01, 0x00, 0x00, 0x64, 0x00, 0x64, 0x2e,
+                     0x13, 0x01, 0x09, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  const Bytes sleep{0x38, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x64, 0x2e,
+                    0x13, 0x02, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  feed(device, packet(Command::STATUS, manual, 0xAA, 0x12), 100);
+  assert(device.enqueue(Command::SLEEP, {55, 0, 0, 0, 0, 0}, 200));
+  feed(device, packet(Command::SLEEP, {}, 0xAC, 0x12), 250);
+  feed(device, packet(Command::STATUS, manual, 0xAD, 0x12), 260);
+  auto different_target = sleep;
+  different_target[8] = 60;
+  feed(device, packet(Command::REPORT, different_target, 0x43, 0x02), 275);
+  assert(std::string(device.result) == "Sent: waiting for MCU target state");
+  feed(device, packet(Command::REPORT, sleep, 0x44, 0x02), 300);
+  assert(std::string(device.result) == "Target confirmed by MCU");
+  device.tick(2800);
+  assert(device.command_failures == 0 && !device.status.display());
+}
+void verify_observed_tank_removal() {
+  Protocol device;
+  const Bytes removed{0x38, 0x00, 0x01, 0x00, 0x01, 0x00, 0x64, 0x01, 0x64, 0x21,
+                      0x15, 0x01, 0x05, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  feed(device, packet(Command::REPORT, removed, 0, 0x02), 100);
+  assert(device.status.tank_removed() && !device.status.water_empty());
+  assert(!device.status.power() && !device.status.safe());
+  assert(!device.enqueue(Command::POWER, {1}, 150));
+  auto refilled = removed;
+  refilled[4] = 0;
+  feed(device, packet(Command::REPORT, refilled, 1, 0x02), 200);
+  assert(!device.status.tank_removed() && !device.status.water_empty() && device.status.safe());
+}
 int main() {
   verify_recorded_water_depletion();
   verify_observed_standby_reply_shapes();
+  verify_observed_sleep_confirmation();
+  verify_observed_tank_removal();
   Protocol d; std::vector<Bytes> sent; d.transmit = [&](const Bytes &f) { sent.push_back(f); };
   feed(d, packet(Command::STATUS, state(), 0, 0x12));
   assert(d.status.fresh(100) && d.status.raw[9] == 42 && d.status.heating_enabled());
