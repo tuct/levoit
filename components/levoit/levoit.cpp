@@ -1224,7 +1224,7 @@ namespace esphome
             // 1) Read incoming bytes into buffer_. Abandon an interrupted frame
             // before consuming a new burst, so a corrupt length cannot hold the
             // next status reports hostage until the whole buffer fills.
-            if (buf_len_ && uint32_t(now - last_rx_byte_ms_) > 250)
+            if (buf_len_ && uint32_t(millis() - last_rx_byte_ms_) > 250)
                 buf_len_ = 0;
             // Drain one buffer at a time so a burst of valid frames larger than
             // the buffer does not discard frames that were already complete.
@@ -1239,7 +1239,7 @@ namespace esphome
                         read_failed = true;
                         break;
                     }
-                    last_rx_byte_ms_ = now;
+                    last_rx_byte_ms_ = millis();
                     buffer_[buf_len_++] = b;
                 }
 

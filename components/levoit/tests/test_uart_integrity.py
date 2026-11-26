@@ -45,7 +45,8 @@ struct Levoit {
  void process_checked(uint8_t*,int);
  uint8_t buffer_[512]{};
  size_t buf_len_=0;
- uint32_t last_rx_byte_ms_=0, now=0;
+ uint32_t last_rx_byte_ms_ = 0;
+ uint32_t clock_ms = 0;
  std::deque<uint8_t> input;
  int reads_before_failure=-1;
  std::vector<std::vector<uint8_t>> frames;
@@ -62,7 +63,11 @@ struct Levoit {
  void process_message(uint8_t *v,int n){frames.emplace_back(v,v+n);}
  void write_array(const uint8_t *v,size_t n){tx.insert(tx.end(),v,v+n);}
  void flush(){}
- void poll(){
+ uint32_t millis() const { return clock_ms; }
+ void poll(uint32_t work_before_read_ms = 0) {
+  // Keep the loop-entry sample distinct from the time of the UART read.
+  [[maybe_unused]] const uint32_t now = millis();
+  clock_ms += work_before_read_ms;
 ''' + parser + r'''
  }
  void ackMessage(uint8_t,uint8_t,uint8_t);
@@ -77,7 +82,10 @@ std::vector<uint8_t> frame(size_t payload) {
  f[6]=1;f[7]=0x40;f[8]=0x41;
  levoit_finalize_message(f,7);return f;
 }
-void feed(Levoit &d,const std::vector<uint8_t>&v){d.input.insert(d.input.end(),v.begin(),v.end());d.poll();}
+void feed(Levoit &d, const std::vector<uint8_t> &v, uint32_t work_before_read_ms = 0) {
+ d.input.insert(d.input.end(), v.begin(), v.end());
+ d.poll(work_before_read_ms);
+}
 int main(){
  // The stock Core trace replies to sequence 0 with exactly these ten bytes.
  Levoit core;messageUpCounter=93;core.ackMessage(0x40,0x41,0);
@@ -100,10 +108,27 @@ int main(){
  Levoit d;auto good=frame(23);feed(d,good);assert(d.frames.size()==1);
  // Correct 16-bit length, split at a byte boundary between bursts.
  auto long_frame=frame(300);auto first=std::vector<uint8_t>(long_frame.begin(),long_frame.begin()+200);
- feed(d,first);assert(d.frames.size()==1);d.now=200;
+ feed(d,first);assert(d.frames.size()==1);d.clock_ms=200;
  feed(d,{long_frame.begin()+200,long_frame.end()});assert(d.frames.size()==2 && d.frames.back().size()==310);
+ // Work before the first read does not count as silence between fragments.
+ const std::vector<uint8_t> header(good.begin(), good.begin() + 6);
+ const std::vector<uint8_t> tail(good.begin() + 6, good.end());
+ Levoit delayed;
+ feed(delayed, header, 280);
+ assert(delayed.frames.empty() && delayed.buf_len_ == header.size());
+ delayed.clock_ms += 10;
+ feed(delayed, tail);
+ assert(delayed.frames.size() == 1 && delayed.frames.front() == good);
+ // Work before the next read does count if a partial frame is already buffered.
+ Levoit expired;
+ feed(expired, header);
+ expired.clock_ms += 100;
+ feed(expired, tail, 160);
+ assert(expired.frames.empty());
+ feed(expired, good);
+ assert(expired.frames.size() == 1 && expired.frames.front() == good);
  // A stuck length is discarded before the next burst after 250ms silence.
- feed(d,{0xa5,0x22,0,0xf0,0,0});d.now+=251;feed(d,good);assert(d.frames.size()==3);
+ feed(d,{0xa5,0x22,0,0xf0,0,0});d.clock_ms+=251;feed(d,good);assert(d.frames.size()==3);
  // Large high byte and impossible short lengths must resynchronize immediately.
  for(auto junk:{std::vector<uint8_t>{0xa5,0x22,0,4,0xff,0},std::vector<uint8_t>{0xa5,0x22,0,0,0,0}}){
   junk.insert(junk.end(),good.begin(),good.end());auto old=d.frames.size();feed(d,junk);assert(d.frames.size()==old+1);
@@ -122,7 +147,7 @@ int main(){
  assert(interrupted.frames.size()==1 && interrupted.frames.front()==good);
  interrupted.poll();
  assert(interrupted.frames.size()==2 && interrupted.frames.back()==good);
- Levoit wrap;wrap.now=0xfffffff0;feed(wrap,{0xa5,0x22});wrap.now=300;feed(wrap,good);assert(wrap.frames.size()==1);
+ Levoit wrap;wrap.clock_ms=0xfffffff0;feed(wrap,{0xa5,0x22});wrap.clock_ms=300;feed(wrap,good);assert(wrap.frames.size()==1);
 }
 ''')
             exe = p / 'uart-integrity'
