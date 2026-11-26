@@ -222,7 +222,7 @@ namespace esphome
       // runs at [9]. 0 there is the auto low speed, which apply_fan_status flags
       // as sleep speed. [9] is 0xFF while off: then keep [5].
       uint8_t fan_speed = (fan_mode == 2 && power && payload[9] != 0xFF) ? payload[9] : payload[5];
-      bool display_on = payload[8] != 0;
+      bool display_on = payload[8] != 0 && power && fan_mode != 1;
       uint8_t aqi = payload[11];
       uint16_t pm25_raw = (payload[13] << 8) | payload[12];
       float pm25 = static_cast<float>(pm25_raw);
