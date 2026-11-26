@@ -811,5 +811,12 @@ incoming sequence and encode the high length byte as zero. Other models retain
 their existing ACK bytes and transmit counter behavior.
 `tests/test_uart_integrity.py` exercises the actual C++ methods with synthetic
 corrupt and truncated streams, plus known ACKs from the Core 600S and Core 300S
-traces. Earlier variants ran on Core 600S and Vital 100S in a separate fork.
-Hardware verification of this revision is pending. The release number is unchanged.
+traces. [ASan and UBSan passed on Linux](https://github.com/mvs90/levoit/actions/runs/45860002152)
+for component source at `7ed0656`.
+
+The same UART code ran on a Core 600S (MCU 1.0.12) and a Vital 100S (MCU 1.0.5)
+with the existing owner-specific panel and diagnostics adaptations. Encrypted
+OTA and live Home Assistant checks with MCU feedback passed on both models.
+Checks covered power, all four fan speeds, the available modes, display,
+child lock, PM2.5 readings, and timer start, countdown, cancellation and
+expiry with automatic shutoff.

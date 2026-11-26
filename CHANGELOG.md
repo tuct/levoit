@@ -1,15 +1,16 @@
 [← Back to the project README](./README.md)
 
-## Unreleased — UART integrity
-
-- Decode both length bytes and discard impossible or truncated frames. Core 600S and Vital 100S echo the incoming sequence in ACKs and reject foreign-version or error status envelopes. Hardware verification of this revision is pending.
-
 # Change Log
 
 Project-level changes. Component releases have their own log:
 [levoit](./components/levoit/README.md#change-log).
 
 ### Unreleased
+
+* **Levoit UART frame handling.** Decode both length bytes, discard impossible
+  or truncated frames, and preserve complete frames in long bursts.
+  Core 600S and Vital 100S echo the incoming sequence in ACKs and reject
+  frames with an unexpected protocol version or error result.
 
 * **Core 300S on the `01 32 40` status: Display reads off in Sleep and while
   off.** The panel is dark then, but the display setting byte stays on, so
