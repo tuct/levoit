@@ -47,10 +47,18 @@ struct Levoit {
  size_t buf_len_=0;
  uint32_t last_rx_byte_ms_=0, now=0;
  std::deque<uint8_t> input;
+ int reads_before_failure=-1;
  std::vector<std::vector<uint8_t>> frames;
  std::vector<uint8_t> tx;
  bool available(){return !input.empty();}
- bool read_byte(uint8_t *b){*b=input.front();input.pop_front();return true;}
+ bool read_byte(uint8_t *b){
+  if (reads_before_failure == 0) {
+   reads_before_failure=-1;
+   return false;
+  }
+  if (reads_before_failure > 0) --reads_before_failure;
+  *b=input.front();input.pop_front();return true;
+ }
  void process_message(uint8_t *v,int n){frames.emplace_back(v,v+n);}
  void write_array(const uint8_t *v,size_t n){tx.insert(tx.end(),v,v+n);}
  void flush(){}
@@ -78,6 +86,12 @@ int main(){
  Levoit vital;vital.model_=VITAL100S;vital.ackMessage(0,0x55,0xf2);
  assert(vital.tx[2]==0xf2 && vital.tx[4]==0 && vital.tx[6]==2);
  assert(levoit_checksum(vital.tx.data(),vital.tx.size())==vital.tx[5]);
+ assert(messageUpCounter==93);
+ // Match the existing Core 300S ACK convention captured in status_32_40.txt.
+ Levoit core300;core300.model_=CORE300S;messageUpCounter=0x1c;core300.ackMessage(0x32,0x40,0xd0);
+ assert((core300.tx==std::vector<uint8_t>{0xa5,0x12,0x1c,4,0xff,0xb6,1,0x32,0x40,0}));
+ assert(messageUpCounter==0x1d);
+ messageUpCounter=255;core300.ackMessage(0x32,0x40,0xd1);assert(messageUpCounter==16);
  Levoit guard;auto status=frame(23);guard.process_checked(status.data(),status.size());assert(guard.decoded==1);
  status[6]=2;guard.process_checked(status.data(),status.size());assert(guard.decoded==1);
  status[6]=1;status[9]=1;guard.process_checked(status.data(),status.size());assert(guard.decoded==1);
@@ -101,6 +115,13 @@ int main(){
  for (unsigned i=0; i<30; ++i) bytes.insert(bytes.end(),good.begin(),good.end());
  feed(burst,bytes); assert(burst.frames.size()==30);
  for(const auto &received:burst.frames) assert(received==good);
+ // A transient driver failure keeps complete frames and resumes the partial one.
+ Levoit interrupted;
+ interrupted.reads_before_failure=good.size()+5;
+ feed(interrupted, {bytes.begin(),bytes.begin()+2*good.size()});
+ assert(interrupted.frames.size()==1 && interrupted.frames.front()==good);
+ interrupted.poll();
+ assert(interrupted.frames.size()==2 && interrupted.frames.back()==good);
  Levoit wrap;wrap.now=0xfffffff0;feed(wrap,{0xa5,0x22});wrap.now=300;feed(wrap,good);assert(wrap.frames.size()==1);
 }
 ''')

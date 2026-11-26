@@ -1680,9 +1680,12 @@ namespace esphome
                 return;
             }
 
-            std::vector<uint8_t> message = {0xA5, 0x12, 0xFF, 0x04, 0x00, 0x00, pv, ptype0, ptype1, 0x00};
+            const bool echo_sequence = this->model_ == ModelType::CORE600S ||
+                                       this->model_ == ModelType::VITAL100S;
+            const uint8_t length_high = echo_sequence ? 0x00 : 0xFF;
+            std::vector<uint8_t> message = {0xA5, 0x12, 0xFF, 0x04, length_high, 0x00, pv, ptype0, ptype1, 0x00};
 
-            levoit_finalize_message(message, sequence);
+            levoit_finalize_message(message, echo_sequence ? sequence : messageUpCounter);
 
             if (message.size() > 0)
             {
@@ -1690,6 +1693,8 @@ namespace esphome
 
                 this->write_array(message.data(), message.size());
                 this->flush();
+                if (!echo_sequence)
+                    messageUpCounter = messageUpCounter == 255 ? 16 : messageUpCounter + 1;
             }
         }
 

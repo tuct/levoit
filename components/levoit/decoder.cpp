@@ -107,7 +107,6 @@ namespace esphome
                           size_t payload_len)
     {
       (void)msg_type;
-      (void)seq;
       (void)cmd_size_code;
 
       ESP_LOGD(TAG_DEC, "dispatch: model=%d ptype=%02X%02X payload_len=%u",

@@ -805,10 +805,11 @@ and the byte maps.
 
 The receive loop now decodes both length bytes, bounds the full frame and drops a
 partial frame after 250 ms of silence. It also processes bursts longer than
-the receive buffer without discarding already complete frames. Ordinary ACKs echo the incoming sequence
-and encode the high length byte as zero; the independent transmit counter is
-unchanged. Core 600S and Vital 100S reject error/foreign-version envelopes.
+the receive buffer without discarding already complete frames. Core 600S and
+Vital 100S reject error and foreign-version envelopes. Their ACKs echo the
+incoming sequence and encode the high length byte as zero. Other models retain
+their existing ACK bytes and transmit counter behavior.
 `tests/test_uart_integrity.py` exercises the actual C++ methods with synthetic
-corrupt/truncated streams and a known Core ACK from this repo's Core 600S trace.
-These changes ran on a separate older fork; this revision is host/compile-tested,
-not newly installed on hardware. The component release number is unchanged.
+corrupt and truncated streams, plus known ACKs from the Core 600S and Core 300S
+traces. Earlier variants ran on Core 600S and Vital 100S in a separate fork.
+Hardware verification of this revision is pending. The release number is unchanged.

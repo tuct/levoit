@@ -2,7 +2,7 @@
 
 ## Unreleased — UART integrity
 
-- Decode both length bytes, discard impossible/truncated frames and preserve the incoming sequence in ACKs. Reject foreign-version/error status envelopes on Core 600S and Vital 100S. Host regression tests use the actual receive and ACK methods. Hardware verification of this current upstream revision is pending.
+- Decode both length bytes and discard impossible or truncated frames. Core 600S and Vital 100S echo the incoming sequence in ACKs and reject foreign-version or error status envelopes. Hardware verification of this revision is pending.
 
 # Change Log
 
