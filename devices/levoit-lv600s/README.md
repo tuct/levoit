@@ -3,8 +3,8 @@
 # Levoit LV600S / LUH-A602S-WEUR
 
 Local ESPHome support for the ultrasonic warm/cool-mist LV600S, tested on one
-EU `LUH-A602S-WEUR` with the original ESP32-SOLO-1C and owner firmware
-`1.2.02-tuct-review` and `1.2.03-queue-review`. [Live verification](RELEASE-REVIEW.md)
+EU `LUH-A602S-WEUR` with the original ESP32-SOLO-1C and owner firmware through
+`1.2.04-sleep-setup-review`. [Live verification](RELEASE-REVIEW.md)
 
 - Module: ESP32-SOLO-1C / ESP32-S0WD, single core, 4 MB on the observed board.
 - MCU UART: GPIO17 TX → MCU RX, GPIO16 RX ← MCU TX, **9600 8N1**.
@@ -22,11 +22,31 @@ unique OTA and setup access point passwords.
 Build [levoit-lv600s_dev.yaml](levoit-lv600s_dev.yaml) with ESPHome from a local
 checkout. This config uses the component in that checkout. The stable Device
 Builder catalogue can include LV600S after the component is released.
-Existing appliances with original partitions, required OTA encryption or the
-owner's reset behaviour should use
-the [secure owner profiles](https://github.com/mvs90/levoit-lv600s-local/tree/codex/tuct-alignment).
 
-Controls: power, display, Manual/Humidity/Humidity Sleep, target RH 40–80%, mist
+## Access and recovery
+
+ESPHome resolves the private values at build time. Keep the private
+`secrets.yaml` and generated firmware in encrypted storage. The development
+example authenticates native OTA with a password, which is distinct from the
+API key and the setup Wi-Fi password.
+
+Use the secure owner profile on an already converted appliance that uses its
+original partition table and encrypted native OTA. This profile uses one
+device-specific key for the API and native OTA, plus separate setup Wi-Fi and
+portal upload passwords. Its physical reset clears the stored Wi-Fi login and
+settings. The credentials compiled into the firmware survive the reset.
+[Secure owner recovery guide (German)](https://github.com/mvs90/levoit-lv600s-local/blob/codex/tuct-alignment/docs/RESET-AND-SECURE-SETUP.md#lv600s-wieder-erreichbar-machen)
+
+Keep the currently accepted OTA credential, setup Wi-Fi password, any
+separate portal upload password, matching recovery image and partition
+table in a backup you can open without Home Assistant. Use the current
+OTA credential when installing a replacement.
+Recover over UART0 if the network paths are unavailable.
+[Serial recovery requirements](HARDWARE.md)
+
+## Controls
+
+Power, display, Manual/Humidity/Humidity Sleep, target RH 40–80%, mist
 1–9, warmth 0–3 and a timer up to 12 h with cancel. Original Auto and unknown mode
 are display-only. Tank/water/fault/MCU diagnostics, humidity/temperature and the
 component/model/version sensors support Home Assistant discovery. A native HA
