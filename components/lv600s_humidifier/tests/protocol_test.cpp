@@ -127,12 +127,37 @@ void verify_observed_level_write_shapes() {
   assert(std::string(device.result) == "Target confirmed by MCU");
   assert(device.command_failures == 0 && device.status.raw[12] == 1 && device.status.heating_enabled());
 }
+void verify_timer_restart_with_same_remaining() {
+  Protocol device;
+  const auto status = packet(Command::STATUS, state(), 0, 0x12);
+  const auto initial = packet(Command::TIMER_REPORT, {60, 0, 0, 0, 120, 0, 0, 0}, 1, 0x02);
+  const auto restarted = packet(Command::TIMER_REPORT, {60, 0, 0, 0, 60, 0, 0, 0}, 4, 0x02);
+  feed(device, status, 1000);
+  feed(device, initial, 1000);
+  assert(device.remaining(1000) == 60);
+
+  // Keep status fresh for the next snapshot, which has the same remaining time.
+  feed(device, status, 11000);
+  feed(device, status, 21000);
+  feed(device, status, 31000);
+  assert(device.remaining(31000) == 30);
+  feed(device, packet(Command::TIMER_QUERY, {60, 0}, 2, 0x12), 31000);
+  feed(device, packet(Command::TIMER_QUERY, {60, 0, 0, 0}, 3, 0x12), 31000);
+  assert(device.remaining(31000) == 30);
+
+  feed(device, restarted, 31000);
+  assert(device.remaining(31000) == 60);
+  feed(device, restarted, 32000);
+  assert(device.remaining(32000) == 59);
+}
+
 int main() {
   verify_recorded_water_depletion();
   verify_observed_standby_reply_shapes();
   verify_observed_sleep_confirmation();
   verify_observed_tank_removal();
   verify_observed_level_write_shapes();
+  verify_timer_restart_with_same_remaining();
   Protocol d; std::vector<Bytes> sent; d.transmit = [&](const Bytes &f) { sent.push_back(f); };
   feed(d, packet(Command::STATUS, state(), 0, 0x12));
   assert(d.status.fresh(100) && d.status.raw[9] == 42 && d.status.heating_enabled());

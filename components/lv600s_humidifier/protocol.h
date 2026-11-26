@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <deque>
 #include <functional>
+#include <optional>
 #include <vector>
 
 namespace esphome::lv600s_humidifier {
@@ -137,6 +138,7 @@ class Protocol {
   std::deque<Pending> pending_;
   uint8_t sequence_{0};
   uint32_t rx_at_{0}, sent_{0}, timer_received_{0}, timer_seconds_{0};
+  std::optional<uint32_t> timer_total_;
   bool active_{false}, queried_{false}, timer_seen_{false};
 
   bool fail_(const char *message) { ++command_failures; result = message; return false; }
@@ -201,10 +203,16 @@ class Protocol {
     } else if ((code == uint16_t(Command::TIMER_QUERY) && (send || reply) && (n == 2 || n == 4)) ||
                (code == uint16_t(Command::TIMER_REPORT) && send && n == 8)) {
       const uint32_t seconds = n == 2 ? uint32_t(p[0]) | (uint32_t(p[1]) << 8) : le32(p);
-      if (seconds > 43200 || (n == 8 && (le32(p + 4) > 43200 || seconds > le32(p + 4)))) return;
+      const auto total = n == 8 ? std::optional{le32(p + 4)} : std::nullopt;
+      if (seconds > 43200 || (total && (*total > 43200 || seconds > *total))) return;
       if (!status.fresh(now)) return;
       const bool confirms_write = timer_matches_(seconds, now);
-      if (!timer_seen_ || seconds != timer_seconds_ || confirms_write) timer_received_ = now;
+      const bool total_changed = total && timer_total_ && *total != *timer_total_;
+      if (!timer_seen_ || seconds != timer_seconds_ || total_changed || confirms_write)
+        timer_received_ = now;
+      // Short replies carry no total. Keep the last known total until the next
+      // valid timer snapshot after a stale link, a confirmed write or expiry.
+      if (total || !timer_seen_ || confirms_write || seconds == 0) timer_total_ = total;
       timer_seconds_ = seconds; timer_seen_ = true;
       confirm_(now, true);
     }
