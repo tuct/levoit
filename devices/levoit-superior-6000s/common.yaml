@@ -80,6 +80,11 @@ number:
     name: "Timer"
     type: timer
     icon: mdi:timer-outline
+    # Hours on this model (the ESP runs the countdown); the shared default is minutes.
+    min_value: 0
+    max_value: 12
+    step: 1
+    unit_of_measurement: h
   - platform: levoit
     levoit: levoitsuperior6000
     name: "Humidity Target"
@@ -111,6 +116,7 @@ sensor:
     levoit: levoitsuperior6000
     name: "Timer Remaining"
     type: timer_current
+    unit_of_measurement: h
 
 select:
   - platform: levoit

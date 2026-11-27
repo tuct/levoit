@@ -18,6 +18,14 @@ namespace esphome
         case SelectType::DRY_LEVEL:
           this->traits.set_options({"Low", "High"});
           break;
+        case SelectType::AUTO_PROFILE:
+          // Superior 6000S Auto: 02 37 55 key 01 / status 0x13, 1 = 50 % target, 2 = 55 %
+          this->traits.set_options({"50%", "55%"});
+          break;
+        case SelectType::HUMIDITY_SUBTYPE:
+          // Superior 6000S Humidity mode: 02 37 55 key 02 / status 0x21, 1 = Smart, 2 = Fan
+          this->traits.set_options({"Smart", "Fan"});
+          break;
         case SelectType::AUTO_MODE:
           if (parent_ && parent_->get_model() == ModelType::EVERESTAIR)
             this->traits.set_options({"Default", "Eco"});  // EverestAir: only Default(0) and Eco(3)

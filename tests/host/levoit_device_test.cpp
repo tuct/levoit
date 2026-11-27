@@ -770,10 +770,50 @@ static void test_superior_power_and_commands() {
   CHECK(rig.host.fan_power == 0);
 }
 
+// Humidity mode, the two Superior selects and the timer in hours (discussion #78).
+static void test_superior_humidity_selects_timer() {
+  Rig rig("SUPERIOR6000S");
+  auto report = [&rig](Bytes payload, uint32_t now) {
+    Bytes f(10 + payload.size(), 0);
+    f[0] = 0xA5; f[1] = 0x22;
+    f[3] = static_cast<uint8_t>(payload.size() + 4);
+    f[6] = 2; f[7] = 0x30; f[8] = 0x55;
+    std::copy(payload.begin(), payload.end(), f.begin() + 10);
+    levoit_finalize_message(f, 7);
+    rig.feed(f, now);
+  };
+  auto sent = [&rig](const Bytes &cmd_and_payload) {
+    CHECK(rig.platform.tx.size() == 1);
+    if (rig.platform.tx.size() == 1)
+      CHECK(Bytes(rig.platform.tx[0].begin() + 6, rig.platform.tx[0].end()) == cmd_and_payload);
+    rig.platform.tx.clear();
+  };
+  // MCU mode 3 (Humidity) reaches the fan as mode 3, and mode 3 sends it back.
+  report({0x02, 1, 1, 0x0B, 1, 3}, 1000);
+  CHECK(rig.host.fan_mode == 3);
+  rig.platform.tx.clear();
+  rig.device.on_fan_command(-1, -1, 3);
+  sent({2, 0x32, 0x55, 0, 1, 1, 3});
+  // Select index = wire value - 1, both ways.
+  report({0x13, 1, 2, 0x21, 1, 2}, 2000);
+  uint32_t idx = 9;
+  CHECK(rig.device.state().get_select(SelectType::AUTO_PROFILE, idx) && idx == 1);
+  CHECK(rig.device.state().get_select(SelectType::HUMIDITY_SUBTYPE, idx) && idx == 1);
+  rig.platform.tx.clear(); // the status ACK
+  rig.device.on_select_command(SelectType::AUTO_PROFILE, 0);
+  sent({2, 0x37, 0x55, 0, 1, 1, 1});
+  rig.device.on_select_command(SelectType::HUMIDITY_SUBTYPE, 1);
+  sent({2, 0x37, 0x55, 0, 2, 1, 2});
+  // The timer number is in hours: 2 h is 7,200 s on the wire.
+  rig.device.on_number_command(NumberType::TIMER, 2);
+  sent({2, 0x19, 0x50, 0, 1, 4, 0x20, 0x1C, 0, 0});
+}
+
 int main() {
   test_superior_capture();
   test_superior_dry_controls_capture();
   test_superior_power_and_commands();
+  test_superior_humidity_selects_timer();
   test_core300s_capture();
   test_command();
   test_dedup();

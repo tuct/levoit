@@ -140,7 +140,7 @@ namespace levoit
 
         case 0x13:
         {
-          // Auto profile: 01=Home, 02=Away -> select index 0=Home, 1=Away
+          // Auto profile: 01=50 % target, 02=55 % target -> select index 0, 1
           ESP_LOGV(TAG_SUP, "AutoProfile=%u", (unsigned)t.value_u32);
           if (t.value_u32 >= 1 && t.value_u32 <= 2)
             self->publish_select(SelectType::AUTO_PROFILE, t.value_u32 - 1);
