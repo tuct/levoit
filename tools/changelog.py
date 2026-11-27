@@ -10,17 +10,21 @@ the logs:
     components/levoit/changelog.d/<pr>-<slug>.md -> components/levoit/README.md
                                                     (the component change log)
 
-A fragment is the finished Markdown bullet (or bullets), exactly as it will
-appear in the log, as one tight list:
+The log is summarised by change, not by PR. A fragment's first line names
+the area (the bold lead of the bullet), the rest is one or two sentences on
+what changed; fragments with the same area become one bullet at release:
 
-    * **Core 300S: speed reads 1 in Sleep.** The fan showed the last manual
-      speed in Sleep, often 3, though it runs slower than speed 1. It now
-      reads the running speed, as Auto already did. Frames in
-      [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
+    Core 300S on the `01 32 40` status
+    speed reads the running speed in Sleep, `00` shown as the lowest speed,
+    instead of the last manual speed. Frames in
+    [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
 
-Links are relative to the log the fragment lands in. The PR link
-"([#151](https://github.com/tuct/levoit/pull/151))" is appended from the
-file name when the text does not mention #151 already.
+    * **Core 300S on the `01 32 40` status**: Display reads off in Sleep and
+      while off, as the panel does ([#148](...)); speed reads the running
+      speed in Sleep, ... ([#151](...))
+
+Links are relative to the log the fragment lands in. The PR link is
+appended from the file name when the text does not mention #151 already.
 
     python tools/changelog.py check      validate fragments and the logs (CI)
     python tools/changelog.py preview    print the sections as they will appear
@@ -39,6 +43,7 @@ import datetime as dt
 import os
 import re
 import sys
+import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -52,6 +57,11 @@ Changes merged since the last release are collected in
 [`changelog.d/`](./changelog.d/), one file per pull request, and land here at
 the next release. `python tools/changelog.py preview` shows them as they will
 appear."""
+
+# Characters of item text, links counted by their text only. Two sentences
+# fit; a test report or a byte-by-byte account does not, and belongs in the PR.
+MAX_ITEM = 450
+WIDTH = 80
 
 LEAD_MARK = "<!-- release lead:"
 LEAD_COMMENT = (
@@ -79,6 +89,7 @@ COMPONENT = Log(
 class Fragment:
     path: Path
     number: int | None
+    area: str
     text: str
 
 
@@ -106,22 +117,30 @@ def parse_fragment(path: Path, errors: list[str]) -> Fragment | None:
     if not text:
         errors.append(f"{where}: empty")
         return None
-    lines = text.split("\n")
-    if not lines[0].startswith("* "):
-        errors.append(f"{where}: must start with a bullet, '* **Short title.** ...'")
+    lines = [ln.strip() for ln in text.split("\n")]
+    area = lines[0]
+    if area.startswith(("* ", "- ", "#")):
+        errors.append(f"{where}:1: the first line is the area, the bold lead of the "
+                      f"bullet, without '* ' or '#' (see {rel(PROJECT.fragments)}/README.md)")
         return None
-    for i, line in enumerate(lines[1:], start=2):
-        if not line.strip():
-            errors.append(f"{where}:{i}: blank line; a fragment is one tight list")
-            return None
-        if not (line.startswith("* ") or line.startswith("  ")):
-            errors.append(f"{where}:{i}: continuation lines are indented by two spaces")
-            return None
+    if area.startswith("**"):
+        area = area.strip("*").rstrip(":").strip()
+    body = " ".join(ln for ln in lines[1:] if ln).strip()
+    if body.endswith("."):
+        body = body[:-1]
+    if not body:
+        errors.append(f"{where}: no text after the area line")
+        return None
+    visible = re.sub(r"\]\([^)]*\)", "]", body)
+    if len(visible) > MAX_ITEM:
+        errors.append(f"{where}: {len(visible)} characters; keep it to about two "
+                      f"sentences ({MAX_ITEM} max), details belong in the PR")
+        return None
     m = re.match(r"^(\d+)-", path.name)
     number = int(m.group(1)) if m else None
-    if number is not None and not re.search(rf"#{number}\b", text):
-        lines[-1] += f" ([#{number}]({PR_URL.format(n=number)}))"
-    return Fragment(path, number, "\n".join(lines))
+    if number is not None and not re.search(rf"#{number}\b", body):
+        body += f" ([#{number}]({PR_URL.format(n=number)}))"
+    return Fragment(path, number, area, body)
 
 
 def load(log: Log, errors: list[str]) -> list[Fragment]:
@@ -185,7 +204,18 @@ def report(errors: list[str]) -> int:
 
 
 def assembled(fragments: list[Fragment]) -> str:
-    return "\n".join(f.text for f in fragments)
+    """One bullet per area, newest area first, its items oldest first."""
+    groups: dict[str, list[Fragment]] = {}
+    for f in fragments:  # sorted newest first, so the dict keeps that order
+        groups.setdefault(f.area.casefold(), []).append(f)
+    bullets = []
+    for items in groups.values():
+        items.sort(key=lambda f: (f.number is None, f.number or 0, f.path.name))
+        line = f"* **{items[0].area}**: " + "; ".join(f.text for f in items)
+        bullets.append("\n".join(textwrap.wrap(
+            line, WIDTH, subsequent_indent="  ",
+            break_long_words=False, break_on_hyphens=False)))
+    return "\n".join(bullets)
 
 
 def cmd_check(_: argparse.Namespace) -> int:

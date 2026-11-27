@@ -60,7 +60,9 @@ them:
 | [CHANGELOG.md](./CHANGELOG.md), the project log | `changelog.d/<pr>-<slug>.md` | Every user-visible change: devices, configs, docs, component |
 | [Component change log](./components/levoit/README.md#change-log) | `components/levoit/changelog.d/<pr>-<slug>.md` | Changes in what the component does; released with a version bump |
 
-A fragment is the finished Markdown bullet; see
+A fragment names its area on the first line and says in one or two sentences
+what changed; at release, fragments with the same area become one bullet with
+the PR links inline, so the log reads by change, not by PR. See
 [`changelog.d/README.md`](./changelog.d/README.md) for the format and an
 example. Do not edit the *Unreleased* section of CHANGELOG.md, and do not add
 an *Unreleased* heading to the component README: the `Change log` workflow

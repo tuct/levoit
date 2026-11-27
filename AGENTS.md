@@ -51,11 +51,13 @@ Instead add
 - `components/levoit/changelog.d/<pr>-<slug>.md` as well when the component's
   behaviour changed.
 
-A fragment is the finished Markdown bullet as one tight list:
-`* **Short title.** What changed, for which models, and why`, with the capture
-or issue it rests on. The PR link is appended from the file name. Format and
-example: [`changelog.d/README.md`](./changelog.d/README.md). Run
-`python tools/changelog.py check`.
+A fragment is two parts: the first line names the area (the device or feature,
+reuse an existing fragment's area word for word when one fits, so the release
+folds them into one bullet), the rest is one or two sentences on what changed,
+for which models, and why, with the capture or issue it rests on. No bullet
+marker, no test report, under 450 characters; the PR link is appended from the
+file name. Format and example: [`changelog.d/README.md`](./changelog.d/README.md).
+Run `python tools/changelog.py check`.
 
 ## Verify, then say exactly what you verified
 

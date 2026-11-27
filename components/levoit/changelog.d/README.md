@@ -6,8 +6,9 @@ runs `python tools/changelog.py release`, which moves these files into the
 [change log](../README.md#change-log) under the new `#### ESP Version` heading.
 
 Same rules as [`changelog.d/`](../../../changelog.d/README.md) at the repo
-root: `<pr>-<slug>.md`, the finished Markdown bullet as one tight list, the PR
-link appended from the file name. Links are relative to
+root: `<pr>-<slug>.md`; first line the area, then one or two sentences on
+what changed; fragments with the same area become one bullet, the PR link is
+appended from the file name. Links are relative to
 `components/levoit/README.md`, so a capture is
 `../../devices/levoit-core300s/uart/status_32_40.txt`.
 
