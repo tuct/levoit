@@ -1,13 +1,11 @@
 #include "sprout_commands.h"
 #include "levoit_message.h"
-#include "levoit.h"
+#include "levoit_device.h"
 #include "levoit_log.h"
 #include <algorithm>
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
     static const char *const TAG_SPROUT_CMD = "levoit.sprout_cmd";
 
     // CMD=02 0B 55  —  Nightlight mode
@@ -66,7 +64,7 @@ namespace esphome
       return build_levoit_message(msg_type, payload, messageUpCounter);
     }
 
-    std::vector<uint8_t> build_sprout_command(Levoit *self, CommandType cmd)
+    std::vector<uint8_t> build_sprout_command(LevoitDevice *self, CommandType cmd)
     {
       switch (cmd)
       {
@@ -145,5 +143,4 @@ namespace esphome
       }
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

@@ -6,14 +6,12 @@
 #include <vector>
 #include <string>
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
 
     static const char *const TAG_SUP = "levoit.superior";
 
-    void decode_superior_status(Levoit *self,
+    void decode_superior_status(LevoitDevice *self,
                                 ModelType model,
                                 const uint8_t *payload,
                                 size_t payload_len)
@@ -249,7 +247,7 @@ namespace esphome
       self->apply_fan_status(pwr, spd, mod);
     }
 
-    void decode_superior_timer(Levoit *self,
+    void decode_superior_timer(LevoitDevice *self,
                               ModelType model,
                               const uint8_t *payload,
                               size_t payload_len)
@@ -310,5 +308,4 @@ namespace esphome
       }
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

@@ -6,35 +6,27 @@
 #include "levoit_log.h"
 #include "types.h"
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
 
     static const char *const TAG_DEC = "levoit.decoder";
-    struct PayloadHashCacheEntry
+    // FNV-1a, 32 bits. The 8-bit XOR/rotate fingerprint it replaces matched
+    // about 1 in 256 changed payloads (Core 300S: AQI 1 -> 2 together with
+    // PM2.5 5 -> 3 left the hash unchanged), and the change was skipped.
+    static uint32_t compute_payload_hash_(const uint8_t *payload, size_t len)
     {
-      uint8_t model; // ModelType
-      uint8_t ptype0;
-      uint8_t ptype1;
-      uint8_t hash; // fingerprint of payload
-      bool valid;
-    };
-
-    static PayloadHashCacheEntry g_payload_hash_cache[16];
-
-    static uint8_t compute_payload_hash_(const uint8_t *payload, size_t len)
-    {
-      uint8_t h = 0;
+      uint32_t h = 2166136261u;
       for (size_t i = 0; i < len; i++)
       {
         h ^= payload[i];
-        h = (h << 1) | (h >> 7); // rotate-left 1
+        h *= 16777619u;
       }
       return h;
     }
 
-    static bool payload_changed_(ModelType model,
+    // The cache lives in the device (one per device, not one per process),
+    // so two devices in one firmware, or two in one test, do not share it.
+    static bool payload_changed_(LevoitDevice *self,
                                  uint8_t ptype0,
                                  uint8_t ptype1,
                                  const uint8_t *payload,
@@ -43,13 +35,13 @@ namespace esphome
       if (!payload || payload_len == 0)
         return true;
 
-      const uint8_t hash = compute_payload_hash_(payload, payload_len);
+      const uint32_t hash = compute_payload_hash_(payload, payload_len);
+      auto &cache = self->payload_hash_cache();
 
       // Find existing entry
-      for (auto &e : g_payload_hash_cache)
+      for (auto &e : cache)
       {
         if (e.valid &&
-            e.model == (uint8_t)model &&
             e.ptype0 == ptype0 &&
             e.ptype1 == ptype1)
         {
@@ -65,12 +57,11 @@ namespace esphome
       }
 
       // New entry
-      for (auto &e : g_payload_hash_cache)
+      for (auto &e : cache)
       {
         if (!e.valid)
         {
           e.valid = true;
-          e.model = (uint8_t)model;
           e.ptype0 = ptype0;
           e.ptype1 = ptype1;
           e.hash = hash;
@@ -96,7 +87,7 @@ namespace esphome
              (ptype0 == 0x40 && ptype1 == 0x41);   // Core 600S
     }
 
-    void dispatch_decoder(Levoit *self,
+    void dispatch_decoder(LevoitDevice *self,
                           ModelType model,
                           uint8_t msg_type,
                           uint8_t seq,
@@ -181,16 +172,16 @@ namespace esphome
         self->publish_filter_stats_now();
       }
 
-      uint8_t h = compute_payload_hash_(payload, payload_len);
-      ESP_LOGD("levoit.dedup", "model=%d ptype=%02X%02X payload_len=%u hash=0x%02X last=0x%02X",
-               (int)model, ptype0, ptype1, (unsigned)payload_len, h,
+      uint32_t h = compute_payload_hash_(payload, payload_len);
+      ESP_LOGD("levoit.dedup", "model=%d ptype=%02X%02X payload_len=%u hash=0x%08X last=0x%02X",
+               (int)model, ptype0, ptype1, (unsigned)payload_len, (unsigned)h,
                payload_len ? payload[payload_len - 1] : 0);
 
       // Deduplicate only periodic status pushes; timer responses, button resets,
       // and async event notifications must always be processed even when two
       // consecutive frames carry identical payloads.
       if (is_status_push_(model, msg_type, ptype0, ptype1) &&
-          !payload_changed_(model, ptype0, ptype1, payload, payload_len))
+          !payload_changed_(self, ptype0, ptype1, payload, payload_len))
       {
         ESP_LOGV(TAG_DEC,
                  "skip decode (unchanged payload): model=%d ptype=%02X%02X",
@@ -330,5 +321,4 @@ namespace esphome
       // Other models: add other decoders later
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

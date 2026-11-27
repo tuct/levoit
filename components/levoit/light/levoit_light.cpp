@@ -1,11 +1,12 @@
 #include "levoit_light.h"
 #include "../levoit.h"
 #include "../types.h"
+#include "../esphome_ns.h"
 #include "esphome/core/log.h"
 #include "esphome/core/version.h"
 
 namespace esphome {
-namespace levoit {
+namespace levoit_component {
 
 static const char *const TAG = "levoit.light";
 
@@ -89,5 +90,5 @@ void LevoitSproutLight::apply_from_mcu(bool on, float brightness, float color_te
   // publishing_ is reset inside write_state when the perform()-triggered call arrives
 }
 
-}  // namespace levoit
+}  // namespace levoit_component
 }  // namespace esphome

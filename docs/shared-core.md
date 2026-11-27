@@ -16,13 +16,14 @@ users exactly where they were.
 | Mapping | | ESPHome: entities. Matter: fan, air quality, PM2.5 and filter clusters |
 | Platform | | UART driver, saved values, timers, logging, OTA, pairing |
 
-Today the protocol is only half separated. The decoders and builders
-(`*_status.cpp`, `*_commands.cpp`, `decoder.cpp`, `tlv.cpp`, about 3,000
-lines) hold no ESPHome code of their own and, since step 2, read and write a
-device state that builds without ESPHome. But they still reach it through
-`Levoit`, the ESPHome component in `levoit.h`, and that header pulls in
-`Component`, `UARTDevice`, preferences and the clock. `levoit.cpp` (1,700
-lines) mixes the protocol with that glue.
+Since step 3 the protocol is a core of its own: `LevoitDevice`
+(`levoit_device.h/.cpp`) with the decoders and builders (`*_status.cpp`,
+`*_commands.cpp`, `decoder.cpp`, `tlv.cpp`), about 4,500 lines that build with
+a plain `g++` and depend on nothing but the standard library. The ESPHome
+component `Levoit` (`levoit.h/.cpp`, 500 lines) owns one core, feeds it the
+UART, and implements the two interfaces the core talks through. What is left
+before a Matter firmware can pull it in is the namespace (3b) and the
+packaging (step 4).
 
 ## Steps
 
@@ -40,7 +41,7 @@ lines) mixes the protocol with that glue.
 Nothing changes for an ESPHome build: the same macros expand, from the same
 header.
 
-### 2. The core owns the state; the host hears about changes (this branch)
+### 2. The core owns the state; the host hears about changes (done, #157)
 
 The decoders already speak in typed enums rather than entities: about a
 hundred `publish_*(SwitchType::…, NumberType::…, SensorType::…, …)` calls and
@@ -73,22 +74,50 @@ the state from them.) The Sprout's LED ring light (`publish_sprout_light`)
 stays a separate call for now; it joins the state when the Sprout gets its
 Matter mapping.
 
-The platform interface, write bytes to the UART, milliseconds since boot, a
-one-shot timer, load and save a `uint32` (used CADR, runtime), the local time
-when there is a clock, and whether the network is up (for the Wi-Fi LED),
-comes with step 3, where `LevoitDevice` is its first user.
+### 3. Split `levoit.cpp` (this branch, 3a)
 
-### 3. Split `levoit.cpp`
+* **`LevoitDevice`** (`levoit_device.h/.cpp`): UART framing and the parser,
+  `process_message`, the ACKs, `sendCommand`, the `on_*_command` mapping, the
+  timers (the MCU's and the Superior's ESP-side one), CADR and filter
+  tracking, the Wi-Fi and filter LEDs, the Eleva auto config and local time,
+  the bulk-prefs cache, and from step 2 the state and `publish_*` /
+  `try_get_*`. The decoders and builders take a `LevoitDevice *`. The
+  decoder's payload dedup cache, a process-wide static until now, lives in the
+  device.
+* **`LevoitPlatform`** (`levoit_platform.h`): write bytes, milliseconds since
+  boot, named one-shot timeouts, load and save a `uint32` by key (used CADR,
+  runtime; the ESPHome side hashes the key the way the component always did,
+  so saved counters survive), the local time when there is a clock, and the
+  network state for the Wi-Fi LED. Inbound, `on_time_synced()` for the Eleva.
+* **`Levoit`** (`levoit.h/.cpp`): a `Component` and `UARTDevice` that
+  implements `LevoitHost` and `LevoitPlatform`, owns one `LevoitDevice`,
+  reads the UART in `loop` and hands the bytes to `receive()`, calls `tick()`,
+  and forwards what the platform entities call. The nine platform directories
+  are unchanged.
+* **`tests/host/levoit_device_test.cpp`** drives the real core and decoders
+  through a fake platform and host: captured Core 300S frames decode to the
+  state the host hears, the ACKs match the capture byte for byte, a command
+  goes out well formed, counters restore through the platform, CADR tracking
+  runs on the state, the Wi-Fi LED follows the network, and the parser
+  survives fragments, bad lengths, bad checksums, silence, bursts and a
+  millisecond wrap. It replaces `test_uart_integrity.py`, which compiled the
+  parser by slicing `levoit.cpp` as text.
 
-* **Into a `LevoitDevice` core:** UART receive and framing, `process_message`,
-  ACKs, `sendCommand`, the `on_*_command` mapping, the timers, CADR and filter
-  tracking, the Eleva auto config and the bulk-prefs cache.
-* **Left in the ESPHome `Levoit`:** a thin component that owns one
-  `LevoitDevice` and wires up `setup`/`loop`, the UART, preferences and the
-  entities.
+What changed for an ESPHome build, all small: CADR and filter tracking read
+the fan from the device state instead of the fan entity, so they also run in
+a config without one; filter life goes through `publish_sensor`, so an
+unchanged value is no longer re-sent every 10 s; the hex in TX logs is
+formatted by the core.
 
-After this step the host test can replay whole captured frames through the
-decoders and check what a host receives.
+**3b (this branch):** the core moves to namespace `levoit`; no core file
+mentions `esphome` any more. The ESPHome side moves to
+`esphome::levoit_component`, not `esphome::levoit` as first planned:
+ESPHome's generated `main.cpp` says `using namespace esphome;`, so a bare
+`levoit::` there would be ambiguous between the two. Codegen names the new
+namespace for the component classes and `::levoit` for the enums
+(`levoit_core_ns` in `__init__.py`); `esphome_ns.h` makes the core's names
+visible on the ESPHome side. The move is mechanical: only the namespace lines
+changed, the code inside keeps its indentation.
 
 ### 4. Packaging for a Matter firmware
 
@@ -100,7 +129,7 @@ already has in `purifier_map` and `matter_setup`. In return it gets the
 protocol of every model here, not only the Core 200S to 600S, and later fixes
 for free.
 
-## To check before step 3
+## To check before step 4
 
 ESPHome copies the component's source files into its build. Whether the core
 can live in a subfolder, and whether a `CMakeLists.txt` next to the sources
@@ -109,10 +138,10 @@ stay at the top level of `components/levoit/`.
 
 ## Decisions and what is still open
 
-* **Namespace:** the core moves to a neutral `levoit::` as part of step 3, not
-  as a separate rename. The ESPHome side stays `esphome::levoit` because of
-  ESPHome's codegen. levoit-matter renames its own `levoit` namespace first so
-  the two do not collide (agreed in #147).
+* **Namespace:** the core is in a neutral `levoit` since 3b; the ESPHome side
+  is `esphome::levoit_component` (see 3b for why not `esphome::levoit`).
+  levoit-matter renames its own `levoit` namespace so the two do not collide
+  (agreed in #147).
 * **Philips:** a separate protocol in `components/philips`, same shape, later.
 * **LV600S:** `components/lv600s_humidifier` (#152) speaks the same Levoit
   frame with a fixed-layout payload at 9600 baud. The goal is `model: LV600S`

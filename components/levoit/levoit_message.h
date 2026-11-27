@@ -4,7 +4,6 @@
 #include <vector>
 #include <cstdint>
 
-namespace esphome {
 namespace levoit {
 
 // Message counter for tracking sent messages
@@ -74,5 +73,4 @@ inline std::vector<uint8_t> build_levoit_message(
 }
 
 }  // namespace levoit
-}  // namespace esphome
 

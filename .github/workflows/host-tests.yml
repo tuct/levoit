@@ -39,3 +39,21 @@ jobs:
             tests/host/levoit_state_test.cpp \
             -o /tmp/levoit-state-test
           /tmp/levoit-state-test
+          # The whole protocol core: LevoitDevice, the decoders and builders
+          # of every model, driven through a fake platform and host.
+          g++ -std=c++17 -Wall -Wextra -DLEVOIT_HOST_QUIET \
+            tests/host/levoit_device_test.cpp \
+            components/levoit/levoit_device.cpp \
+            components/levoit/decoder.cpp \
+            components/levoit/core_status.cpp \
+            components/levoit/vital_status.cpp \
+            components/levoit/sprout_status.cpp \
+            components/levoit/superior_status.cpp \
+            components/levoit/core_commands.cpp \
+            components/levoit/vital_commands.cpp \
+            components/levoit/sprout_commands.cpp \
+            components/levoit/superior_commands.cpp \
+            components/levoit/tlv.cpp \
+            components/levoit/levoit_message.cpp \
+            -o /tmp/levoit-device-test
+          /tmp/levoit-device-test

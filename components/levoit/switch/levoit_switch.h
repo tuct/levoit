@@ -1,10 +1,11 @@
 #pragma once
 #include "esphome/components/switch/switch.h"
 #include "../types.h"
+#include "../esphome_ns.h"
 
 namespace esphome
 {
-  namespace levoit
+  namespace levoit_component
   {
 
     class Levoit;
@@ -24,5 +25,5 @@ namespace esphome
       SwitchType type_{SwitchType::DISPLAY};
     };
 
-  } // namespace levoit
+  } // namespace levoit_component
 } // namespace esphome

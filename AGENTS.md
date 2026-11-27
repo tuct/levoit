@@ -61,8 +61,12 @@ Run `python tools/changelog.py check`.
 
 ## Verify, then say exactly what you verified
 
-- UART parser host regression (compiles the real C++ with `clang++` or `c++`):
-  `python components/levoit/tests/test_uart_integrity.py`
+- Host tests (the protocol core built with a plain `g++`, no ESPHome; the
+  commands are in `.github/workflows/host-tests.yml`): the frame layer, the
+  device state, and `tests/host/levoit_device_test.cpp`, which drives the real
+  `LevoitDevice` and decoders with captured frames, corrupted streams and
+  commands through a fake platform and host. The same test under ASan and
+  UBSan: `python components/levoit/tests/test_uart_integrity.py`
 - Compile tests on both ESPHome versions: `components/run-compile-tests.sh min`,
   or on Windows `.\components\run-compile-tests.ps1 min` in PowerShell (not Git
   Bash, where the ESP-IDF build is skipped while ESPHome still reports success)

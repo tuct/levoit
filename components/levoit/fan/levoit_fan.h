@@ -4,7 +4,7 @@
 #include "esphome/components/fan/fan.h"
 
 namespace esphome {
-namespace levoit {
+namespace levoit_component {
 
 class Levoit;
 

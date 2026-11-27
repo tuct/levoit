@@ -4,7 +4,7 @@
 #include "esphome/components/light/light_effect.h"
 
 namespace esphome {
-namespace levoit {
+namespace levoit_component {
 
 class Levoit;
 
@@ -47,5 +47,5 @@ class LevoitSproutLight : public light::LightOutput {
   bool publishing_{false};
 };
 
-}  // namespace levoit
+}  // namespace levoit_component
 }  // namespace esphome

@@ -3,9 +3,10 @@
 #include "esphome/core/component.h"
 #include "esphome/components/button/button.h"
 #include "../types.h"
+#include "../esphome_ns.h"
 
 namespace esphome {
-namespace levoit {
+namespace levoit_component {
 
 class Levoit;
 
@@ -22,5 +23,5 @@ class LevoitButton : public Component, public button::Button {
   ButtonType type_{ButtonType::RESET_FILTER_STATS};
 };
 
-}  // namespace levoit
+}  // namespace levoit_component
 }  // namespace esphome

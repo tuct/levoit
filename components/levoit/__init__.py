@@ -22,7 +22,12 @@ CONF_LEVOIT_ID = "levoit"
 # ESP for the local time (CMD 02 22 55); without a time source it is never set.
 CONF_TIME_ID = "time_id"
 
-levoit_ns = cg.esphome_ns.namespace(CONF_LEVOIT_ID)
+# The ESPHome side of the component (esphome::levoit_component) and the
+# protocol core it wraps (::levoit, levoit_device.h). Not esphome::levoit: the
+# generated main.cpp says `using namespace esphome;`, which would make a bare
+# `levoit::` ambiguous between the two.
+levoit_ns = cg.esphome_ns.namespace("levoit_component")
+levoit_core_ns = cg.global_ns.namespace("levoit")
 Levoit = levoit_ns.class_("Levoit", cg.Component, uart.UARTDevice)
 
 

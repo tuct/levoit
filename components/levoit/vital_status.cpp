@@ -6,10 +6,8 @@
 #include <vector>
 #include <string>
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
 
     static const char *const TAG_VITAL = "levoit.vital"; 
 
@@ -18,7 +16,7 @@ namespace esphome
     {
       return (t.value_ptr && idx < t.value_len) ? t.value_ptr[idx] : 0;
     }
-    void decode_vital_timer(Levoit *self,
+    void decode_vital_timer(LevoitDevice *self,
                             ModelType model,
                             const uint8_t *payload,
                             size_t payload_len)
@@ -93,7 +91,7 @@ namespace esphome
         }
       }
     }
-    void decode_vital_status(Levoit *self,
+    void decode_vital_status(LevoitDevice *self,
                              ModelType model,
                              const uint8_t *payload,
                              size_t payload_len)
@@ -519,5 +517,4 @@ namespace esphome
         self->apply_fan_status(pwr, spd, mod);
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

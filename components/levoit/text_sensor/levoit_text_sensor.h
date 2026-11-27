@@ -1,10 +1,11 @@
 #pragma once
 #include "esphome/components/text_sensor/text_sensor.h"
 #include "../types.h"
+#include "../esphome_ns.h"
 
 namespace esphome
 {
-  namespace levoit
+  namespace levoit_component
   {
 
     class Levoit;
@@ -23,5 +24,5 @@ namespace esphome
 
     };
 
-  } // namespace levoit
+  } // namespace levoit_component
 } // namespace esphome

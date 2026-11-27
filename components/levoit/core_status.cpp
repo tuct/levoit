@@ -6,14 +6,12 @@
 #include <vector>
 #include <string>
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
 
     static const char *const TAG_CORE = "levoit.core";
 
-    void decode_core_timer(Levoit *self,
+    void decode_core_timer(LevoitDevice *self,
                            ModelType model,
                            const uint8_t *payload,
                            size_t payload_len)
@@ -54,7 +52,7 @@ namespace esphome
         self->set_timer_stop_pending(false);  // MCU confirmed timer off
       }
     }
-    void decode_core_status(Levoit *self,
+    void decode_core_status(LevoitDevice *self,
                             ModelType model,
                             const uint8_t *payload,
                             size_t payload_len)
@@ -205,7 +203,7 @@ namespace esphome
     //   [15] auto mode, 1:1 with 01 E6 A5
     //   [16..17] efficiency area LE16, as sent in 01 E6 A5
     //   [18] 0x00/0x01, meaning unconfirmed
-    void decode_core300s_status_19(Levoit *self,
+    void decode_core300s_status_19(LevoitDevice *self,
                                    const uint8_t *payload,
                                    size_t payload_len)
     {
@@ -245,8 +243,8 @@ namespace esphome
       self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, efficency_area_m2);
 
       ESP_LOGV(TAG_CORE, "Core300S (19-byte) fan: power=%d speed=%d mode=%d", power, fan_speed, (int)fan_mode);
+      self->set_selected_speed(payload[5]);
       self->apply_fan_status(power, fan_speed, fan_mode);
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

@@ -4,7 +4,7 @@
 
 namespace esphome
 {
-  namespace levoit
+  namespace levoit_component
   {
     static const char *const TAG = "levoit.switch";
     void LevoitSwitch::setup()
@@ -32,5 +32,5 @@ namespace esphome
       parent_->on_switch_command(this->type_, state);
     }
     void LevoitSwitch::dump_config() { LOG_SWITCH("", "Levoit Switch", this); }
-  } // namespace levoit
+  } // namespace levoit_component
 } // namespace esphome
