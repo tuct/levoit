@@ -48,7 +48,7 @@ Click a model for its guide: teardown, wiring and YAML. How the firmware gets on
 - 🔵 **Add ESP**: wire in your own ESP32 and hold the original in reset (`EN` to GND). Needed where secure boot blocks flashing, and reversible.
 - 🔴 **Custom HW**: replace the controller board.
 
-🪛 shows how hard the unit is to open: ●○○ Easy, ●●○ Medium, ●●● Hard.
+🪛 How easy the unit is to open: 🟩🟩🟩 Easy · 🟧🟧⬜ Medium · 🟥⬜⬜ Hard.
 
 ### Levoit air purifiers
 
@@ -61,7 +61,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <b><a href="./devices/levoit-core200s">Core 200S</a></b><br>
 <sub>✅ Tested · 167 m³/h</sub><br>
 <sub>3 speeds, no air-quality sensor</sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
 <sub><a href="./devices/levoit-core200s">Guide</a> · <a href="https://amzn.to/3SGH513">Amazon</a></sub>
 </td>
@@ -70,7 +70,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <b><a href="./devices/levoit-core300s">Core 300S</a></b><br>
 <sub>✅ Tested · 214 m³/h</sub><br>
 <sub>PM2.5 and Auto mode</sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
 <sub><a href="./devices/levoit-core300s">Guide</a> · <a href="https://amzn.to/4aMVbnO">Amazon</a></sub>
 </td>
@@ -79,7 +79,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <b><a href="./devices/levoit-core400s">Core 400S</a></b><br>
 <sub>✅ Tested · 442 m³/h</sub><br>
 <sub>4 speeds</sub><br>
-<sub>🪛 ●●● Hard to open</sub><br>
+<sub>🪛 🟥⬜⬜ Hard to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
 <sub><a href="./devices/levoit-core400s">Guide</a> · <a href="https://amzn.to/4vOT9vt">Amazon</a></sub>
 </td>
@@ -90,7 +90,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <b><a href="./devices/levoit-core600s">Core 600S</a></b><br>
 <sub>✅ Tested · 641 m³/h</sub><br>
 <sub>4 auto modes</sub><br>
-<sub>🪛 ●●● Hard to open</sub><br>
+<sub>🪛 🟥⬜⬜ Hard to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
 <sub><a href="./devices/levoit-core600s">Guide</a> · <a href="https://amzn.to/4opVx9z">Amazon</a></sub>
 </td>
@@ -99,7 +99,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <b><a href="./devices/levoit-vital100s">Vital 100S</a></b><br>
 <sub>✅ Tested · 221 m³/h</sub><br>
 <sub>Pet mode, detailed teardown</sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
 <sub><a href="./devices/levoit-vital100s">Guide</a> · <a href="https://amzn.to/3SaFron">Amazon</a></sub>
 </td>
@@ -108,7 +108,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <b><a href="./devices/levoit-vital200s">Vital 200S (Pro)</a></b><br>
 <sub>✅ Tested · 415 m³/h</sub><br>
 <sub>Pet mode</sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
 <sub><a href="./devices/levoit-vital200s">Guide</a> · <a href="https://amzn.to/4xMiJn1">Amazon</a></sub>
 </td>
@@ -119,7 +119,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <b><a href="./devices/levoit-everest-air">Everest Air</a></b><br>
 <sub>✅ Tested · 612 m³/h</sub><br>
 <sub>Vent louver, PM1.0/2.5/10, Turbo</sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
 <sub><a href="./devices/levoit-everest-air">Guide</a> · <a href="https://amzn.to/3Q1cMB">Amazon</a></sub>
 </td>
@@ -128,7 +128,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <b><a href="./devices/levoit-eleva-300x">Eleva 300X</a></b><br>
 <sub>✅ Tested on a XIAO C3 · 273 m³/h</sub><br>
 <sub>PM1.0/2.5/10, quiet period, timer</sub><br>
-<sub>🪛 ●●○ Medium to open</sub><br>
+<sub>🪛 🟧🟧⬜ Medium to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
 <sub><a href="./devices/levoit-eleva-300x">Guide</a></sub>
 </td>
@@ -137,7 +137,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <b><a href="./devices/levoit-sprout">Sprout</a></b><br>
 <sub>🚧 Work in progress · 145 m³/h</sub><br>
 <sub>White-noise audio (I2S MP3)</sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
 <sub><a href="./devices/levoit-sprout">Guide</a> · <a href="https://amzn.to/4oAJs1n">Amazon</a></sub>
 </td>
@@ -156,7 +156,7 @@ component. Where each one stands: [docs/humidifiers.md](./docs/humidifiers.md).
 <b><a href="./devices/levoit-superior-6000s">Superior 6000S</a></b><br>
 <sub>🚧 Untested on hardware · 6 L · 500 mL/h</sub><br>
 <sub>Evaporative, 9 fan speeds, target humidity, auto-dry</sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
 <sub><a href="./devices/levoit-superior-6000s">Guide</a></sub>
 </td>
@@ -166,7 +166,7 @@ component. Where each one stands: [docs/humidifiers.md](./docs/humidifiers.md).
 <sub>🚧 Development · 6 L</sub><br>
 <sub>Warm and cool mist, one EU unit on MCU 1.0.56</sub><br>
 <sub>Component: <a href="./components/lv600s_humidifier">lv600s_humidifier</a></sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash original ESP</sub><br>
 <sub><a href="./devices/levoit-lv600s">Guide</a></sub>
 </td>
@@ -175,7 +175,7 @@ component. Where each one stands: [docs/humidifiers.md](./docs/humidifiers.md).
 <b><a href="./docs/humidifiers.md">Dual 200S</a></b><br>
 <sub>📋 Planned</sub><br>
 <sub>Ultrasonic; YAML and teardown in <a href="https://github.com/tuct/levoit/issues/66">#66</a></sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🔵 Add ESP · 🟢 Flash (untried)</sub><br>
 <sub><a href="./docs/humidifiers.md">Plan</a></sub>
 </td>
@@ -227,7 +227,7 @@ build guide and YAML here.
 <b><a href="./devices/levoit-lv131s">LV-PUR 131S</a></b><br>
 <sub>🏠 Guide + YAML</sub><br>
 <sub>ESP12F → ESP32-C3, PM1003 → PM5003</sub><br>
-<sub>🪛 ●●○ Medium to open</sub><br>
+<sub>🪛 🟧🟧⬜ Medium to open</sub><br>
 <sub>🔴 Custom HW</sub><br>
 <sub><a href="./devices/levoit-lv131s">Guide</a></sub>
 </td>
@@ -236,7 +236,7 @@ build guide and YAML here.
 <b><a href="./devices/levoit-lv131">LV-PUR 131</a></b><br>
 <sub>🏠 Guide + YAML</sub><br>
 <sub>As the 131S, plus a temperature sensor</sub><br>
-<sub>🪛 ●●○ Medium to open</sub><br>
+<sub>🪛 🟧🟧⬜ Medium to open</sub><br>
 <sub>🔴 Custom HW</sub><br>
 <sub><a href="./devices/levoit-lv131">Guide</a></sub>
 </td>
@@ -245,7 +245,7 @@ build guide and YAML here.
 <b><a href="./devices/levoit-mini">Levoit Mini</a></b><br>
 <sub>🏠 Guide + YAML · 78 m³/h</sub><br>
 <sub>Custom PCB and 3D parts, reversible</sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🔴 Custom HW</sub><br>
 <sub><a href="./devices/levoit-mini">Guide</a> · <a href="https://amzn.to/4acovEh">Amazon</a></sub>
 </td>
@@ -269,7 +269,7 @@ On the [`philips`](./components/philips/README.md) component.
 <b><a href="./devices/philips-600-series">600 series: AC0650, AC0651</a></b><br>
 <sub>✅ Tested · 170 m³/h</sub><br>
 <sub>Secure boot, so add an ESP; the AC0651 adds PM2.5, allergen index, Auto</sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🔵 Add ESP</sub><br>
 <sub><a href="./devices/philips-600-series">Guide</a> · <a href="https://amzn.to/4vS5Ohs">AC0650</a> · <a href="https://amzn.to/4elkSyg">AC0651</a></sub>
 </td>
@@ -278,7 +278,7 @@ On the [`philips`](./components/philips/README.md) component.
 <b><a href="./devices/philips-900-series">900 series: AC0951, AC0950</a></b><br>
 <sub>✅ AC0951 tested · ⚠️ AC0950 untested</sub><br>
 <sub>PM2.5, allergen index, child lock, beep, sleep timer</sub><br>
-<sub>🪛 ●○○ Easy to open</sub><br>
+<sub>🪛 🟩🟩🟩 Easy to open</sub><br>
 <sub>🔵 Add ESP</sub><br>
 <sub><a href="./devices/philips-900-series">Guide</a></sub>
 </td>
