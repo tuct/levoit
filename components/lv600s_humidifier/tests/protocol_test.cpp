@@ -201,7 +201,33 @@ void verify_timer_confirmation_checks_total() {
   assert(device.commands_idle() && device.remaining(2400) == 0);
 }
 
+void verify_timer_confirmation_identifies_the_submission() {
+  Protocol device;
+  feed(device, packet(Command::STATUS, state(), 0, 0x12), 1000);
+  const auto report = packet(Command::TIMER_REPORT, {120, 0, 0, 0, 120, 0, 0, 0}, 1);
+  feed(device, report, 1100);
+  assert(device.timer_duration(1100) == 120);
+  uint32_t timed_out_id = 0;
+  assert(device.enqueue(Command::TIMER, {120, 0, 0, 0}, 1200, &timed_out_id));
+  feed(device, packet(Command::TIMER, {}, 0, 0x12), 1300);
+  assert(!device.command_confirmed(timed_out_id));
+  device.tick(3700);
+  assert(device.commands_idle() && device.command_failures == 1);
+  assert(device.timer_duration(3700) == 120 && !device.command_confirmed(timed_out_id));
+
+  assert(device.enqueue(Command::TIMER, {120, 0, 0, 0}, 3800));
+  feed(device, report, 3900);
+  assert(device.commands_idle() && !device.command_confirmed(timed_out_id));
+  uint32_t new_id = 0;
+  assert(device.enqueue(Command::TIMER, {120, 0, 0, 0}, 4000, &new_id));
+  assert(new_id != timed_out_id && !device.command_confirmed(new_id));
+  feed(device, report, 4100);
+  assert(device.commands_idle() && device.command_confirmed(new_id));
+  assert(!device.command_confirmed(timed_out_id));
+}
+
 int main() {
+  verify_timer_confirmation_identifies_the_submission();
   verify_recorded_water_depletion();
   verify_observed_standby_reply_shapes();
   verify_observed_sleep_confirmation();

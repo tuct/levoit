@@ -67,9 +67,12 @@ class LV600SHumidifier : public Component, public uart::UARTDevice {
   }
   bool set_mist_level(uint8_t level) { return send_(Command::MIST, {level, 0, 0, 0}); }
   bool set_warm_level(uint8_t level) { return send_(Command::WARM, {level, 0, 0, 0, 0}); }
-  bool set_timer_seconds(uint32_t seconds) {
-    return send_(Command::TIMER, {uint8_t(seconds), uint8_t(seconds >> 8), uint8_t(seconds >> 16), uint8_t(seconds >> 24)});
+  bool set_timer_seconds(uint32_t seconds, uint32_t *confirmation_id = nullptr) {
+    return protocol_.enqueue(Command::TIMER,
+                             {uint8_t(seconds), uint8_t(seconds >> 8), uint8_t(seconds >> 16), uint8_t(seconds >> 24)},
+                             millis(), confirmation_id);
   }
+  bool timer_write_confirmed(uint32_t id) const { return protocol_.command_confirmed(id); }
   void clear_timer() { set_timer_seconds(0); }
   void set_manual_mode() { set_manual_mist_level(uint8_t(std::max(1.0f, std::min(9.0f, get_mist_level())))); }
   bool set_manual_mist_level(uint8_t level) { return send_(Command::MANUAL, {0, 1, level}); }

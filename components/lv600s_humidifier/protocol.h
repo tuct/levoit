@@ -81,11 +81,17 @@ class Protocol {
     if (timer_seconds_ == 0) return 0.0f;
     return timer_total_ ? float(*timer_total_) : NAN;
   }
-  bool enqueue(Command command, Bytes payload, uint32_t now) {
+  bool command_confirmed(uint32_t id) const { return id != 0 && id == confirmed_command_id_; }
+  bool enqueue(Command command, Bytes payload, uint32_t now, uint32_t *confirmation_id = nullptr) {
     if (!allowed_(command, payload, now)) return fail_("Rejected: stale/unsafe status or mode");
     if (is_off_(command, payload)) { pending_.clear(); active_ = false; }
     if (pending_.size() >= 8) return fail_("Rejected: command queue full");
-    pending_.push_back({command, std::move(payload), 0});
+    uint32_t id = 0;
+    if (confirmation_id != nullptr) {
+      if (++next_command_id_ == 0) ++next_command_id_;
+      id = *confirmation_id = next_command_id_;
+    }
+    pending_.push_back({command, std::move(payload), 0, id});
     tick(now);
     return true;
   }
@@ -135,11 +141,12 @@ class Protocol {
   }
 
  protected:
-  struct Pending { Command code; Bytes payload; uint8_t retries; };
+  struct Pending { Command code; Bytes payload; uint8_t retries; uint32_t confirmation_id; };
   Bytes rx_;
   std::deque<Pending> pending_;
   uint8_t sequence_{0};
   uint32_t rx_at_{0}, sent_{0}, timer_received_{0}, timer_seconds_{0};
+  uint32_t next_command_id_{0}, confirmed_command_id_{0};
   std::optional<uint32_t> timer_total_;
   bool active_{false}, queried_{false}, timer_seen_{false};
 
@@ -263,6 +270,8 @@ class Protocol {
   }
   void confirm_pending_() {
     active_ = false;
+    const auto id = pending_.front().confirmation_id;
+    if (id != 0) confirmed_command_id_ = id;
     pending_.pop_front();
     result = "Target confirmed by MCU";
   }

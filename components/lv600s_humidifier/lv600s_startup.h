@@ -53,7 +53,12 @@ class Settings {
     if (!device.has_status()) return;
     if (!device.is_power_on()) {
       mist_sent_ = warm_sent_ = timer_sent_ = unset;
+      timer_confirmation_id_ = 0;
       return;
+    }
+    if (minutes > 0 && timer_sent_ == minutes && device.timer_write_confirmed(timer_confirmation_id_)) {
+      minutes = timer_sent_ = unset;
+      timer_confirmation_id_ = 0;
     }
     if (!device.can_apply_startup_setting()) return;
 
@@ -64,11 +69,10 @@ class Settings {
     if (warm >= 0 && device.get_mode() != 2 && advance_(
           warm, warm_sent_, device.get_warm_level() == warm,
           [&](int16_t level) { return device.set_warm_level(level); })) return;
-    // Require a new, confirmed start even when an earlier countdown used the same duration.
-    if (minutes > 0) {
-      advance_(minutes, timer_sent_,
-               timer_sent_ == minutes && device.get_timer_duration() == minutes * 60,
-               [&](int16_t value) { return device.set_timer_seconds(uint32_t(value) * 60); });
+    // Keep an unconfirmed preset for the next power cycle without resending an accepted write.
+    if (minutes > 0 && timer_sent_ != minutes &&
+        device.set_timer_seconds(uint32_t(minutes) * 60, &timer_confirmation_id_)) {
+      timer_sent_ = minutes;
     }
   }
 
@@ -86,5 +90,6 @@ class Settings {
   }
 
   int16_t mist_sent_{unset}, warm_sent_{unset}, timer_sent_{unset};
+  uint32_t timer_confirmation_id_{0};
 };
 }  // namespace lv600s_startup

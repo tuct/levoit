@@ -57,8 +57,9 @@ not shown here and is replaced at the next power-on or mode change.
 **English.** Set mist, warm mist or timer minutes on the ESPHome entities while
 the appliance is in standby. The ESP saves them and applies them after a safe,
 confirmed power-on. A mist preset selects Manual. A queued warm mist level
-waits until the appliance leaves Sleep. The timer starts once and does not
-restart on later power cycles after consumption. Setting the timer to `0`
+waits until the appliance leaves Sleep. A confirmed timer start consumes
+its preset. If the write times out, the ESP keeps the preset for the next
+power-on. Setting the timer to `0`
 clears the saved preset immediately and requests cancellation when the MCU
 confirms that the humidifier is on. A confirmed inactive timer displays `Off`,
 as does a standby device that has sent no timer report. Missing or expired
@@ -69,7 +70,9 @@ separately while the countdown is still off.
 ESPHome-Entitäten im Standby vormerken. Der ESP speichert sie und überträgt
 sie nach sicher bestätigtem Einschalten. Eine Nebelvorgabe schaltet auf
 **Manuell**. Eine Warmnebelvorgabe wartet, bis der Schlafmodus endet. Der
-Timer startet einmal. `0` löscht die Vormerkung sofort. Bestätigt die MCU den
+ESP löscht die Timervormerkung nach bestätigtem Start. Läuft die Bestätigung
+in ein Zeitlimit, bleibt sie für das nächste Einschalten gespeichert.
+`0` löscht die Vormerkung sofort. Bestätigt die MCU den
 eingeschalteten Zustand, wird der Timerabbruch angefordert. Bei bestätigtem
 Timer-Aus und im Standby ohne Timer-Rückmeldung steht `Off`. Fehlen aktuelle Timerdaten,
 steht dort `Unknown`. Eine vorgemerkte Dauer erscheint bei weiterhin
