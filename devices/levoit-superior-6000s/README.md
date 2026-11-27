@@ -13,6 +13,11 @@ The Superior 6000S is an evaporative humidifier, but it speaks the **same MCU
 protocol** as the Levoit air purifiers, so it needs no new component — just
 `model: SUPERIOR6000S` on the existing
 [`levoit`](../../components/levoit/README.md) component.
+Flashing the original ESP32-C3-SOLO-1 is the route described step by step;
+your own ESP32 on the MCU link uses the `-c3` / `-s3` configs, untested so far.
+The steps shared by all devices are in the
+[install guide](../../docs/installing.md); this page has what is particular to
+the Superior 6000S.
 
 ## Quick Facts
 
@@ -28,45 +33,7 @@ protocol** as the Levoit air purifiers, so it needs no new component — just
 | Fan speeds | **9** (the purifiers have 3–4) |
 | Status | 🚧 pins confirmed, initial tests working ([#78](https://github.com/tuct/levoit/discussions/78)) |
 
-## Files
-
-| File | Purpose |
-|------|---------|
-| [`levoit-superior-6000s.yaml`](./levoit-superior-6000s.yaml) | Flash the device's own ESP32-C3-SOLO-1; pulls the component from git |
-| [`levoit-superior-6000s_dev.yaml`](./levoit-superior-6000s_dev.yaml) | Same, but builds against this repo's local `components/` |
-| [`levoit-superior-6000s-builder.yaml`](./levoit-superior-6000s-builder.yaml) | Everything inlined, for the ESPHome Device Builder (generated, see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)) |
-| [`levoit-superior-6000s-c3.yaml`](./levoit-superior-6000s-c3.yaml) / [`_dev`](./levoit-superior-6000s-c3_dev.yaml) / [`builder-c3`](./levoit-superior-6000s-builder-c3.yaml) | A replacement Seeed XIAO ESP32-C3 on the MCU link (RX GPIO5 = pad D3 to module pin 27, TX GPIO4 = pad D2 to pin 28, as on the working Eleva install); untested |
-| [`levoit-superior-6000s-s3.yaml`](./levoit-superior-6000s-s3.yaml) / [`_dev`](./levoit-superior-6000s-s3_dev.yaml) / [`builder-s3`](./levoit-superior-6000s-builder-s3.yaml) | A replacement Seeed XIAO ESP32-S3 on the MCU link (RX GPIO5 = pad D4 to module pin 27, TX GPIO4 = pad D3 to pin 28, as confirmed for the LEH-S601S-WUS in [#78](https://github.com/tuct/levoit/discussions/78)); untested with an S3 |
-| [`common.yaml`](./common.yaml) | All the entities — included by both |
-| [`secrets-example.yaml`](./secrets-example.yaml) | Copy to `secrets.yaml` and fill in |
-
-## Getting started
-
-1. Copy `secrets-example.yaml` to `secrets.yaml` and fill in your Wi-Fi details.
-2. **Back up the stock firmware** (`esptool read-flash 0 ALL backup.bin`).
-3. Flash [`levoit-superior-6000s.yaml`](./levoit-superior-6000s.yaml) over the
-   module's **programming UART pads** (a USB-UART adapter: its TX to the
-   module's RX, its RX to the module's TX, 3.3 V). Hold **GPIO9** low during
-   reset for download mode; the pad marked *IO0* is GPIO9 on the C3. Release
-   it and power-cycle after flashing.
-4. The MCU link (GPIO18 / GPIO19) is separate from the programming pads and
-   needs no extra wiring on the stock module. The config logs on UART0 (the
-   programming pads); ESPHome warns that GPIO18/19 are the USB pins, which is
-   expected.
-
-To keep the stock module instead, wire your own ESP to the MCU link and use the
-`-c3` or `-s3` config from [Files](#files).
-
-**Recommended modules:**
-- [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
-- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
-
-> [!TIP]
-> No YAML to write: in Home Assistant, the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration's
-> *Add device* makes a ready-to-flash config for either board from this model's
-> template. You only add a name and your Wi-Fi.
-
-## Entities
+## Features
 
 | Platform | `type` | Notes |
 |----------|--------|-------|
@@ -103,6 +70,64 @@ where the purifiers use minutes.
 the choice for the next **Dry** preset request; inactive MCU reports do not erase
 that choice. On MCU 1.0.9 the level command also starts drying, so selecting a
 level while inactive does not send it ([capture](uart/dry_controls.txt)).
+
+## 1. Build the firmware
+
+**With Home Assistant (recommended):** [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha)
+→ *Add device* → **Superior 6000S** → the original ESP, Seeed XIAO ESP32-C3 or
+ESP32-S3. [Step by step](../../docs/installing.md#with-home-assistant-recommended).
+
+**Manually:** the files in this folder, built with the ESPHome CLI or pasted
+into the Device Builder. [Step by step](../../docs/installing.md#manually).
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| [`levoit-superior-6000s.yaml`](./levoit-superior-6000s.yaml) | Flash the device's own ESP32-C3-SOLO-1; pulls the component from git |
+| [`levoit-superior-6000s_dev.yaml`](./levoit-superior-6000s_dev.yaml) | Same, but builds against this repo's local `components/` |
+| [`levoit-superior-6000s-builder.yaml`](./levoit-superior-6000s-builder.yaml) | Everything inlined, for the ESPHome Device Builder (generated) |
+| [`levoit-superior-6000s-c3.yaml`](./levoit-superior-6000s-c3.yaml) / [`_dev`](./levoit-superior-6000s-c3_dev.yaml) / [`builder-c3`](./levoit-superior-6000s-builder-c3.yaml) | A replacement Seeed XIAO ESP32-C3 on the MCU link (RX GPIO5 = pad D3 to module pin 27, TX GPIO4 = pad D2 to pin 28, as on the working Eleva install); untested |
+| [`levoit-superior-6000s-s3.yaml`](./levoit-superior-6000s-s3.yaml) / [`_dev`](./levoit-superior-6000s-s3_dev.yaml) / [`builder-s3`](./levoit-superior-6000s-builder-s3.yaml) | A replacement Seeed XIAO ESP32-S3 on the MCU link (RX GPIO5 = pad D4 to module pin 27, TX GPIO4 = pad D3 to pin 28, as confirmed for the LEH-S601S-WUS in [#78](https://github.com/tuct/levoit/discussions/78)); untested with an S3 |
+| [`common.yaml`](./common.yaml) | All the entities — included by both |
+| [`secrets-example.yaml`](./secrets-example.yaml) | Copy to `secrets.yaml` and fill in |
+
+## 2. Disassembly
+
+Not documented yet. [General notes](../../docs/installing.md#2-disassembly) in
+the install guide.
+
+## 3. Flash the original ESP32
+
+1. **Back up the stock firmware** (`esptool read-flash 0 ALL backup.bin`).
+2. Flash [`levoit-superior-6000s.yaml`](./levoit-superior-6000s.yaml) over the
+   module's **programming UART pads** (a USB-UART adapter: its TX to the
+   module's RX, its RX to the module's TX, 3.3 V). Hold **GPIO9** low during
+   reset for download mode; the pad marked *IO0* is GPIO9 on the C3. Release
+   it and power-cycle after flashing.
+3. The MCU link (GPIO18 / GPIO19) is separate from the programming pads and
+   needs no extra wiring on the stock module. The config logs on UART0 (the
+   programming pads); ESPHome warns that GPIO18/19 are the USB pins, which is
+   expected.
+
+The generic procedure is in the
+[install guide](../../docs/installing.md#3-flash-the-original-esp32).
+
+## 4. Add your own ESP32 (recommended)
+
+To keep the stock module instead, wire your own ESP to the MCU link and use the
+`-c3` or `-s3` config from [Files](#files).
+
+**Recommended modules:**
+- [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+
+No wiring photos for this model yet. [Wiring, parking the original, strapping pins](../../docs/installing.md#4-add-your-own-esp32)
+in the install guide.
+
+## 5. Assembly
+
+Reverse the disassembly. No notes specific to this model yet; [what to check once it is powered](../../docs/installing.md#5-assembly).
 
 ## Credits
 

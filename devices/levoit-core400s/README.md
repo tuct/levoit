@@ -4,6 +4,12 @@
 
 Started from community projects ([acvigue](https://github.com/acvigue/esphome-levoit-air-purifier), [mulcmu](https://github.com/mulcmu/esphome-levoit-core300s)) and evolved into a generic Levoit ESPHome component for Core/Vital models.
 
+ESPHome on the Core 400S, through the `levoit` component, in Home Assistant
+without the cloud. Supported. Adding your own ESP32 is the recommended route;
+flashing the original works too. The steps shared by all devices are in the
+[install guide](../../docs/installing.md); this page has what is particular to
+the Core 400S.
+
 ## Quick Facts
 
 | Item | Value |
@@ -69,7 +75,47 @@ whatever Default or Quiet left behind.
 Not yet investigated, so treat the placeholder explanation as unconfirmed. Set
 Room Size once and the value should track what you asked for.
 
-## Teardown / Disassembly
+## Routes onto the device
+
+Three ways to put ESPHome on this unit. The two soldering routes use
+**different serial pads**, so pick one before you solder anything.
+
+| Route | Teardown | Serial pads | Original firmware |
+|-------|----------|-------------|-------------------|
+| [Add your own ESP32](#4-add-your-own-esp32-recommended) | full | `RX` / `TX` test pads near the original ESP32: the link between the ESP32 and the MCU | Kept, the stock module is only disabled (`EN` to GND) |
+| [Flash the original ESP32](#3-flash-the-original-esp32) | full + soldering | [J1 debug header](#j1-debug-header-pinout) pins 1 (`TX`) and 2 (`RX`): the ESP32's own UART0 | Overwritten, so back it up first |
+| [Over the air](#flash-over-the-air--no-disassembly-third-party) | **none** | — | Overwritten (third-party proof of concept, hijacks the stock OTA over the LAN) |
+
+The two soldering routes are below; the over-the-air route is at the
+[end of this guide](#flash-over-the-air--no-disassembly-third-party).
+
+> **Don't flash through the `RX` / `TX` test pads.** They are the ESP32-to-MCU
+> link, so esptool can't reach the bootloader through them (`No serial data
+> received`, `Invalid head of packet (0xFF)`). A lifted `RX` pad also breaks the
+> MCU's replies to ESPHome later: commands still work, but no frame ever arrives
+> and `MCU Version` stays unknown. Remove flashing wires with heat, never by
+> pulling. This is what happened on a Core 200S-P; see that guide.
+
+## 1. Build the firmware
+
+**With Home Assistant (recommended):** [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha)
+→ *Add device* → **Core 400S** → the original ESP, Seeed XIAO ESP32-C3 or
+ESP32-S3. [Step by step](../../docs/installing.md#with-home-assistant-recommended).
+
+**Manually:** the files in this folder, built with the ESPHome CLI or pasted
+into the Device Builder. [Step by step](../../docs/installing.md#manually).
+
+| Board | ESPHome CLI | Device Builder / web builder |
+|-------|-------------|------------------------------|
+| original ESP32-SOLO-1C | `levoit-core400s.yaml` | `levoit-core400s-builder.yaml` |
+| Seeed XIAO ESP32-C3 | `levoit-core400s-c3.yaml` | `levoit-core400s-builder-c3.yaml` |
+| Seeed XIAO ESP32-S3 | `levoit-core400s-s3.yaml` | `levoit-core400s-builder-s3.yaml` |
+
+```bash
+esphome run levoit-core400s.yaml
+```
+
+## 2. Disassembly
 
 Very similar to Core 300S but the PCB needs to be unclipped from the carry holes after removing the filter and filter housing.
 
@@ -114,6 +160,8 @@ with long (12-inch) cooking tweezers or hemostats. Soldering a JST-PH 2.0 mm
 later, to flash the stock firmware or ESPHome again, without taking everything
 apart.
 
+## 3. Flash the original ESP32
+
 ### J1 Debug Header Pinout
 
 | Pin | Signal |
@@ -125,28 +173,45 @@ apart.
 | 5 | IO0 |
 | 6 | EN |
 
-## Routes onto the device
+### Prerequisites
 
-Three ways to put ESPHome on this unit. The two soldering routes use
-**different serial pads**, so pick one before you solder anything.
+Connect a USB-UART converter (3.3V TTL) to the **J1 debug header**: converter
+RX to J1 pin 1 (`TX`), converter TX to pin 2 (`RX`), GND to pin 3 and 3.3 V to
+pin 4. J1's `TX` / `RX` are the ESP32's own UART0. The `RX` / `TX` test pads
+near the module are the MCU link and won't work for flashing; see
+[Routes onto the device](#routes-onto-the-device). If you can't use
+J1, the same signals are the module's own TXD0 / RXD0 / IO0 / +3V3 / GND pins.
 
-| Route | Teardown | Serial pads | Original firmware |
-|-------|----------|-------------|-------------------|
-| [Over the air](#flash-over-the-air--no-disassembly-third-party) | **none** | — | Overwritten (third-party proof of concept, hijacks the stock OTA over the LAN) |
-| [Install a new ESP32](#install-new-esp32-recommended) | full | `RX` / `TX` test pads near the original ESP32: the link between the ESP32 and the MCU | Kept, the stock module is only disabled (`EN` to GND) |
-| [Flash the original ESP32](#flash-original-esp32) | full + soldering | [J1 debug header](#j1-debug-header-pinout) pins 1 (`TX`) and 2 (`RX`): the ESP32's own UART0 | Overwritten, so back it up first |
+Connect **IO0 (J1 pin 5) to GND before powering on** to enter bootloader mode.
+Leave `EN` (pin 6) unconnected: pulling it to GND holds the ESP32 off.
 
-The two soldering routes are below; the over-the-air route is at the
-[end of this guide](#flash-over-the-air--no-disassembly-third-party).
+### Backup Existing Firmware
 
-> **Don't flash through the `RX` / `TX` test pads.** They are the ESP32-to-MCU
-> link, so esptool can't reach the bootloader through them (`No serial data
-> received`, `Invalid head of packet (0xFF)`). A lifted `RX` pad also breaks the
-> MCU's replies to ESPHome later: commands still work, but no frame ever arrives
-> and `MCU Version` stays unknown. Remove flashing wires with heat, never by
-> pulling. This is what happened on a Core 200S-P; see that guide.
+```bash
+esptool read_flash 0 ALL levoit-core400s-backup.bin
+```
 
-## Install New ESP32 (Recommended)
+> Note: may fail if watchdog-protected. Try while the PCB is externally powered.
+>
+> **Keep the baud rate low.** A full-flash read at `-b 460800` has been reported
+> failing partway through over jumper wires; plain 115200 completed, and two
+> identical reads confirmed it. Verify any backup by reading twice and comparing
+> before you rely on it.
+
+The board can be flashed with the logic board **out of the unit**, powered from
+the 3.3 V on J1 — the fan MCU runs from it on the bench, so the sensors come up
+and you can confirm the UART link before reassembling.
+
+Then [flash and, if needed, restore](../../docs/installing.md#3-flash-the-original-esp32):
+
+```bash
+esphome run levoit-core400s.yaml
+```
+
+Check the [component README](../../components/levoit/README.md) for UART pin
+mapping per board.
+
+## 4. Add your own ESP32 (recommended)
 
 Replacing the original ESP32 lets you keep the original firmware intact and switch back easily.
 This route uses the `RX` / `TX` test pads near the original ESP32 (the
@@ -155,11 +220,6 @@ ESP32-to-MCU link), not J1.
 **Recommended modules:**
 - [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
 - [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
-
-> [!TIP]
-> No YAML to write: in Home Assistant, the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration's
-> *Add device* makes a ready-to-flash config for either board from this model's
-> template. You only add a name and your Wi-Fi.
 
 **Wiring:** 4 wires — `+3.3V`, `GND`, `RX`, `TX`
 
@@ -184,72 +244,28 @@ kocy33 found the pads and wired a Seeed XIAO ESP32-C3 on this revision
 
 <img src="./images/v12-kocy33-6-wired.jpg" width="49%" alt="The new ESP wired in, inside the unit"> <img src="./images/v12-kocy33-7-board.jpg" width="40%" alt="The CORE400S Ctrl V1.2 board">
 
+[Wiring, parking the original, strapping pins](../../docs/installing.md#4-add-your-own-esp32)
+in the install guide.
 
-## Flash Original ESP32
+## 5. Assembly
 
-### Prerequisites
+The author needed extended wires to reassemble; the
+[twist-off method](#opening-it-without-extension-wires) reassembles without
+extending anything.
 
-Connect a USB-UART converter (3.3V TTL) to the **J1 debug header**: converter
-RX to J1 pin 1 (`TX`), converter TX to pin 2 (`RX`), GND to pin 3 and 3.3 V to
-pin 4. J1's `TX` / `RX` are the ESP32's own UART0. The `RX` / `TX` test pads
-near the module are the MCU link and won't work for flashing; see
-[Two routes, two sets of pads](#two-routes-two-sets-of-pads). If you can't use
-J1, the same signals are the module's own TXD0 / RXD0 / IO0 / +3V3 / GND pins.
+* Refit the fan unit
+* Clip the PCB back into the carry holes and plug the logic board back in
+* Fit the top sleeve back onto the base
+* Refit the 8 screws (the 4 with washers where they came from) — they are soft
+  metal, do not overtighten
+* Filter and base cover back in
 
-Connect **IO0 (J1 pin 5) to GND before powering on** to enter bootloader mode.
-Leave `EN` (pin 6) unconnected: pulling it to GND holds the ESP32 off.
+Reassemble and enjoy! [What to check](../../docs/installing.md#5-assembly)
+once it is powered.
 
-### Backup Existing Firmware
+## Other routes
 
-```bash
-esptool read_flash 0 ALL levoit-core400s-backup.bin
-```
-
-> Note: may fail if watchdog-protected. Try while the PCB is externally powered.
->
-> **Keep the baud rate low.** A full-flash read at `-b 460800` has been reported
-> failing partway through over jumper wires; plain 115200 completed, and two
-> identical reads confirmed it. Verify any backup by reading twice and comparing
-> before you rely on it.
-
-The board can be flashed with the logic board **out of the unit**, powered from
-the 3.3 V on J1 — the fan MCU runs from it on the bench, so the sensors come up
-and you can confirm the UART link before reassembling.
-
-### Configure
-
-1. Copy `secrets-example.yaml` → `secrets.yaml` and fill in your Wi-Fi and encryption key
-2. Adjust the device name in the config if running multiple units
-3. Check the [component README](../../components/levoit/README.md) for UART pin mapping per board
-
-### Flash
-
-```bash
-esphome run levoit-core400s.yaml
-```
-
-Reassemble and enjoy!
-
-### ESPHome Web Builder / Dashboard
-
-Use the pre-generated builder yaml to flash without a local clone — all config is inlined, no `!include` or packages needed:
-
-| File | Board |
-|------|-------|
-| `levoit-core400s-builder.yaml` | original ESP32-SOLO-1C |
-| `levoit-core400s-builder-c3.yaml` | ESP32-C3 replacement |
-| `levoit-core400s-builder-s3.yaml` | Seeed XIAO ESP32-S3 replacement |
-
-Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. Regenerate with `.\make-builder-yaml.ps1` from the `devices/` folder.
-
-### Restore Original Firmware
-
-```bash
-esptool erase_flash
-esptool write_flash 0x00 levoit-core400s-backup.bin
-```
-
-## Flash Over the Air — No Disassembly (third-party)
+### Flash Over the Air — No Disassembly (third-party)
 
 The same no-soldering trick documented for the Core 300S works on the Core
 400S. [**nico202/levoit-core300s-ota-wifi-flash**](https://github.com/nico202/levoit-core300s-ota-wifi-flash)

@@ -469,7 +469,7 @@ The Eleva 300X speaks the Vital protocol, with a few additions. Its MCU pushes s
 | Dynamic Manual | switch | `dynamic_manual` | Manual speed jumps to turbo on pollution (key `0x03`) **Eleva 300X only** |
 | Dynamic Sleep | switch | `dynamic_sleep` | Dynamic sleep (key `0x04`) **Eleva 300X only** |
 
-The MCU runs the quiet period itself. For the Timer trigger it needs the local time, which it asks for at boot (`02 22 55`): give the `levoit:` block a `time_id` (e.g. Home Assistant or SNTP time) and the component answers that request and re-sends the time after every clock sync. The timer uses the Vital `timer` number; the MCU pushes its countdown as a REPORT every second. Filter life is estimated on the ESP as for the other models: the `reset_filter_stats` button also sends the stock reset pair to the MCU (`02 05 55` + `03 00`, then `04 01 00` = not a genuine filter), and a filter reset on the unit's panel (`02 05 55` + `03 01 00` from the MCU) resets the ESP counters. At boot the component reports "not a genuine filter" (`04 01 00`), as a stock unit with an unlinked filter does. See [the device README](../../devices/levoit-eleva-300x) for the protocol notes.
+The MCU runs the quiet period itself. For the Timer trigger it needs the local time, which it asks for at boot (`02 22 55`): give the `levoit:` block a `time_id` (e.g. Home Assistant or SNTP time) and the component answers that request and re-sends the time after every clock sync. The timer uses the Vital `timer` number; the MCU pushes its countdown as a REPORT every second. Filter life is estimated on the ESP as for the other models: the `reset_filter_stats` button also sends the stock reset pair to the MCU (`02 05 55` + `03 00`, then `04 01 00` = not a genuine filter), and a filter reset on the unit's panel (`02 05 55` + `03 01 00` from the MCU) resets the ESP counters. At boot the component reports "not a genuine filter" (`04 01 00`), as a stock unit with an unlinked filter does. The protocol notes are in [the Eleva 300X folder](../../devices/levoit-eleva-300x/PROTOCOL.md).
 
 
 #### Display / Light
@@ -745,7 +745,7 @@ and the byte maps.
   effect, and keyed on message direction rather than payload, because the push
   carries `0x01` on MCU 2.0.11 but `0x00` on 4.0.34
 * The full byte map, both firmware layouts and a symptom-to-cause table are in
-  [the device README](../../devices/levoit-core200s/README.md)
+  [the Core 200S protocol notes](../../devices/levoit-core200s/PROTOCOL.md)
 
 > **The Core 200S filter percentage is an estimate and always was.** Three
 > independent counters exist on these units: the VeSync cloud's, the MCU's own

@@ -5,7 +5,7 @@
 ESP32-C3 ↔ MCU link of a stock Eleva 300X (Wi-Fi FW 1.0.08, MCU FW 1.0.13), 115200 8N1.
 **Channel 0 = MCU TX, channel 1 = ESP TX**, 10 MS/s. Open them in Logic 2; the
 [levoit_uart analyzer](../../../../logic2/levoit_uart) decodes the frames.
-The protocol notes they back are in the [device README](../../README.md#uart-protocol-wip).
+The protocol notes they back are in the [device notes](../../PROTOCOL.md#uart-protocol-wip).
 
 | Capture | Length | What was done |
 |---------|--------|---------------|

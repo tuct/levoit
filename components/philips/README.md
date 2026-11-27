@@ -6,7 +6,7 @@ Custom ESPHome component for **Philips (Versuni) air purifiers**, including thos
 
 It works much like the [Levoit component](../levoit/README.md), just speaking Philips' own `FE FF` binary UART protocol instead of the Levoit TLV one.
 
-[See the Supported Models overview](../../README.md) · [Full protocol reverse-engineering notes](../../devices/philips-600-series/README.md)
+[See the Supported Models overview](../../README.md) · [Full protocol reverse-engineering notes](../../devices/philips-600-series/PROTOCOL.md)
 
 ## Supported Models
 
@@ -46,7 +46,7 @@ Both speak the identical protocol; the component selects model-specific behaviou
 
 > On the ESP32-C3 the default logger UART (UART0) shares GPIO20/21 with the MCU link, so log over the native USB instead: `logger: { hardware_uart: USB_SERIAL_JTAG }`.
 
-See the [device guide](../../devices/philips-600-series/README.md) for teardown, pin locations, and protocol details.
+See the [device guide](../../devices/philips-600-series/README.md) for teardown and pin locations, and the [protocol notes](../../devices/philips-600-series/PROTOCOL.md) for protocol details.
 
 ## Configuration
 
