@@ -262,6 +262,39 @@ static void test_refused_command() {
 
 // begin(): counters restored through the platform, the Core 300S asks for its
 // status once if nothing arrived, CADR tracking runs on the device state.
+static void test_capabilities() {
+  struct { const char *model; uint8_t speeds; bool automode; bool aq; const char *disp; } cases[] = {
+      {"CORE200S", 3, false, false, "Core 200S"},
+      {"CORE300S", 3, true, true, "Core 300S"},
+      {"CORE400S", 4, true, true, "Core 400S"},
+      {"CORE600S", 4, true, true, "Core 600S"},
+      {"SPROUT", 4, true, true, "Sprout"},
+      {"EVERESTAIR", 3, true, true, "EverestAir"},
+      {"VITAL100S", 4, true, true, "Vital 100S"},
+      {"VITAL200S", 4, true, true, "Vital 200S"},
+      {"ELEVA300X", 4, true, true, "Eleva 300X"},
+      {"SUPERIOR6000S", 9, true, false, "Superior 6000S"},
+  };
+  for (auto &c : cases) {
+    Rig rig(c.model);
+    CHECK(rig.device.speed_count() == c.speeds);
+    CHECK(rig.device.has_auto() == c.automode);
+    CHECK(rig.device.has_air_quality() == c.aq);
+    CHECK(std::string(rig.device.display_name()) == c.disp);
+  }
+}
+
+static void test_set_filter_percent() {
+  for (uint8_t pct = 0; pct <= 100; pct += 10) {
+    Rig rig("CORE300S");
+    rig.device.note_number_state(NumberType::FILTER_LIFETIME_MONTHS, 6);
+    rig.device.begin();
+    rig.device.set_filter_percent(pct);
+    const int got = (int)(rig.device.calculate_filter_life_left_percent() + 0.5f);
+    CHECK(got == pct);
+  }
+}
+
 static void test_begin_and_tracking() {
   Rig rig("CORE300S");
   rig.platform.prefs[LevoitDevice::PREF_USED_CADR] = 1234;
@@ -461,6 +494,8 @@ int main() {
   test_command();
   test_dedup();
   test_refused_command();
+  test_capabilities();
+  test_set_filter_percent();
   test_begin_and_tracking();
   test_wifi_led();
   test_filter_led();

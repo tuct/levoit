@@ -26,11 +26,6 @@ namespace levoit
 
         static const char *const TAG = "levoit";
 
-        static bool supports_auto_fan_mode_(ModelType model)
-        {
-            return model != ModelType::CORE200S;
-        }
-
         // Up to 64 bytes as "A5.22.4D ..." for the TX logs
         static constexpr size_t HEX_DUMP_SIZE = 64 * 3 + 4;
         static const char *hex_dump_(char *buf, const uint8_t *data, size_t len)
@@ -358,7 +353,7 @@ namespace levoit
 
             case NumberType::EFFICIENCY_ROOM_SIZE:
                 this->sendCommand(setAutoModeEfficient); // takes value from number: Room Size
-                if (supports_auto_fan_mode_(this->model_))
+                if (this->has_auto())
                     this->sendCommand(setFanModeAuto);
                 break;
 
@@ -502,7 +497,7 @@ namespace levoit
                         break;
                     }
                 }
-                if (sent_auto_profile && supports_auto_fan_mode_(this->model_))
+                if (sent_auto_profile && this->has_auto())
                     this->sendCommand(setFanModeAuto);
                 break;
             }
@@ -708,26 +703,7 @@ namespace levoit
         {
             ESP_LOGI(TAG, "Starting Levoit %s", model_name_.c_str());
             //https://docs.google.com/spreadsheets/d/17j6FZwvqHRFkGoH5996u5JdR7tk4_7fNuTxAK7kc4Fk/edit?gid=1612245341#gid=1612245341
-            if (model_ == ModelType::VITAL200S)
-                cadr = 415;
-            if (model_ == ModelType::VITAL100S)
-                cadr = 221;
-            if (model_ == ModelType::CORE300S)
-                cadr = 214; 
-            if (model_ == ModelType::CORE400S)
-                cadr = 442;
-            if (model_ == ModelType::CORE200S)
-                cadr = 167;
-            if (model_ == ModelType::CORE600S)
-                cadr = 641;
-            if (model_ == ModelType::SPROUT)
-                cadr = 145; // spec smoke CADR 144.5 m³/h (rounded)
-            if (model_ == ModelType::EVERESTAIR)
-                cadr = 612;
-            if (model_ == ModelType::SUPERIOR6000S)
-                cadr = 500;   // humidifier: nominal, only feeds the CADR counters
-            if (model_ == ModelType::ELEVA300X)
-                cadr = 273;   // spec 161 CFM smoke/dust/PM2.5
+            cadr = this->rated_cadr();
             
             // Restore saved values or initialize to 0
             if (platform_->load_u32(PREF_USED_CADR, used_cadr_)) {
@@ -859,13 +835,9 @@ namespace levoit
                 return 0;
             }
 
-            // Determine max speed based on model. Core200S and Core300S have 3
-            // speeds - using 4 here undercounted their CADR by 25% at every level,
-            // so the filter estimate decayed a quarter too slowly.
-            uint32_t max_speed = (this->model_ == ModelType::CORE200S ||
-                                  this->model_ == ModelType::CORE300S)        ? 3u
-                                 : (this->model_ == ModelType::SUPERIOR6000S) ? 9u
-                                                                              : 4u;
+            // Max speed per model (speed_count). Core200S/300S have 3; using 4
+            // here once undercounted their CADR by 25% at every level.
+            uint32_t max_speed = this->speed_count();
             if (speed <= 0 || (uint32_t)speed > max_speed)
                 return 0;
             uint32_t result = (cadr * (uint32_t)speed) / max_speed;
