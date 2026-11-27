@@ -104,10 +104,48 @@ namespace esphome
                 return;
             buttons_[static_cast<uint8_t>(type)] = btn;
         }
+        // publish_*: the decoders' view. Record the slot; the LevoitHost
+        // method below runs only when it changed. The entity dedup in those
+        // methods stays, so what reaches Home Assistant is what reached it
+        // before the state moved here.
         void Levoit::publish_switch(SwitchType type, bool state)
         {
-            if (type == SwitchType::DISPLAY)
-                display_on_ = state;
+            if (this->state_.set_switch(type, state))
+                this->switch_changed(type, state);
+        }
+
+        void Levoit::publish_sensor(SensorType type, float value)
+        {
+            if (this->state_.set_sensor(type, value))
+                this->sensor_changed(type, value);
+        }
+
+        void Levoit::publish_number(NumberType type, float value)
+        {
+            if (this->state_.set_number(type, value))
+                this->number_changed(type, value);
+        }
+
+        void Levoit::publish_select(SelectType type, uint32_t value)
+        {
+            if (this->state_.set_select(type, value))
+                this->select_changed(type, value);
+        }
+
+        void Levoit::publish_text_sensor(TextSensorType type, const std::string &value)
+        {
+            if (this->state_.set_text(type, value))
+                this->text_changed(type, value);
+        }
+
+        void Levoit::publish_binary_sensor(BinarySensorType type, bool state)
+        {
+            if (this->state_.set_binary(type, state))
+                this->binary_changed(type, state);
+        }
+
+        void Levoit::switch_changed(SwitchType type, bool state)
+        {
 #ifdef USE_LEVOIT_SWITCH
             auto *sw = switches_[st_idx_(type)];
             if (!sw)
@@ -122,10 +160,13 @@ namespace esphome
             if (sw->state == state)
                 return;
             sw->publish_state(state);
+#else
+            (void) type;
+            (void) state;
 #endif
         }
 
-        void Levoit::publish_sensor(SensorType type, float value)
+        void Levoit::sensor_changed(SensorType type, float value)
         {
 #ifdef USE_LEVOIT_SENSOR
             auto *se = sensors_[st_idx_(type)];
@@ -134,10 +175,13 @@ namespace esphome
             if (se->has_state() && se->state == value)
                 return;
             se->publish_state(value);
+#else
+            (void) type;
+            (void) value;
 #endif
         }
 
-        void Levoit::publish_number(NumberType type, float value)
+        void Levoit::number_changed(NumberType type, float value)
         {
 #ifdef USE_LEVOIT_NUMBER
             auto *nm = numbers_[nt_idx_(type)];
@@ -147,9 +191,12 @@ namespace esphome
             if (nm->has_state() && nm->state == value)
                 return;
             nm->publish_state(value);
+#else
+            (void) type;
+            (void) value;
 #endif
         }
-        void Levoit::publish_select(SelectType type, uint32_t value)
+        void Levoit::select_changed(SelectType type, uint32_t value)
         {
 #ifdef USE_LEVOIT_SELECT
             auto *sl = selects_[sl_idx_(type)];
@@ -184,9 +231,12 @@ namespace esphome
             if (sl->has_state() && sl->current_option() == opt)
                 return;
             sl->publish_state(opt);
+#else
+            (void) type;
+            (void) value;
 #endif
         }
-        void Levoit::publish_text_sensor(TextSensorType type, const std::string &value)
+        void Levoit::text_changed(TextSensorType type, const std::string &value)
         {
 #ifdef USE_LEVOIT_TEXT_SENSOR
             auto *tsl = text_sensor_[static_cast<uint8_t>(type)];
@@ -195,12 +245,28 @@ namespace esphome
             if (tsl->has_state() && tsl->state == value)
                 return;
             tsl->publish_state(value);
+#else
+            (void) type;
+            (void) value;
 #endif
         }
-        void Levoit::publish_binary_sensor(BinarySensorType type, bool state)
+        void Levoit::binary_changed(BinarySensorType type, bool state)
         {
-            // Store the desired state; platform entity will publish from its loop
-            binary_sensor_states_[bs_idx_(type)] = state;
+            // Nothing to push: LevoitBinarySensor::loop reads the slot through
+            // get_binary_sensor_state and publishes from there.
+            (void) type;
+            (void) state;
+        }
+        void Levoit::fan_changed(int power, int speed, int mode)
+        {
+#ifdef USE_LEVOIT_FAN
+            if (this->fan_ != nullptr)
+                this->fan_->apply_device_status(power, speed, mode);
+#else
+            (void) power;
+            (void) speed;
+            (void) mode;
+#endif
         }
 
         void Levoit::update_bulk_pref(uint8_t tlv_id, uint32_t value)
@@ -268,7 +334,9 @@ namespace esphome
 
         void Levoit::send_aqi_to_mcu(uint16_t aqi)
         {
-            if (!this->display_on_)
+            bool display_on = false;
+            this->state_.get_switch(SwitchType::DISPLAY, display_on);
+            if (!display_on)
                 return;
             this->pending_aqi_ = aqi;
             this->sendCommand(setSproutAqiScale);
@@ -279,61 +347,29 @@ namespace esphome
         // of them - which is exactly what happened when the periodic CADR path kept
         // overwriting the Core200S value once a minute.
 
+        // try_get_*: the builders' view of the same slots. A slot is known
+        // once the MCU reported it or a command requested it, whether or not
+        // the matching entity is configured.
         bool Levoit::try_get_number_state(NumberType type, float &out) const
         {
-#ifdef USE_LEVOIT_NUMBER
-            auto *n = this->numbers_[nt_idx_(type)];
-            if (n == nullptr || !n->has_state())
-                return false;
-            out = n->state;
-            return true;
-#else
-            (void) type;
-            (void) out;
-            return false;
-#endif
+            return this->state_.get_number(type, out);
         }
 
         bool Levoit::try_get_select_index(SelectType type, size_t &out) const
         {
-#ifdef USE_LEVOIT_SELECT
-            auto *sel = this->selects_[sl_idx_(type)];
-            if (sel == nullptr || !sel->has_state())
+            // The slot holds what publish_select / on_select_command carry:
+            // the raw MCU mode for the fan mode selects, the option index for
+            // the others, which is what the builders expect here.
+            uint32_t value;
+            if (!this->state_.get_select(type, value))
                 return false;
-            if (type == SelectType::FAN_OPERATING_MODE_SELECT || type == SelectType::DAYTIME_FAN_MODE)
-            {
-                const auto option = sel->current_option();
-                int mode = fan_operating_mode_to_raw(option.c_str(), option.size());
-                if (mode < 0)
-                    return false;
-                out = static_cast<size_t>(mode);
-                return true;
-            }
-            auto idx = sel->active_index();
-            if (!idx.has_value())
-                return false;
-            out = idx.value();
+            out = static_cast<size_t>(value);
             return true;
-#else
-            (void) type;
-            (void) out;
-            return false;
-#endif
         }
 
         bool Levoit::try_get_switch_state(SwitchType type, bool &out) const
         {
-#ifdef USE_LEVOIT_SWITCH
-            auto *sw = this->switches_[st_idx_(type)];
-            if (sw == nullptr || !sw->has_state())
-                return false;
-            out = sw->state;
-            return true;
-#else
-            (void) type;
-            (void) out;
-            return false;
-#endif
+            return this->state_.get_switch(type, out);
         }
 
         void Levoit::apply_fan_status(int power, int speed, int mode)
@@ -341,14 +377,10 @@ namespace esphome
             this->fan_status_seen_ = true;
             if (speed != -1)
                 this->fan_sleep_speed_ = (speed == 0);
-#ifdef USE_LEVOIT_FAN
-            if (this->fan_ != nullptr)
-                this->fan_->apply_device_status(power, speed, mode);
-#else
-            (void) power;
-            (void) speed;
-            (void) mode;
-#endif
+            // Every report goes to the fan entity, as before: it merges the
+            // -1 sentinels itself and knows which of its fields moved.
+            this->state_.set_fan(power, speed, mode);
+            this->fan_changed(power, speed, mode);
         }
 
         void Levoit::publish_filter_stats_now()
@@ -382,6 +414,9 @@ namespace esphome
         }
         void Levoit::on_switch_command(SwitchType type, bool state)
         {
+            // The requested value is the state until the MCU reports back,
+            // which is what the builders read through try_get_switch_state.
+            this->state_.set_switch(type, state);
             // Optional: restrict by model
             // if (model_ != ModelType::VITAL200S && type == SwitchType::QUICK_CLEAN) return;
 
@@ -452,6 +487,8 @@ namespace esphome
 
         void Levoit::on_number_command(NumberType type, float value)
         {
+            // Requested value first: the builders below read it back.
+            this->state_.set_number(type, value);
             // Optional: restrict by model
             // if (model_ != ModelType::VITAL200S && type == NumberType::EFFICIENCY_ROOM_SIZE) return;
 
@@ -573,6 +610,8 @@ namespace esphome
         }
         void Levoit::on_select_command(SelectType type, uint32_t value)
         {
+            // Requested value first: the builders below read it back.
+            this->state_.set_select(type, value);
             // Optional: restrict by model
             // if (model_ != ModelType::VITAL200S && type == SwitchType::QUICK_CLEAN) return;
 
@@ -720,6 +759,7 @@ namespace esphome
         void Levoit::on_fan_command(int power, int speed_level, int mode)
         {
             ESP_LOGD(TAG, "on_fan_command: power=%d speed_level=%d mode=%d", power, speed_level, mode);
+            this->state_.set_fan(power, speed_level, mode);
             // Optional: restrict by model
             // if (model_ != ModelType::VITAL200S && type == SwitchType::QUICK_CLEAN) return;
 
@@ -1030,14 +1070,12 @@ namespace esphome
 
         float Levoit::calculate_filter_life_left_percent() const
         {
-#ifndef USE_LEVOIT_NUMBER
-            return 100.0f;
-#else
-            auto *filter_lifetime_num = this->get_number(NumberType::FILTER_LIFETIME_MONTHS);
-            if (filter_lifetime_num == nullptr || !filter_lifetime_num->has_state())
+            // The number entity restores the saved months into the state at
+            // boot (note_number_state) and on every change (on_number_command).
+            float filter_lifetime_months;
+            if (!this->state_.get_number(NumberType::FILTER_LIFETIME_MONTHS, filter_lifetime_months))
                 return 100.0f;
 
-            float filter_lifetime_months = filter_lifetime_num->state;
             uint32_t total_filter_capacity = cadr * 24 * 30 * filter_lifetime_months;
             if (total_filter_capacity == 0)
                 return 100.0f;
@@ -1049,7 +1087,6 @@ namespace esphome
                 life_left_percent = 100.0f;
 
             return life_left_percent;
-#endif
         }
 
         /// @brief The main loop, that is triggeed by the esphome framework automatically
