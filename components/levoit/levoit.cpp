@@ -143,6 +143,7 @@ namespace esphome
             auto *nm = numbers_[nt_idx_(type)];
             if (!nm)
                 return;
+            value = nm->normalize_room_size(value);
             if (nm->has_state() && nm->state == value)
                 return;
             nm->publish_state(value);
@@ -301,7 +302,8 @@ namespace esphome
                 return false;
             if (type == SelectType::FAN_OPERATING_MODE_SELECT || type == SelectType::DAYTIME_FAN_MODE)
             {
-                int mode = fan_operating_mode_to_raw(sel->current_option());
+                const auto option = sel->current_option();
+                int mode = fan_operating_mode_to_raw(option.c_str(), option.size());
                 if (mode < 0)
                     return false;
                 out = static_cast<size_t>(mode);

@@ -3,7 +3,7 @@
 #include "core_status.h"
 #include "sprout_status.h"
 #include "superior_status.h"
-#include "esphome/core/log.h"
+#include "levoit_log.h"
 #include "types.h"
 
 namespace esphome
