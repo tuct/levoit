@@ -9,10 +9,12 @@
 // counters. See docs/shared-core.md, step 3.
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "levoit_platform.h"
+#include "lv600s_controls.h"
 #include "levoit_state.h"
 #include "types.h"
 
@@ -50,6 +52,8 @@ class LevoitDevice {
 
   const std::string &get_model_name() const { return this->model_name_; }
   ModelType get_model() const { return model_; }
+  // Only available after selecting ModelType::LV600S.
+  lv600s::Controls &lv600s() { return *lv600s_; }
   const LevoitState &state() const { return this->state_; }
   // A number entity restored a saved value at boot: keep the state in step
   // without sending anything
@@ -247,6 +251,7 @@ class LevoitDevice {
       case ModelType::EVERESTAIR:
         return 3;
       case ModelType::SUPERIOR6000S:
+      case ModelType::LV600S:
         return 9;
       default:
         return 4;
@@ -254,7 +259,8 @@ class LevoitDevice {
   }
   bool has_auto() const { return this->model_ != ModelType::CORE200S; }
   bool has_air_quality() const {
-    return this->model_ != ModelType::CORE200S && this->model_ != ModelType::SUPERIOR6000S;
+    return this->model_ != ModelType::CORE200S && this->model_ != ModelType::SUPERIOR6000S &&
+           this->model_ != ModelType::LV600S;
   }
   // get_model_name() returns the configured key ("CORE300S"); this is "Core 300S".
   const char *display_name() const {
@@ -268,6 +274,7 @@ class LevoitDevice {
       case ModelType::SPROUT: return "Sprout";
       case ModelType::EVERESTAIR: return "EverestAir";
       case ModelType::SUPERIOR6000S: return "Superior 6000S";
+      case ModelType::LV600S: return "LV600S";
       case ModelType::ELEVA300X: return "Eleva 300X";
       default: return "Levoit";
     }
@@ -333,6 +340,8 @@ class LevoitDevice {
   std::string model_name_;
   // What the MCU reported, or what was last requested of it (levoit_state.h)
   LevoitState state_;
+  std::unique_ptr<lv600s::Controls> lv600s_;
+  uint32_t lv600s_poll_at_{0};
   // Last commanded LED values — set by sendSproutLightDirect, read by build_sprout_command
   uint8_t  pending_led_bri_{100};    // 0–100 percent
   uint16_t pending_led_ct_{3500};    // Kelvin

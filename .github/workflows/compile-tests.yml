@@ -52,6 +52,8 @@ jobs:
           # component. levoit only (Philips has no wired test config).
           - { component: levoit, config: test-ethernet.yaml, esphome: latest }
           - { component: levoit, config: test-ethernet.yaml, esphome: '2026.6.0' }
+          - { component: levoit, config: test-lv600s.yaml, esphome: latest }
+          - { component: levoit, config: test-lv600s.yaml, esphome: '2026.6.0' }
           - { component: lv600s_humidifier, config: test-all-entities.yaml, esphome: latest }
           - { component: lv600s_humidifier, config: test-all-entities.yaml, esphome: '2026.6.0' }
     steps:

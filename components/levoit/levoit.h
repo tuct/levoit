@@ -15,6 +15,7 @@
 #include "types.h"
 #include "esphome_ns.h"
 #include "levoit_device.h"
+#include "lv600s_presets.h"
 #include "levoit_platform.h"
 #include "levoit_state.h"
 #ifdef USE_LEVOIT_TIME

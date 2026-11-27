@@ -165,7 +165,7 @@ component. Where each one stands: [docs/humidifiers.md](./docs/humidifiers.md).
 <b><a href="./devices/levoit-lv600s">LV600S</a></b><br>
 <sub>🚧 Development · 6 L</sub><br>
 <sub>Warm and cool mist, one EU unit on MCU 1.0.56</sub><br>
-<sub>Component: <a href="./components/lv600s_humidifier">lv600s_humidifier</a></sub><br>
+<sub>On <a href="./devices/levoit-lv600s/levoit-lv600s-shared_dev.yaml"><code>levoit</code>, <code>model: LV600S</code></a></sub><br>
 <sub>🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash original ESP</sub><br>
 <sub><a href="./devices/levoit-lv600s">Guide</a></sub>

@@ -12,6 +12,11 @@ namespace esphome
     }
     void LevoitSwitch::write_state(bool state)
     {
+      if (parent_ && parent_->get_model() == ModelType::LV600S)
+      {
+        parent_->on_switch_command(this->type_, state);
+        return;
+      }
       // Optimistic update for HA UI. Switch::publish_state in core
       // ESPHome sets the public `state` field and fires callbacks but
       // does not flip has_state_ — unlike Select::publish_state and

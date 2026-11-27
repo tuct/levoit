@@ -1,0 +1,28 @@
+substitutions:
+  rx_pin: GPIO16
+  tx_pin: GPIO17
+
+esphome:
+  name: test-levoit-lv600s
+  min_version: 2026.6.0
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+
+logger:
+  baud_rate: 0
+
+wifi:
+  ssid: compile-test
+  password: compile-test
+
+packages:
+  device: !include ../../../devices/levoit-lv600s/common-shared.yaml
+
+external_components:
+  - source: ../..
+    components: [levoit]

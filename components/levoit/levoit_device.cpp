@@ -10,6 +10,8 @@
 #include <functional>
 #include <algorithm>
 #include "decoder.h"
+#include "lv600s_status.h"
+#include "lv600s_presets.h"
 #include "fan_modes.h"
 #include "tlv.h"
 #include "vital_status.h"
@@ -229,6 +231,12 @@ namespace levoit
         }
         void LevoitDevice::on_switch_command(SwitchType type, bool state)
         {
+            if (lv600s_)
+            {
+                if (type == SwitchType::DISPLAY)
+                    lv600s_->set_display(state);
+                return;
+            }
             // The requested value is the state until the MCU reports back,
             // which is what the builders read through try_get_switch_state.
             this->state_.set_switch(type, state);
@@ -303,6 +311,16 @@ namespace levoit
 
         void LevoitDevice::on_number_command(NumberType type, float value)
         {
+            if (lv600s_)
+            {
+                if (type == NumberType::WARM_LEVEL && value >= 0 && value <= 3)
+                    lv600s_->set_warm_level(static_cast<uint8_t>(std::lround(value)));
+                else if (type == NumberType::HUMIDITY_TARGET && value >= 40 && value <= 80)
+                    lv600s_->set_target_humidity(static_cast<uint8_t>(std::lround(value)));
+                else if (type == NumberType::TIMER && value >= 0 && value <= 720)
+                    lv600s_->set_timer_seconds(static_cast<uint32_t>(std::lround(value)) * 60);
+                return;
+            }
             // Requested value first: the builders below read it back.
             this->state_.set_number(type, value);
             this->note_command();
@@ -427,6 +445,12 @@ namespace levoit
         }
         void LevoitDevice::on_select_command(SelectType type, uint32_t value)
         {
+            if (lv600s_)
+            {
+                if (type == SelectType::FAN_OPERATING_MODE_SELECT)
+                    lv600s_->fan_command(-1, -1, value);
+                return;
+            }
             // Requested value first: the builders below read it back.
             this->state_.set_select(type, value);
             this->note_command();
@@ -580,6 +604,11 @@ namespace levoit
         }
         void LevoitDevice::on_fan_command(int power, int speed_level, int mode)
         {
+            if (lv600s_)
+            {
+                lv600s_->fan_command(power, speed_level, mode);
+                return;
+            }
             ESP_LOGD(TAG, "on_fan_command: power=%d speed_level=%d mode=%d", power, speed_level, mode);
             // Superior power follows MCU feedback, including off requests that start drying.
             this->state_.set_fan(this->model_ == ModelType::SUPERIOR6000S ? -1 : power, speed_level, mode);
@@ -704,12 +733,31 @@ namespace levoit
                 model_ = ModelType::SUPERIOR6000S;
             else if (model == "ELEVA300X")
                 model_ = ModelType::ELEVA300X;
+            else if (model == "LV600S")
+                model_ = ModelType::LV600S;
+
+            if (model_ == ModelType::LV600S)
+            {
+                lv600s_ = std::make_unique<lv600s::Controls>([this] { return platform_->millis(); });
+                lv600s_->protocol().transmit = [this](const lv600s::Bytes &frame) {
+                    platform_->write(frame.data(), frame.size());
+                };
+            }
+            else
+                lv600s_.reset();
 
             ESP_LOGI(TAG, "Model set to: %s (ModelType=%d)", model.c_str(), (int)model_);
         }
         void LevoitDevice::begin()
         {
             ESP_LOGI(TAG, "Starting Levoit %s", model_name_.c_str());
+            if (lv600s_)
+            {
+                lv600s_poll_at_ = platform_->millis();
+                lv600s_->query_status();
+                lv600s_->protocol().query_timer();
+                return;
+            }
             //https://docs.google.com/spreadsheets/d/17j6FZwvqHRFkGoH5996u5JdR7tk4_7fNuTxAK7kc4Fk/edit?gid=1612245341#gid=1612245341
             cadr = this->rated_cadr();
             
@@ -911,6 +959,43 @@ namespace levoit
         /// @brief Once per main loop pass: LEDs, timers, CADR, filter life
         void LevoitDevice::tick(uint32_t now)
         {
+            if (lv600s_)
+            {
+                lv600s_->tick(now);
+                if (uint32_t(now - lv600s_poll_at_) >= 5000)
+                {
+                    lv600s_poll_at_ = now;
+                    lv600s_->query_status();
+                    lv600s_->protocol().query_timer();
+                }
+                const bool online = lv600s_->has_status();
+                if (!online && get_binary_sensor_state(BinarySensorType::MCU_CONNECTION))
+                {
+                    publish_sensor(SensorType::HUMIDITY, NAN);
+                    publish_sensor(SensorType::TEMPERATURE, NAN);
+                    publish_sensor(SensorType::MIST_LEVEL, NAN);
+                    publish_number(NumberType::WARM_LEVEL, NAN);
+                    publish_number(NumberType::HUMIDITY_TARGET, NAN);
+                    publish_text_sensor(TextSensorType::REPORTED_MODE, "Unknown");
+                    publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Unknown");
+                }
+                publish_binary_sensor(BinarySensorType::MCU_CONNECTION, online);
+                if (uint32_t(now - last_check_sec_) >= 1000)
+                {
+                    last_check_sec_ = now;
+                    const float remaining = lv600s_startup::timer_remaining(*lv600s_);
+                    const float duration = lv600s_startup::timer_duration(*lv600s_, lv600s_startup::unset);
+                    publish_text_sensor(TextSensorType::TIMER_DURATION_CURRENT,
+                                        lv600s::Controls::format_timer_duration(remaining));
+                    publish_text_sensor(TextSensorType::TIMER_DURATION_INITIAL,
+                                        lv600s::Controls::format_timer_duration(duration));
+                    if (std::isfinite(remaining))
+                        publish_number(NumberType::TIMER, std::ceil(remaining / 60.0f));
+                    else if (float previous; try_get_number_state(NumberType::TIMER, previous) && std::isfinite(previous))
+                        publish_number(NumberType::TIMER, NAN);
+                }
+                return;
+            }
             this->accrue_filter_(now);
 
             // Every minute: the runtime counter and the filter sensors
@@ -1200,6 +1285,13 @@ namespace levoit
                 return;
             if (msg[0] != 0xA5)
                 return;
+
+            if (lv600s_)
+            {
+                if (lv600s_->receive_frame(msg, len, last_rx_byte_ms_))
+                    decode_lv600s_status(this, lv600s_->protocol().status);
+                return;
+            }
 
             // Byte 6 is the model's protocol version, byte 9 the result code.
             // A checksum alone does not make an error response valid status.
