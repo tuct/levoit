@@ -282,14 +282,14 @@ The **Filter Life Left** sensor tracks filter usage as a percentage (0-100%) bas
 ### How It Works
 
 1. **Baseline Capacity**:
-   - Model CADR (e.g., 214 m³/h for Core300S) multiplied by filter lifetime (default 12 months)
-   - Formula: `Total Capacity = CADR × 24 hours × 30 days × Filter Lifetime (months)`
-   - Example: `214 × 24 × 30 × 12 = 1,844,160 m³` for Core300S at 12 months
+   - The filter is good for its lifetime (default 12 months) of running at full CADR
+   - Formula: `Total Capacity = 30 days × 24 hours × 3600 s × Filter Lifetime (months)`, in seconds at full CADR
+   - Example: `30 × 24 × 3600 × 12 = 31,104,000 s` at 12 months, for every model
 
 2. **Real-Time Tracking**:
-   - Every minute, the component accumulates CADR based on current fan speed
-   - Tracks `used_cadr_` (total m³ processed) persisted to device preferences
-   - Updates `total_runtime_` (minutes fan has been on)
+   - On every pass of the main loop, the time since the last pass is added, weighted by the CADR at the current speed over the model's full CADR: a second at full speed counts one second, a second at a speed that moves half the air counts half
+   - The result, `filter_seconds` (seconds at full CADR), is saved once per completed hour and when the firmware shuts down, so a power cut loses at most an hour; before 1.9 the counter was cubic metres saved every minute, and an existing value is converted once at the first boot
+   - `total_runtime` (minutes the fan has been on) counts once a minute
 
 3. **Speed-Dependent CADR**:
    - Level 1: `CADR × 1 ÷ max_speed` (derates to ~63% in Sleep mode)
@@ -299,8 +299,9 @@ The **Filter Life Left** sensor tracks filter usage as a percentage (0-100%) bas
 
 4. **Percentage Calculation**:
    ```
-   Filter Life % = 100 - (used_cadr ÷ Total Capacity × 100)
+   Filter Life % = 100 - (filter_seconds ÷ Total Capacity × 100)
    ```
+   - The **Used CADR** number shows the same wear in cubic metres (`filter_seconds × CADR ÷ 3600`)
    - Clamped to 0-100% range
    - Published every 10 seconds as a float with one decimal place
 
@@ -310,7 +311,7 @@ The **Filter Life Left** sensor tracks filter usage as a percentage (0-100%) bas
 
 ### Resetting Filter Stats
 
-- Use the **Reset Filter Stats** button to reset `used_cadr` and `total_runtime` to 0
+- Use the **Reset Filter Stats** button to reset `filter_seconds` and `total_runtime` to 0
 - This resets the filter life percentage back to 100%
 - Persists immediately to device storage
 

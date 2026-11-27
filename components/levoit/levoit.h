@@ -68,6 +68,7 @@ class Levoit : public Component, public uart::UARTDevice, public LevoitHost, pub
   void setup() override;
   void loop() override;
   void dump_config() override;
+  void on_shutdown() override;
 
   // ---- forwarded to the core for the platform entities ----
   ModelType get_model() const { return this->device_.get_model(); }
@@ -136,6 +137,7 @@ class Levoit : public Component, public uart::UARTDevice, public LevoitHost, pub
   time::RealTimeClock *time_{nullptr};
 #endif
   // Saved counters: one preference object per key the core asks for
+  ESPPreferenceObject pref_filter_seconds_;
   ESPPreferenceObject pref_used_cadr_;
   ESPPreferenceObject pref_total_runtime_;
   ESPPreferenceObject *pref_for_(const char *key);

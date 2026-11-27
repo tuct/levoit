@@ -313,13 +313,86 @@ static void test_begin_and_tracking() {
   CHECK(rig.platform.fire("core300s_status_req2"));
   CHECK(rig.platform.tx.size() == after);
 
-  // Core 300S: 214 m³/h at speed 3 of 3; a minute of it goes to the counters
+  // Core 300S: 214 m³/h at speed 3 of 3, full CADR; the minute tick counts
+  // runtime and publishes the sensors, but does not save on its own
   CHECK(rig.device.calculate_current_cadr_per_hour() == 214);
   rig.device.track_cadr_usage();
   CHECK(rig.device.get_total_runtime() == 57);
-  CHECK(rig.device.get_used_cadr() == 1234 + 214 / 60);
-  CHECK(rig.platform.prefs[LevoitDevice::PREF_TOTAL_RUNTIME] == 57);
+  CHECK(rig.platform.prefs[LevoitDevice::PREF_TOTAL_RUNTIME] == 56);
   CHECK(rig.host.sensors.count(SensorType::FILTER_LIFE_LEFT) == 1);
+}
+
+// Filter wear in speed-weighted seconds (#162): migrated once from the old
+// cubic-metre counter, accrued per tick, saved per completed hour and at
+// shutdown, reset at once.
+static void test_filter_accounting() {
+  Rig rig("CORE300S");
+  rig.platform.prefs[LevoitDevice::PREF_USED_CADR] = 1234;  // old key only
+  rig.device.note_number_state(NumberType::FILTER_LIFETIME_MONTHS, 12);
+  rig.device.begin();
+  // 1234 m³ at 214 m³/h = 20759 s at full CADR, seeded and saved under the new key
+  CHECK(rig.device.get_filter_seconds() == 20759);
+  CHECK(rig.device.get_used_cadr() == 1234);
+  CHECK(rig.platform.prefs[LevoitDevice::PREF_FILTER_SECONDS] == 20759);
+
+  // speed 3 of 3: ten seconds of wall time are ten seconds of wear
+  rig.feed(hex("A5 22 D8 17 00 63 01 32 40 00 00 00 01 01 00 03 00 64 01 03 00 01 05 00 00 00 00 00 00"), 1000);
+  rig.device.tick(1000);
+  rig.device.tick(11000);
+  CHECK(rig.device.get_filter_seconds() == 20769);
+  CHECK(rig.platform.prefs[LevoitDevice::PREF_FILTER_SECONDS] == 20759);  // no hour completed: no save
+
+  // Sleep at running speed 0 flags the sleep speed; speed 1 of 3 derated to
+  // 63 %: 214 / 3 * 0.63 = 44 m³/h, so ten seconds are two seconds of wear
+  rig.feed(hex("A5 22 DC 17 00 61 01 32 40 00 00 00 01 01 01 03 00 64 01 00 00 01 05 00 00 00 00 00 00"), 12000);
+  rig.device.state();  // (speed 0 in Sleep: calculate_current_cadr_per_hour is 0)
+  rig.device.tick(12000);
+  rig.device.tick(22000);
+  CHECK(rig.device.get_filter_seconds() == 20769);
+  rig.device.on_fan_command(-1, 1, 0);  // Manual, speed 1
+  rig.device.tick(23000);
+  rig.device.tick(33000);
+  CHECK(rig.device.calculate_current_cadr_per_hour() == 71);
+  CHECK(rig.device.get_filter_seconds() == 20769 + 3);  // 10 s * 71 / 214 = 3.3
+
+  // off: nothing accrues
+  rig.device.on_fan_command(0, -1, -1);
+  rig.device.tick(34000);
+  rig.device.tick(94000);
+  CHECK(rig.device.get_filter_seconds() == 20772);
+
+  // back to full speed at 94 s until the hour boundary (21600 s): the wear
+  // accrues from the command on, and is saved at the boundary, once
+  rig.device.on_fan_command(1, 3, 0);
+  rig.device.tick(94000 + (21600 - 20772) * 1000 - 1000);
+  CHECK(rig.device.get_filter_seconds() == 21599);
+  CHECK(rig.platform.prefs[LevoitDevice::PREF_FILTER_SECONDS] == 20759);
+  rig.device.tick(94000 + (21600 - 20772) * 1000);
+  CHECK(rig.device.get_filter_seconds() == 21600);
+  CHECK(rig.platform.prefs[LevoitDevice::PREF_FILTER_SECONDS] == 21600);
+
+  // the percentage is seconds over the lifetime in seconds
+  const float left = rig.device.calculate_filter_life_left_percent();
+  CHECK(left > 99.9f && left < 100.0f);  // 21600 of 31,104,000 s
+
+  // shutdown saves whatever is there; a reset saves at once
+  rig.device.tick(94000 + (21600 - 20772) * 1000 + 5000);
+  CHECK(rig.device.get_filter_seconds() == 21605);
+  rig.device.shutdown();
+  CHECK(rig.platform.prefs[LevoitDevice::PREF_FILTER_SECONDS] == 21605);
+  rig.device.set_used_cadr(0);
+  CHECK(rig.device.get_filter_seconds() == 0);
+  CHECK(rig.platform.prefs[LevoitDevice::PREF_FILTER_SECONDS] == 0);
+
+  // a fresh device with neither key starts at 0, and set_filter_percent seeds seconds
+  Rig fresh("CORE300S");
+  fresh.device.note_number_state(NumberType::FILTER_LIFETIME_MONTHS, 12);
+  fresh.device.begin();
+  CHECK(fresh.device.get_filter_seconds() == 0 && fresh.device.get_used_cadr() == 0);
+  fresh.device.set_filter_percent(50);
+  CHECK(fresh.device.get_filter_seconds() == 31104000u / 2);
+  const float half = fresh.device.calculate_filter_life_left_percent();
+  CHECK(half > 49.9f && half < 50.1f);
 }
 
 // tick(): the Wi-Fi LED follows the network through the platform.
@@ -497,6 +570,7 @@ int main() {
   test_capabilities();
   test_set_filter_percent();
   test_begin_and_tracking();
+  test_filter_accounting();
   test_wifi_led();
   test_filter_led();
   test_acks();

@@ -78,6 +78,11 @@ namespace esphome
 
         void Levoit::dump_config() {}
 
+        void Levoit::on_shutdown()
+        {
+            this->device_.shutdown();
+        }
+
         // ===== entity registration (codegen) =====
 
         void Levoit::register_switch(SwitchType type, LevoitSwitch *sw)
@@ -291,6 +296,11 @@ namespace esphome
         // so counters saved by earlier versions are found.
         ESPPreferenceObject *Levoit::pref_for_(const char *key)
         {
+            if (std::string(key) == LevoitDevice::PREF_FILTER_SECONDS)
+            {
+                pref_filter_seconds_ = global_preferences->make_preference<uint32_t>(fnv1_hash(key));
+                return &pref_filter_seconds_;
+            }
             if (std::string(key) == LevoitDevice::PREF_USED_CADR)
             {
                 pref_used_cadr_ = global_preferences->make_preference<uint32_t>(fnv1_hash(key));

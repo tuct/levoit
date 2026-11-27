@@ -125,18 +125,33 @@ class LevoitDevice {
   uint8_t  get_pending_led_bri() const { return pending_led_bri_; }
   uint16_t get_pending_led_ct()  const { return pending_led_ct_; }
   uint16_t get_pending_aqi() const { return pending_aqi_; }
-  // Getters for internally tracked values
-  uint32_t get_used_cadr() const { return used_cadr_; }
+  // Filter accounting (#162). The filter wears by speed-weighted seconds: a
+  // second at full CADR counts 1, a second at a speed that moves half the
+  // air counts 0.5. Accrued on every tick, saved once per hour of it and in
+  // shutdown(); a reset saves at once.
+  uint32_t get_filter_seconds() const { return filter_seconds_; }
+  // The same wear as cubic metres of air, the unit the old counter and the
+  // Used CADR number use: seconds × CADR / 3600.
+  uint32_t get_used_cadr() const {
+    return (uint32_t)(((uint64_t) filter_seconds_ * cadr + 1800) / 3600);
+  }
   uint32_t get_total_runtime() const { return total_runtime_; }
-  // Setters for internally tracked values (auto-saves to preferences)
+  // Set the wear in cubic metres (0 = new filter); saves at once.
   void set_used_cadr(uint32_t value) {
-    used_cadr_ = value;
-    platform_->save_u32(PREF_USED_CADR, used_cadr_);
+    this->set_filter_seconds((uint32_t)(((uint64_t) value * 3600 + cadr / 2) / cadr));
+  }
+  void set_filter_seconds(uint32_t seconds) {
+    filter_seconds_ = seconds;
+    filter_carry_ = 0;
+    this->save_counters_(true);
   }
   void set_total_runtime(uint32_t value) {
     total_runtime_ = value;
-    platform_->save_u32(PREF_TOTAL_RUNTIME, total_runtime_);
+    this->save_counters_(true);
   }
+  // Save the counters now: the platform calls this when the firmware stops
+  // (ESPHome's on_shutdown), so a power cut loses at most an hour.
+  void shutdown() { this->save_counters_(true); }
 
   // Bulk-prefs cache — mirrors the 12 status TLVs (0x18..0x23) the MCU
   // emits on every push for the sleep / quick-clean / white-noise /
@@ -259,8 +274,8 @@ class LevoitDevice {
     float months;
     if (!this->state_.get_number(NumberType::FILTER_LIFETIME_MONTHS, months) || months <= 0.0f)
       return;
-    const uint64_t capacity = (uint64_t) this->rated_cadr() * 24 * 30 * (uint32_t) months;
-    this->set_used_cadr((uint32_t)((capacity * (100 - percent) + 99) / 100));
+    const uint64_t capacity = (uint64_t) 30 * 24 * 3600 * (uint32_t) months;  // seconds at full CADR
+    this->set_filter_seconds((uint32_t)((capacity * (100 - percent) + 99) / 100));
     this->publish_filter_stats_now();
   }
   void sendCommand(CommandType commandType);
@@ -271,8 +286,10 @@ class LevoitDevice {
 
   // Preference keys; the ESPHome platform hashes them the way the component
   // always did, so existing counters survive the move into the core.
-  static constexpr const char *PREF_USED_CADR = "levoit_used_cadr";
+  static constexpr const char *PREF_FILTER_SECONDS = "levoit_filter_seconds";
   static constexpr const char *PREF_TOTAL_RUNTIME = "levoit_runtime";
+  // The counter before #162, cubic metres; read once to seed the seconds.
+  static constexpr const char *PREF_USED_CADR = "levoit_used_cadr";
 
  protected:
   // Per-model rated CADR (m³/h); begin() seeds the counter from it and
@@ -296,6 +313,10 @@ class LevoitDevice {
   void parse_rx_();
   // Core models: the filter LED follows FILTER_LOW
   void sync_filter_led_(float filter_left);
+  // Filter accounting: add the time since the last tick, weighted by the
+  // current CADR; save when an hour of wear or of runtime completes
+  void accrue_filter_(uint32_t now);
+  void save_counters_(bool force = false);
 
   LevoitHost *host_;
   LevoitPlatform *platform_;
@@ -347,12 +368,15 @@ class LevoitDevice {
   uint8_t dry_level_preference_{0};
 
   // Internal tracked values (persisted through the platform)
-  uint32_t used_cadr_{0};
-  // Sub-m³ carry for the per-minute CADR accumulation, always < 60. Deliberately
-  // not persisted: a reboot loses under 1 m³ against a filter capacity in the
-  // hundreds of thousands.
-  uint32_t cadr_remainder_{0};
-  uint32_t total_runtime_{0};
+  uint32_t filter_seconds_{0};  // speed-weighted seconds of wear
+  uint32_t total_runtime_{0};   // minutes the fan was on
+  // Wear below one second, in ms × m³/h; not persisted, a reboot loses under
+  // a second. uint64 so a long gap between ticks cannot overflow it.
+  uint64_t filter_carry_{0};
+  uint32_t accrue_ms_{0};       // platform time of the last accrual
+  bool accrue_started_{false};
+  uint32_t saved_filter_hours_{0};
+  uint32_t saved_runtime_hours_{0};
   BulkPrefsCache bulk_prefs_;
   PayloadHashCacheEntry payload_hash_cache_[PAYLOAD_HASH_CACHE_SIZE]{};
   bool command_pending_{false};
