@@ -10,13 +10,16 @@ namespace levoit
 {
 
     static const char *const TAG_DEC = "levoit.decoder";
-    static uint8_t compute_payload_hash_(const uint8_t *payload, size_t len)
+    // FNV-1a, 32 bits. The 8-bit XOR/rotate fingerprint it replaces matched
+    // about 1 in 256 changed payloads (Core 300S: AQI 1 -> 2 together with
+    // PM2.5 5 -> 3 left the hash unchanged), and the change was skipped.
+    static uint32_t compute_payload_hash_(const uint8_t *payload, size_t len)
     {
-      uint8_t h = 0;
+      uint32_t h = 2166136261u;
       for (size_t i = 0; i < len; i++)
       {
         h ^= payload[i];
-        h = (h << 1) | (h >> 7); // rotate-left 1
+        h *= 16777619u;
       }
       return h;
     }
@@ -32,7 +35,7 @@ namespace levoit
       if (!payload || payload_len == 0)
         return true;
 
-      const uint8_t hash = compute_payload_hash_(payload, payload_len);
+      const uint32_t hash = compute_payload_hash_(payload, payload_len);
       auto &cache = self->payload_hash_cache();
 
       // Find existing entry
@@ -169,9 +172,9 @@ namespace levoit
         self->publish_filter_stats_now();
       }
 
-      uint8_t h = compute_payload_hash_(payload, payload_len);
-      ESP_LOGD("levoit.dedup", "model=%d ptype=%02X%02X payload_len=%u hash=0x%02X last=0x%02X",
-               (int)model, ptype0, ptype1, (unsigned)payload_len, h,
+      uint32_t h = compute_payload_hash_(payload, payload_len);
+      ESP_LOGD("levoit.dedup", "model=%d ptype=%02X%02X payload_len=%u hash=0x%08X last=0x%02X",
+               (int)model, ptype0, ptype1, (unsigned)payload_len, (unsigned)h,
                payload_len ? payload[payload_len - 1] : 0);
 
       // Deduplicate only periodic status pushes; timer responses, button resets,

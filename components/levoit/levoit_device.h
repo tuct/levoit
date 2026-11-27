@@ -172,7 +172,7 @@ class LevoitDevice {
   struct PayloadHashCacheEntry {
     uint8_t ptype0;
     uint8_t ptype1;
-    uint8_t hash;  // fingerprint of payload
+    uint32_t hash;  // fingerprint of payload
     bool valid;
   };
   static constexpr size_t PAYLOAD_HASH_CACHE_SIZE = 16;
