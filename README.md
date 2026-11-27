@@ -75,11 +75,14 @@ Devices that *can't* run ESPHome but are still controllable locally on stock fir
 
 Humidifiers use the same MCU-over-UART approach as the purifiers above, and the
 same in-repo components — a Levoit humidifier is just another `model:` for the
-[`levoit`](./components/levoit/README.md) component.
+[`levoit`](./components/levoit/README.md) component. The plan for bringing every
+Levoit humidifier onto it, and where each one stands, is
+[docs/humidifiers.md](./docs/humidifiers.md).
 
 | Model | Manufacturer | Support | Methods | Tank | Output (spec) | Disassembly | Guide | Links | Comments |
 |-------|--------------|---------|---------|------|---------------|-------------|-------|-------|----------|
 | [Superior 6000S](./devices/levoit-superior-6000s) | Levoit | 🏠 [`levoit`](./components/levoit/README.md) | 🟢 Flash / 🔵 Add ESP | 6 L | 500 mL/h | Easy | [Guide](./devices/levoit-superior-6000s) | — | 🚧 **Untested on hardware** · evaporative; 9 fan speeds, target humidity, auto-dry, temperature + humidity sensors |
+| Dual 200S (LUH-D302S) | Levoit | 🏠 [`levoit`](./components/levoit/README.md), planned | 🔵 Add ESP / 🟢 Flash (untried) | — | — | Easy | [Plan](./docs/humidifiers.md) | — | 📋 **Planned** · ultrasonic; a working single-file YAML and the teardown are in [#66](https://github.com/tuct/levoit/issues/66), to be folded into the component as `model: DUAL200S`, see the [humidifier plan](./docs/humidifiers.md) |
 
 The legend is the same as for the purifiers above — **Tank** and **Output** are
 manufacturer specs and replace the CADR/Noise columns.
