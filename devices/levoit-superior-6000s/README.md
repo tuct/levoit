@@ -99,9 +99,10 @@ when it reaches zero it sends the zero a few times (a single one is sometimes
 missed) before switching the device off. The `timer` number is in **hours** here,
 where the purifiers use minutes.
 
-**`dry_level` does not act on its own.** There is no standalone dry-level command;
-the select just records Low or High, and the value is applied when you pick **Dry**
-on the fan entity. Setting the select alone will not start a drying cycle.
+**`dry_level`** changes Low/High immediately while drying. Otherwise it remembers
+the choice for the next **Dry** preset request; inactive MCU reports do not erase
+that choice. On MCU 1.0.9 the level command also starts drying, so selecting a
+level while inactive does not send it ([capture](uart/dry_controls.txt)).
 
 ## Credits
 

@@ -74,9 +74,18 @@ class LevoitDevice {
   // Send calculated AQI value to MCU display (CMD=02 06 55)
   void send_aqi_to_mcu(uint16_t aqi);
   // Superior 6000S: Dry level is chosen up-front via a select, then applied when
-  // Dry mode is picked on the fan entity. 0 = Low, 1 = High.
+  // Dry mode is picked on the fan entity; changes while drying apply immediately.
+  // 0 = Low, 1 = High.
   uint8_t get_dry_level_preference() const { return dry_level_preference_; }
-  void set_dry_level_preference(uint8_t level) { dry_level_preference_ = level; }
+  bool has_dry_level_preference() const { return dry_level_preference_known_; }
+  void set_dry_level_preference(uint8_t level) {
+    dry_level_preference_ = level;
+    dry_level_preference_known_ = true;
+  }
+
+  // Last decoded Superior drying countdown, in seconds.
+  uint16_t get_dry_remaining() const { return dry_remaining_; }
+  void set_dry_remaining(uint16_t seconds) { dry_remaining_ = seconds; }
 
   // ---- what the decoders call when the MCU reports ----
   // Records the value in the device state and, when it changed, hands it to
@@ -375,6 +384,8 @@ class LevoitDevice {
   uint32_t esp_timer_last_update_{0};
   uint8_t esp_timer_zero_count_{0};
   uint8_t dry_level_preference_{0};
+  bool dry_level_preference_known_{false};
+  uint16_t dry_remaining_{0};
 
   // Internal tracked values (persisted through the platform)
   uint32_t filter_seconds_{0};  // speed-weighted seconds of wear

@@ -472,9 +472,13 @@ namespace levoit
                 break;
 
             case SelectType::DRY_LEVEL:
-                // Remembered only. Drying is started from the fan entity's Dry mode,
-                // which then applies this level - the MCU has no standalone dry-level command.
-                this->dry_level_preference_ = (value <= 1) ? (uint8_t) value : 0;
+                if (this->model_ != ModelType::SUPERIOR6000S || value > 1)
+                    break;
+                this->set_dry_level_preference((uint8_t) value);
+                // MCU 1.0.9: this command also starts drying (uart/dry_controls.txt).
+                // While inactive, retain the choice for the next explicit Dry request.
+                if (this->get_binary_sensor_state(BinarySensorType::DRY_ACTIVE))
+                    this->sendCommand(value == 1 ? setDryLevelHigh : setDryLevelLow);
                 break;
 
             case SelectType::FAN_OPERATING_MODE_SELECT:
@@ -606,7 +610,8 @@ namespace levoit
                 return;
             }
             ESP_LOGD(TAG, "on_fan_command: power=%d speed_level=%d mode=%d", power, speed_level, mode);
-            this->state_.set_fan(power, speed_level, mode);
+            // Superior power follows MCU feedback, including off requests that start drying.
+            this->state_.set_fan(this->model_ == ModelType::SUPERIOR6000S ? -1 : power, speed_level, mode);
             this->note_command();
             if (speed_level != -1 && this->state_.fan.selected_speed != -1)
                 this->state_.fan.selected_speed = speed_level;
@@ -649,8 +654,11 @@ namespace levoit
             // plus "Manual" (see LevoitFan::control). Sent level-then-Manual, the
             // Everest does not end up in Manual at the requested level (#92);
             // Manual-then-level is the sequence that works on the unit (preset
-            // first, then speed). Other models keep level-then-mode.
-            const bool mode_before_speed = this->model_ == ModelType::EVERESTAIR;
+            // first, then speed). Superior MCU 1.0.9 also restores its remembered
+            // speed on entering Manual, so the explicit level must follow it.
+            // Other models keep level-then-mode.
+            const bool mode_before_speed = this->model_ == ModelType::EVERESTAIR ||
+                                           this->model_ == ModelType::SUPERIOR6000S;
 
             if (power != -1)
             {
@@ -1341,7 +1349,11 @@ namespace levoit
             ESP_LOGD(TAG, "Command triggered: %s", command_type_to_string(commandType));
             std::vector<uint8_t> message;
 
-            if (this->model_ == ModelType::CORE200S || this->model_ == ModelType::CORE300S || this->model_ == ModelType::CORE400S || this->model_ == ModelType::CORE600S)
+            if (this->model_ == ModelType::SUPERIOR6000S)
+            {
+                message = build_superior_command(this, commandType);
+            }
+            else if (this->model_ == ModelType::CORE200S || this->model_ == ModelType::CORE300S || this->model_ == ModelType::CORE400S || this->model_ == ModelType::CORE600S)
             {
                 message = build_core_command(this, commandType);
             }
