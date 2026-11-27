@@ -13,6 +13,11 @@ Project-level changes. Component releases have their own log:
   `lv600s_humidifier` component for now; the goal is `model: LV600S` in `levoit`
   once the shared protocol core ([#147](https://github.com/tuct/levoit/issues/147))
   exists.
+* **Core 300S on the `01 32 40` status: speed reads 1 in Sleep.** The fan showed
+  the last manual speed in Sleep, often 3, though it runs slower than speed 1. It
+  now reads the running speed, `00` in Sleep, as Auto already did, which the fan
+  shows as its lowest speed. Frames in
+  [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt) ("sleep")
 * **Core 300S on the `01 32 40` status: Display reads off in Sleep and while
   off.** The panel is dark then, but the display setting byte stays on, so
   *Display* showed on. It now shows what the panel does. The setting is
