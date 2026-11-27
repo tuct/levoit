@@ -7,59 +7,10 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
-* **Auto room size**: the Core 600S diagnostic control uses the same 147 m²
-  upper limit as its preset. The Vital 100S rounds reported and restored room
-  sizes to the nearest m² when configured with a 1 m² step.
-* **Towards one protocol core for ESPHome and Matter**
-  ([#147](https://github.com/tuct/levoit/issues/147)): the plan in
-  [docs/shared-core.md](./docs/shared-core.md), and its first step: the
-  protocol sources log through `levoit_log.h` (ESPHome's, ESP-IDF's or a
-  host's log), `fan_modes.h` no longer needs ESPHome, and a new *Host tests*
-  workflow builds the frame layer with a plain `g++` against captured frames.
-  Nothing changes in an ESPHome build.
-* **Levoit UART frame handling.** Decode both length bytes, discard impossible
-  or truncated frames, and preserve complete frames in long bursts.
-  Core 600S and Vital 100S echo the incoming sequence in ACKs and reject
-  frames with an unexpected protocol version or error result.
-* **Core 300S on the `01 32 40` status: speed reads 1 in Sleep.** The fan showed
-  the last manual speed in Sleep, often 3, though it runs slower than speed 1. It
-  now reads the running speed, `00` in Sleep, as Auto already did, which the fan
-  shows as its lowest speed. Frames in
-  [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt) ("sleep")
-* **Core 300S on the `01 32 40` status: Display reads off in Sleep and while
-  off.** The panel is dark then, but the display setting byte stays on, so
-  *Display* showed on. It now shows what the panel does. The setting is
-  kept: leaving Sleep or turning on brings the display back as before.
-  Frames in [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
-  ("sleep", "power off")
-* **Core 300S with the `01 32 40` status** (a LAP-C302S-WGC, MCU 1.0.0) now
-  reports its state: the 19-byte status is decoded and asked for at boot, a
-  filter reset on the panel (Sleep held 3 s) resets the filter life, and a
-  new `power_button_held` binary sensor (Core models) follows a long press of
-  the On/Off button. Capture in
-  [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
-  ([#140](https://github.com/tuct/levoit/pull/140),
-  [#141](https://github.com/tuct/levoit/pull/141),
-  [#142](https://github.com/tuct/levoit/pull/142),
-  [#143](https://github.com/tuct/levoit/pull/143))
-* **Core plasma documented** in [LEVOIT_UART.md](./LEVOIT_UART.md#plasma-01-e8-a5):
-  the plasma command `01 E8 A5`, read from the stock firmware of a Core 300S
-  (not sent to a purifier yet), and offset 6 of the `01 32 40` status, which
-  follows the panel's plasma button. Not used by the component yet
-  ([#144](https://github.com/tuct/levoit/pull/144))
-* **Room size: one number to set** (Core 300S / 400S / 600S, Vital 100S /
-  200S). Changing *Auto Mode Room Size Preset* while Room Size is the active
-  auto mode now sends it to the purifier at once; before, it only took effect
-  the next time Room Size was picked. *Auto Mode Room Size*, which shows what
-  the purifier reports (0 outside Room Size), moves to *Diagnostic* in Home
-  Assistant. Same entity, same name: automations keep working. The Sprout
-  keeps it as a setting, since it has no Preset
-  ([#137](https://github.com/tuct/levoit/pull/137))
-* **Statistics for the remaining measurements**: the Superior 6000S humidity,
-  temperature and MCU filter life, and the Philips filter sensors, get
-  `state_class: measurement`, so Home Assistant keeps long-term statistics for
-  them, as it already did for PM, AQI, CADR and filter life. The Superior ones
-  also get their unit and device class (%, °C) ([#138](https://github.com/tuct/levoit/pull/138))
+Changes merged since the last release are collected in
+[`changelog.d/`](./changelog.d/), one file per pull request, and land here at
+the next release. `python tools/changelog.py preview` shows them as they will
+appear.
 
 ### 2026.11.23 (component 1.7.3)
 
