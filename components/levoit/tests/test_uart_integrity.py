@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[3]
 COMPONENT = ROOT / 'components' / 'levoit'
 CORE_SOURCES = [
     'levoit_device.cpp', 'decoder.cpp',
-    'core_status.cpp', 'vital_status.cpp', 'sprout_status.cpp', 'superior_status.cpp',
+    'core_status.cpp', 'vital_status.cpp', 'sprout_status.cpp', 'superior_status.cpp', 'lv600s_status.cpp',
     'core_commands.cpp', 'vital_commands.cpp', 'sprout_commands.cpp', 'superior_commands.cpp',
     'tlv.cpp', 'levoit_message.cpp',
 ]
@@ -34,7 +34,7 @@ class UARTIntegrityTests(unittest.TestCase):
                             str(ROOT / 'tests' / 'host' / 'levoit_device_test.cpp'),
                             *[str(COMPONENT / s) for s in CORE_SOURCES],
                             '-o', str(exe)], check=True)
-            subprocess.run([str(exe)], check=True)
+            subprocess.run([str(exe)], cwd=ROOT, check=True)
 
 
 if __name__ == '__main__': unittest.main()

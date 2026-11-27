@@ -19,14 +19,13 @@ handful of entities the purifiers do not have.
 | Device | Protocol | Status | Who | Where |
 |--------|----------|--------|-----|-------|
 | **Superior 6000S** (LEH-S601S / S602S) | TLV, 115200, `cmd[0] = 02`, status `02 30 55` | `model: SUPERIOR6000S` since #64; runs on the stock module on two units | decode by Jyers, pins and tests by egoleos, jasongill, rebpdx | [issue #10](https://github.com/tuct/levoit/issues/10), [discussion #78](https://github.com/tuct/levoit/discussions/78), [`devices/levoit-superior-6000s`](../devices/levoit-superior-6000s/) |
-| **LV600S** (LUH-A602S-WEUR, EU) | fixed layout, **9600**, `cmd[0] = 01`, status `01 10 41` / `01 11 41`, 20 bytes | open [PR #152](https://github.com/tuct/levoit/pull/152): separate `lv600s_humidifier` component, tested on one EU unit with MCU 1.0.56 | mvs90 | PR #152, its `PROTOCOL.md` and `HARDWARE.md` |
+| **LV600S** (LUH-A602S-WEUR, EU) | fixed layout, **9600**, `cmd[0] = 01`, status `01 10 41` / `01 11 41`, 20 bytes in the captures | development component `lv600s_humidifier` merged in [#152](https://github.com/tuct/levoit/pull/152), tested on one EU unit with MCU 1.0.56 | mvs90 | [device notes and UART captures](../devices/levoit-lv600s/) |
 | **Dual 200S** (LUH-D302S-WDE) | fixed layout, **9600**, `cmd[0] = 01`, status `01 C1 40`, 25 bytes | standalone single-file YAML (MIT) with an inline parser, works on one unit with a XIAO ESP32-C3 added | gorischek | [issue #66](https://github.com/tuct/levoit/issues/66) |
 | OasisMist LV450S / LV600S (US) | unknown | FCC filings only, nobody has opened one | — | [adding-a-new-device.md](./adding-a-new-device.md) |
 
-All three opened units carry an ESP32-C3-SOLO-1 (the LV600S an ESP32-SOLO-1C)
-next to a separate MCU, with the MCU link on the module's IO18 / IO19 pads, the
-same as the Superior 6000S write-up. So the two install paths the purifiers
-have apply: flash the stock module, or park it (`EN` to GND) and add a XIAO.
+The tested EU LV600S uses the original ESP32-SOLO-1C with the MCU link on
+GPIO17 (TX) and GPIO16 (RX). See each device's hardware notes for its
+module and UART connections before using a replacement ESP.
 
 ## The protocols side by side
 
@@ -119,13 +118,11 @@ toggled may yet find the byte.
 
 ## Steps
 
-### 0. Shared-core step 3 first
+### 0. Shared-core step 3
 
-[Step 3](./shared-core.md#3-split-levoitcpp) moves the decoders onto
-`LevoitDevice *` and splits `levoit.cpp`. A humidifier decoder written before
-that lands has to be rewritten in the merge, and the Core-family decoders are
-exactly the files it touches. Everything that does not touch the component
-(steps 1 and 2) can start now.
+[#158](https://github.com/tuct/levoit/pull/158) moved the decoders onto
+`LevoitDevice *` and separated the ESPHome adapter. The model port can use
+that interface and replay the UART captures through the shared core.
 
 ### 1. Collect what is missing (now)
 
@@ -135,11 +132,10 @@ exactly the files it touches. Everything that does not touch the component
   per file: power on and off, each mist level, a target change, auto-off on and
   off, display on and off, tank off and on, a minute idle; the MCU version;
   and whether they will flash a test build.
-* **LV600S, PR #152**: agree with mvs90 on the path from the separate
-  component to `model: LV600S`, which the PR itself names as the goal. The
-  owner's captures are not in the repo; the PR's native tests replay the
-  payloads, which is the evidence the decode can cite until frames are
-  committed under `devices/levoit-lv600s/uart/`.
+* **LV600S, #152**: the [90 captured frames](../devices/levoit-lv600s/uart/README.md)
+  cover status polls, panel changes, mode and mist writes, timer expiry and
+  button events on EU MCU 1.0.56. The stock ESP's cold-start handshake
+  remains outside those captures.
 * **Superior 6000S**: the Jyers protocol sheet from issue #10 and egoleos'
   frames from #78 go under `devices/levoit-superior-6000s/uart/`, so the
   decoder has a capture to cite like every other model.
@@ -179,13 +175,18 @@ permission, EXIF stripped.
 * `decoder.cpp`: route `01 11 41` and the `0x12` reply to `01 10 41` for the
   LV600S, `01 C1 40` and the `0x12` reply to `01 C0 40` for the Dual 200S; add
   both to the status-frame predicate so dedup treats them as status.
-* Polling: neither LUH model is known to push status unprompted. Reuse the Core
-  300S status-request path (`requestCore300sStatus`, sent on a timer and after
-  each command) with the model's request CMD.
+* Polling: the LV600S pushes `01 11 41` between `01 10 41` polls as shown in
+  [panel-mode-timer.csv](../devices/levoit-lv600s/uart/panel-mode-timer.csv).
+  Keep polling for refresh and recovery. Accept status feedback separately
+  from the empty ACK after a settings write. Unsolicited Dual 200S reporting
+  still needs capture evidence.
 * Command confirmation: #152 confirms setters from the next status, not the
   ACK alone, and drops pending writes on a tank, water or fault condition. Keep
   that as the behaviour for both LUH models; it is what the one hardware test
   verified.
+  The LV600S also requires fresh confirmed power for settings writes, accepts
+  explicit power-off, and keeps an unconfirmed timer preset for the next
+  power-on. Carry those rules forward with the #152 startup tests.
 * Nothing changes for the Superior 6000S or any purifier. Two ESPHome versions
   must build, the minimum in the component READMEs and the newest release.
 

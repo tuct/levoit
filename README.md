@@ -81,7 +81,7 @@ Levoit humidifier onto it, and where each one stands, is
 
 | Model | Manufacturer | Support | Methods | Tank | Output (spec) | Disassembly | Guide | Links | Comments |
 |-------|--------------|---------|---------|------|---------------|-------------|-------|-------|----------|
-| [LV600S / LUH-A602S-WEUR](./devices/levoit-lv600s) | Levoit | 🏠 [`lv600s_humidifier`](./components/lv600s_humidifier) | 🟢 Flash original ESP | 6 L | — | Easy | [Guide](./devices/levoit-lv600s) | — | 🚧 Development: warm/cool mist, verified on one EU unit with MCU 1.0.56 |
+| [LV600S / LUH-A602S-WEUR](./devices/levoit-lv600s) | Levoit | 🏠 [`levoit`, `model: LV600S`](./devices/levoit-lv600s/levoit-lv600s-shared_dev.yaml) | 🟢 Flash original ESP | 6 L | — | Easy | [Guide](./devices/levoit-lv600s) | — | 🚧 Development: warm/cool mist, verified on one EU unit with MCU 1.0.56 |
 | [Superior 6000S](./devices/levoit-superior-6000s) | Levoit | 🏠 [`levoit`](./components/levoit/README.md) | 🟢 Flash / 🔵 Add ESP | 6 L | 500 mL/h | Easy | [Guide](./devices/levoit-superior-6000s) | — | 🚧 **Untested on hardware** · evaporative; 9 fan speeds, target humidity, auto-dry, temperature + humidity sensors |
 | Dual 200S (LUH-D302S) | Levoit | 🏠 [`levoit`](./components/levoit/README.md), planned | 🔵 Add ESP / 🟢 Flash (untried) | — | — | Easy | [Plan](./docs/humidifiers.md) | — | 📋 **Planned** · ultrasonic; a working single-file YAML and the teardown are in [#66](https://github.com/tuct/levoit/issues/66), to be folded into the component as `model: DUAL200S`, see the [humidifier plan](./docs/humidifiers.md) |
 

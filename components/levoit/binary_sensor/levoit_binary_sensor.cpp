@@ -19,6 +19,14 @@ void LevoitBinarySensor::loop() {
 	if (this->parent_ == nullptr)
 		return;
 
+	if (this->parent_->get_model() == ModelType::LV600S &&
+	    this->type_ != BinarySensorType::MCU_CONNECTION &&
+	    !this->parent_->device().lv600s().has_status()) {
+		if (this->has_state())
+			this->invalidate_state();
+		return;
+	}
+
 	bool desired = this->parent_->get_binary_sensor_state(this->type_);
 	if (!this->has_state() || this->state != desired) {
 		this->publish_state(desired);

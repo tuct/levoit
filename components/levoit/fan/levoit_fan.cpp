@@ -45,10 +45,12 @@ namespace esphome
             bool isSprout = model == ModelType::SPROUT;
             bool isEverest = model == ModelType::EVERESTAIR;
             bool isEleva = model == ModelType::ELEVA300X;
-            auto restore = this->restore_state_();
-            if (restore.has_value())
+            const bool isLv600s = model == ModelType::LV600S;
+            if (!isLv600s)
             {
-                restore->apply(*this);
+                auto restore = this->restore_state_();
+                if (restore.has_value())
+                    restore->apply(*this);
             }
             // based on model, set capabilities
             std::vector<const char *> preset_modes;
@@ -69,11 +71,8 @@ namespace esphome
                 preset_modes.push_back(m.preset);
             }
 
-            // The speed count is the core's per-model fact (LevoitDevice::speed_count):
-            // 3 on the Core 200S / 300S and the EverestAir (its 4th step is the
-            // "Turbo" preset, not a fan level), 9 on the Superior 6000S, 4 elsewhere.
-            // The entity had its own table with 4 for the Superior, which clamped
-            // its speeds 5-9 to 4.
+            if (isLv600s)
+                preset_modes = {"Manual", "Sleep", "Humidity"};
             this->speed_count_ = parent_->device().speed_count();
 
             // Construct traits
@@ -88,6 +87,16 @@ namespace esphome
 
         void LevoitFan::control(const fan::FanCall &call)
         {
+            if (parent_ && parent_->get_model() == ModelType::LV600S)
+            {
+                const auto preset = call.get_preset_mode();
+                const int mode = preset && std::strcmp(preset, "Humidity") == 0
+                                     ? 3 : preset_to_device_mode(preset);
+                const int power = call.get_state().has_value() ? int(*call.get_state()) : -1;
+                parent_->on_fan_command(power, call.get_speed().value_or(-1), mode);
+                return;
+            }
+
             // Start with sentinels = "no change"
             int power_cmd = -1;
             int speed_cmd = -1;
@@ -188,10 +197,16 @@ namespace esphome
                 }
             }
 
-            const char *preset = device_mode_to_preset(mode);
-            if (mode != -1 && this->parent_ != nullptr)
+            const bool is_lv600s = parent_ && parent_->get_model() == ModelType::LV600S;
+            const char *preset = is_lv600s && mode == 3 ? "Humidity" : device_mode_to_preset(mode);
+            if (mode != -1 && this->parent_ != nullptr && !is_lv600s)
             {
                 this->parent_->publish_select(SelectType::FAN_OPERATING_MODE_SELECT, mode);
+            }
+            if (is_lv600s && mode == -1 && !this->get_preset_mode().empty())
+            {
+                this->set_preset_mode_(nullptr);
+                dirty = true;
             }
             if (preset != nullptr)
             {

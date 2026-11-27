@@ -1,7 +1,7 @@
 name: UART host regressions
 on:
   pull_request:
-    paths: ['components/levoit/**', 'tests/host/**', '.github/workflows/uart-tests.yml']
+    paths: ['components/levoit/**', 'tests/host/**', 'devices/levoit-lv600s/uart/*.csv', '.github/workflows/uart-tests.yml']
   push:
     branches: [main]
 jobs:

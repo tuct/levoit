@@ -15,7 +15,7 @@ CODEOWNERS = ["@tuct"]
 LEVOIT_VERSION = version_info.version()
 
 CONF_LEVOIT_MODEL = "model"
-VALID_MODELS = ["VITAL100S", "VITAL200S", "CORE200S", "CORE300S", "CORE400S", "CORE600S", "SPROUT", "EVERESTAIR", "SUPERIOR6000S", "ELEVA300X"] # same name: VITAL200S PRO == VITAL200S
+VALID_MODELS = ["VITAL100S", "VITAL200S", "CORE200S", "CORE300S", "CORE400S", "CORE600S", "SPROUT", "EVERESTAIR", "SUPERIOR6000S", "ELEVA300X", "LV600S"] # same name: VITAL200S PRO == VITAL200S
 
 CONF_LEVOIT_ID = "levoit"
 # Optional clock. The Eleva 300X MCU runs its quiet window itself and asks the
@@ -44,6 +44,18 @@ CONFIG_SCHEMA = cv.All(
     .extend(cv.COMPONENT_SCHEMA)
     .extend(uart.UART_DEVICE_SCHEMA)
 )
+
+
+def _validate_uart(config):
+    if config[CONF_LEVOIT_MODEL] == "LV600S":
+        return uart.final_validate_device_schema(
+            "LV600S", baud_rate=9600, data_bits=8, parity="NONE", stop_bits=1,
+            require_tx=True, require_rx=True,
+        )(config)
+    return config
+
+
+FINAL_VALIDATE_SCHEMA = _validate_uart
 
 
 async def to_code(config):

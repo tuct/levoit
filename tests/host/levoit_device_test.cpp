@@ -14,6 +14,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <fstream>
 #include <functional>
 #include <map>
 #include <sstream>
@@ -562,6 +563,250 @@ static void test_parser() {
   CHECK(wrap.platform.acks() == 1);
 }
 
+// Full captured ESP RX frames from devices/levoit-lv600s/uart/. Each
+// status updates the shared state, including 0x02 pushes between polls.
+static void test_lv600s_captures() {
+  unsigned frames = 0, statuses = 0;
+  unsigned mist_levels = 0, warm_levels = 0;
+  for (const char *name : {"poll-standby.csv", "panel-mode-timer.csv", "api-control-feedback.csv"}) {
+    const auto path = std::string("devices/levoit-lv600s/uart/") + name;
+    std::ifstream input(path);
+    CHECK(input.is_open());
+    if (!input) continue;
+    std::string line;
+    std::getline(input, line);  // CSV header
+    Rig rig("LV600S");
+    uint32_t now = 0;
+    while (std::getline(input, line)) {
+      std::istringstream row(line);
+      std::string test_case, elapsed, direction, opcode, data;
+      std::getline(row, test_case, ',');
+      std::getline(row, elapsed, ',');
+      std::getline(row, direction, ',');
+      std::getline(row, opcode, ',');
+      std::getline(row, data);
+      frames++;
+      const auto packet = hex(data.c_str());
+      CHECK(packet.size() >= 10 && levoit_checksum(packet.data(), packet.size()) == packet[5]);
+      if (direction == "TX") continue;
+      CHECK(direction == "RX");
+      const bool status = opcode == "4110" || opcode == "4111";
+      const int reports = rig.host.fan_reports;
+      rig.feed(packet, ++now);
+      CHECK(rig.host.fan_reports == reports + (status ? 1 : 0));
+      if (!status || packet.size() != 30) continue;
+      statuses++;
+      const auto *p = packet.data() + 10;
+      CHECK(rig.host.texts[TextSensorType::MCU_VERSION] == "1.0.56");
+      CHECK(rig.host.fan_power == p[3] && rig.host.fan_speed == p[12]);
+      CHECK(rig.host.binaries[BinarySensorType::TANK_REMOVED] == (p[4] == 1));
+      CHECK(rig.host.binaries[BinarySensorType::WATER_TANK_EMPTY] == (p[5] == 1));
+      CHECK(rig.host.switches[SwitchType::DISPLAY] == (p[3] == 1 && p[6] == 100 && p[11] != 2));
+      CHECK(rig.host.sensors[SensorType::HUMIDITY] == p[9]);
+      CHECK(rig.host.sensors[SensorType::TEMPERATURE] == p[10]);
+      CHECK(rig.host.numbers[NumberType::WARM_LEVEL] == p[13]);
+      if (p[12] <= 9) mist_levels |= 1u << p[12];
+      if (p[13] <= 3) warm_levels |= 1u << p[13];
+      if (test_case == "humidity-sleep-manual" && p[11] == 3) {
+        CHECK(rig.host.fan_mode == 3 && rig.host.texts[TextSensorType::REPORTED_MODE] == "Humidity");
+        CHECK(rig.host.numbers[NumberType::HUMIDITY_TARGET] == p[8]);
+      }
+      if (test_case == "humidity-sleep-manual" && p[11] == 2)
+        CHECK(rig.host.fan_mode == 1 && rig.host.texts[TextSensorType::REPORTED_MODE] == "Sleep");
+    }
+    CHECK(rig.platform.tx.empty());
+  }
+  CHECK(frames == 90 && statuses == 42);
+  constexpr unsigned mist_presets = (1u << 1) | (1u << 5) | (1u << 9);
+  CHECK((mist_levels & mist_presets) == mist_presets);
+  CHECK(warm_levels == 0x0F);
+}
+
+static void test_lv600s_status_guard() {
+  // Panel warmth push at 2230 ms in panel-mode-timer.csv.
+  const auto good = hex("A5 02 30 18 00 77 01 11 41 00 38 00 01 01 00 00 64 00 64 29 14 01 05 01 00 00 00 00 00 00");
+  Rig rig("LV600S");
+  auto bad_result = good;
+  bad_result[9] = 1;
+  levoit_finalize_message(bad_result, good[2]);
+  rig.feed(bad_result, 10);
+  auto bad_version = good;
+  bad_version[6] = 2;
+  levoit_finalize_message(bad_version, good[2]);
+  rig.feed(bad_version, 11);
+  auto short_push = good;
+  short_push.resize(26);
+  short_push[3] = 20;
+  levoit_finalize_message(short_push, good[2]);
+  rig.feed(short_push, 12);
+  CHECK(rig.host.fan_reports == 0);
+
+  // The standalone component also accepts 16-byte poll replies.
+  auto short_reply = short_push;
+  short_reply[1] = 0x12;
+  short_reply[7] = 0x10;
+  levoit_finalize_message(short_reply, good[2]);
+  rig.feed(short_reply, 13);
+  CHECK(rig.host.fan_reports == 1 && rig.host.fan_mode == 0);
+
+  rig.feed(good, 14);
+  CHECK(rig.host.fan_reports == 2 && rig.host.binaries[BinarySensorType::HEATING_ENABLED]);
+  // Same status is still received by the LV600S model; normal typed slots deduplicate.
+  rig.feed(good, 15);
+  CHECK(rig.host.fan_reports == 3);
+  auto original_auto = good;
+  original_auto[1] = 0x22;
+  original_auto[21] = 0;
+  original_auto[25] = 3;
+  levoit_finalize_message(original_auto, good[2]);
+  rig.feed(original_auto, 16);
+  CHECK(rig.host.fan_mode == 0 && rig.host.texts[TextSensorType::REPORTED_MODE] == "Auto (Original)");
+  CHECK(rig.host.binaries[BinarySensorType::MCU_FAULT]);
+  CHECK(!rig.host.binaries[BinarySensorType::HEATING_ENABLED] && !rig.host.binaries[BinarySensorType::HUMIDIFYING]);
+  CHECK(rig.platform.tx.empty());
+
+  Rig purifier("CORE600S");
+  purifier.feed(good, 17);
+  CHECK(purifier.host.fan_reports == 0 && purifier.host.sensors.count(SensorType::HUMIDITY) == 0);
+}
+
+static void test_lv600s_shared_commands() {
+  Rig rig("LV600S");
+  auto &device = rig.device;
+  auto &controls = device.lv600s();
+  device.begin();
+  CHECK(rig.platform.tx.size() == 2);
+  CHECK(rig.platform.last_with(0x10, 0x41) && rig.platform.last_with(0x65, 0xA2));
+
+  // Status and timer ACK/report from panel-mode-timer.csv. Modify the
+  // decoded standby and water flags to exercise the guard deterministically.
+  auto status = hex("A5 12 EE 18 00 A3 01 10 41 00 38 00 01 01 00 00 64 00 64 32 13 01 05 00 00 00 00 00 00 00");
+  auto report = [&](size_t offset, uint8_t value, uint32_t now) {
+    status[10 + offset] = value;
+    levoit_finalize_message(status, status[2]);
+    rig.feed(status, now);
+  };
+  report(3, 0, 100);
+  CHECK(rig.host.binaries[BinarySensorType::MCU_CONNECTION]);
+  const auto poll_count = rig.platform.tx.size();
+  device.on_fan_command(-1, 5, -1);
+  device.on_fan_command(-1, -1, 3);
+  device.on_fan_command(-1, 9, -1);
+  CHECK(rig.platform.tx.size() == poll_count + 1 && rig.platform.last_with(0x00, 0xA0));
+  rig.feed(lv600s::packet(lv600s::Command::POWER, {}, 0, 0x12), 105);
+  device.tick(105);
+  CHECK(!rig.platform.last_with(0x60, 0xA2) && !rig.platform.last_with(0x14, 0x41));
+  CHECK(rig.host.fan_power == 0);
+  report(3, 1, 110);
+  device.tick(110);
+  const auto *mist = rig.platform.last_with(0x60, 0xA2);
+  CHECK(mist && (*mist)[12] == 9 && !rig.platform.last_with(0x14, 0x41));
+  CHECK(rig.host.fan_speed == 5);
+  report(12, 9, 120);
+  CHECK(rig.host.fan_speed == 9 && rig.host.sensors[SensorType::MIST_LEVEL] == 9);
+  device.on_switch_command(SwitchType::DISPLAY, false);
+  CHECK(rig.platform.last_with(0x05, 0xA1));
+  CHECK(rig.host.switches[SwitchType::DISPLAY]);
+  report(6, 0, 130);
+  CHECK(!rig.host.switches[SwitchType::DISPLAY]);
+
+  device.on_fan_command(-1, -1, 3);
+  const auto *humidity = rig.platform.last_with(0x14, 0x41);
+  CHECK(humidity && (*humidity)[10] == 55);
+  CHECK(rig.host.fan_mode == 0);
+  report(8, 55, 131);
+  report(11, 3, 132);
+  CHECK(rig.host.fan_mode == 3);
+  device.on_number_command(NumberType::HUMIDITY_TARGET, 66);
+  const auto *target = rig.platform.last_with(0xE8, 0xA2);
+  CHECK(target && (*target)[11] == 66);
+  CHECK(rig.host.numbers[NumberType::HUMIDITY_TARGET] == 55);
+  report(8, 66, 133);
+  CHECK(rig.host.numbers[NumberType::HUMIDITY_TARGET] == 66);
+  device.on_number_command(NumberType::WARM_LEVEL, 2);
+  const auto *warm = rig.platform.last_with(0x12, 0x41);
+  CHECK(warm && (*warm)[10] == 2);
+  CHECK(rig.host.numbers[NumberType::WARM_LEVEL] == 0);
+  report(13, 2, 134);
+  CHECK(rig.host.numbers[NumberType::WARM_LEVEL] == 2);
+  device.on_fan_command(-1, -1, 1);
+  const auto *sleep = rig.platform.last_with(0x82, 0x40);
+  CHECK(sleep && (*sleep)[10] == 66);
+  report(11, 2, 135);
+  CHECK(rig.host.fan_mode == 1);
+
+  uint32_t timer_id = 0;
+  CHECK(controls.set_timer_seconds(60, &timer_id));
+  const auto *timer = rig.platform.last_with(0x64, 0xA2);
+  CHECK(timer && (*timer)[10] == 60);
+  rig.feed(hex("A5 12 F0 04 00 4D 01 64 A2 00"), 140);
+  CHECK(!controls.timer_write_confirmed(timer_id));
+  rig.feed(hex("A5 22 59 0C 00 52 01 66 A2 00 3C 00 00 00 3C 00 00 00"), 150);
+  CHECK(controls.timer_write_confirmed(timer_id) && controls.get_timer_duration() == 60);
+  rig.platform.now = 1150;
+  device.tick(1150);
+  CHECK(controls.get_timer_remaining() == 59);
+  CHECK(rig.host.texts[TextSensorType::TIMER_DURATION_CURRENT] == "1 min");
+  device.on_number_command(NumberType::TIMER, 0);
+  timer = rig.platform.last_with(0x64, 0xA2);
+  CHECK(timer && (*timer)[10] == 0);
+  rig.feed(hex("A5 22 5B 0C 00 8C 01 66 A2 00 00 00 00 00 3C 00 00 00"), 1200);
+  CHECK(controls.get_timer_remaining() == 0 && controls.get_timer_duration() == 0);
+
+  report(5, 1, 1250);
+  const auto before_rejected = rig.platform.tx.size();
+  device.on_number_command(NumberType::WARM_LEVEL, 3);
+  device.on_fan_command(-1, 1, 0);
+  CHECK(rig.platform.tx.size() == before_rejected);
+  device.on_fan_command(0, -1, -1);
+  CHECK(rig.platform.tx.size() == before_rejected + 1);
+  report(3, 0, 1300);
+  rig.platform.now = 16400;
+  device.tick(16400);
+  CHECK(!rig.host.binaries[BinarySensorType::MCU_CONNECTION]);
+  CHECK(std::isnan(rig.host.sensors[SensorType::HUMIDITY]));
+  CHECK(rig.host.texts[TextSensorType::TIMER_DURATION_CURRENT] == "Unknown");
+  CHECK(rig.platform.acks() == 0);
+}
+
+static void test_lv600s_deferred_fan_cancelled() {
+  // Same fixed status layout as panel-mode-timer.csv, with synthetic power
+  // and water changes during a wake-up.
+  const auto frame = hex("A5 12 EE 18 00 A3 01 10 41 00 38 00 01 01 00 00 64 00 64 32 13 01 05 00 00 00 00 00 00 00");
+  enum class Abort { POWER_OFF, WATER_SHORTAGE, UNSAFE_STATUS_BURST, TIMEOUT };
+  for (const auto cause : {Abort::POWER_OFF, Abort::WATER_SHORTAGE, Abort::UNSAFE_STATUS_BURST, Abort::TIMEOUT}) {
+    Rig rig("LV600S");
+    auto status = frame;
+    status[13] = 0;
+    levoit_finalize_message(status, status[2]);
+    rig.feed(status, 1);
+    if (cause == Abort::WATER_SHORTAGE)
+      rig.device.on_fan_command(-1, 9, -1);
+    else
+      rig.device.on_fan_command(-1, -1, 1);
+    CHECK(rig.platform.last_with(0x00, 0xA0));
+    if (cause == Abort::POWER_OFF) {
+      rig.device.on_fan_command(0, -1, -1);
+    } else if (cause == Abort::WATER_SHORTAGE || cause == Abort::UNSAFE_STATUS_BURST) {
+      if (cause == Abort::UNSAFE_STATUS_BURST) rig.feed(frame, 2); // Wake confirmed before the unsafe report
+      status[15] = 1;
+      levoit_finalize_message(status, status[2]);
+      rig.feed(status, 3);
+    } else {
+      rig.platform.now = 5002;
+      rig.device.tick(2502);
+      rig.device.tick(5002);
+    }
+    const uint32_t now = rig.platform.now + 1;
+    status[13] = 1;
+    status[15] = 0;
+    levoit_finalize_message(status, status[2]);
+    rig.feed(status, now);
+    rig.device.tick(now);
+    CHECK(!rig.platform.last_with(0x82, 0x40) && !rig.platform.last_with(0x60, 0xA2));
+  }
+}
+
 int main() {
   test_core300s_capture();
   test_command();
@@ -576,6 +821,10 @@ int main() {
   test_acks();
   test_version_guard();
   test_parser();
+  test_lv600s_captures();
+  test_lv600s_status_guard();
+  test_lv600s_shared_commands();
+  test_lv600s_deferred_fan_cancelled();
   if (failures == 0)
     std::printf("levoit device core: all checks passed\n");
   return failures == 0 ? 0 : 1;

@@ -29,13 +29,13 @@ constexpr size_t NUMBER_SLOTS = 24;
 constexpr size_t SENSOR_SLOTS = 16;
 constexpr size_t SELECT_SLOTS = 16;
 constexpr size_t TEXT_SLOTS = 16;
-constexpr size_t BINARY_SLOTS = 8;
+constexpr size_t BINARY_SLOTS = 12;
 static_assert(static_cast<size_t>(SwitchType::DYNAMIC_SLEEP) < SWITCH_SLOTS, "SwitchType outgrew SWITCH_SLOTS");
-static_assert(static_cast<size_t>(NumberType::QUIET_END) < NUMBER_SLOTS, "NumberType outgrew NUMBER_SLOTS");
-static_assert(static_cast<size_t>(SensorType::AMBIENT_LIGHT) < SENSOR_SLOTS, "SensorType outgrew SENSOR_SLOTS");
+static_assert(static_cast<size_t>(NumberType::WARM_LEVEL) < NUMBER_SLOTS, "NumberType outgrew NUMBER_SLOTS");
+static_assert(static_cast<size_t>(SensorType::MIST_LEVEL) < SENSOR_SLOTS, "SensorType outgrew SENSOR_SLOTS");
 static_assert(static_cast<size_t>(SelectType::QUIET_TRIGGER) < SELECT_SLOTS, "SelectType outgrew SELECT_SLOTS");
-static_assert(static_cast<size_t>(TextSensorType::MODEL) < TEXT_SLOTS, "TextSensorType outgrew TEXT_SLOTS");
-static_assert(static_cast<size_t>(BinarySensorType::POWER_BUTTON_HELD) < BINARY_SLOTS, "BinarySensorType outgrew BINARY_SLOTS");
+static_assert(static_cast<size_t>(TextSensorType::REPORTED_MODE) < TEXT_SLOTS, "TextSensorType outgrew TEXT_SLOTS");
+static_assert(static_cast<size_t>(BinarySensorType::MCU_CONNECTION) < BINARY_SLOTS, "BinarySensorType outgrew BINARY_SLOTS");
 
 template<typename T> struct StateSlot {
   T value{};

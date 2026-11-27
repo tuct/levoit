@@ -15,7 +15,8 @@ namespace levoit
             SPROUT = 6,
             EVERESTAIR = 7,
             SUPERIOR6000S = 8,  // humidifier (not an air purifier)
-            ELEVA300X = 9       // Vital protocol; MCU status arrives as REPORT (0x02), not SEND (0x22)
+            ELEVA300X = 9,      // Vital protocol; MCU status arrives as REPORT (0x02), not SEND (0x22)
+            LV600S = 10,       // Fixed-layout humidifier status at 9600 baud
         };
 
         enum class SwitchType : uint8_t
@@ -78,6 +79,7 @@ namespace levoit
             HUMIDITY_TARGET = 19,       // Superior 6000S: target relative humidity (%)
             QUIET_START = 20,           // Eleva 300X: quiet window start, hours (CMD 02 21 55 key 07, seconds after midnight)
             QUIET_END = 21,             // Eleva 300X: quiet window end, hours (CMD 02 21 55 key 08, seconds after midnight)
+            WARM_LEVEL = 22,            // LV600S: retained warm mist level (0–3)
         };
         // Note: indices 0-11 must stay stable (serialized to preferences)
         // NumberType aliases (flat namespace)
@@ -99,6 +101,7 @@ namespace levoit
         static constexpr NumberType VENT_ANGLE = NumberType::VENT_ANGLE;
         static constexpr NumberType AUTO_PROFILE_ROOM_SIZE_INPUT = NumberType::AUTO_PROFILE_ROOM_SIZE_INPUT;
         static constexpr NumberType HUMIDITY_TARGET = NumberType::HUMIDITY_TARGET;
+        static constexpr NumberType WARM_LEVEL = NumberType::WARM_LEVEL;
         static constexpr NumberType QUIET_START = NumberType::QUIET_START;
         static constexpr NumberType QUIET_END = NumberType::QUIET_END;
 
@@ -117,6 +120,7 @@ namespace levoit
             TEMPERATURE = 10,   // Superior 6000S: measured temperature (degC)
             FILTER_LIFE_MCU = 11, // Superior 6000S: filter life as reported by the MCU (%)
             AQI_INDEX = 12,     // Eleva 300X: numeric AQI 0–500 (status TLV 0x2C); AQI above is the 1–4 level
+            MIST_LEVEL = 14,    // LV600S: confirmed level for history
             AMBIENT_LIGHT = 13, // Eleva 300X: raw light sensor reading (status TLV 0x34, ~4400 bright, ~700 covered)
         };
         // SensorType aliases (flat namespace)
@@ -134,6 +138,7 @@ namespace levoit
         static constexpr SensorType FILTER_LIFE_MCU = SensorType::FILTER_LIFE_MCU;
         static constexpr SensorType AQI_INDEX = SensorType::AQI_INDEX;
         static constexpr SensorType AMBIENT_LIGHT = SensorType::AMBIENT_LIGHT;
+        static constexpr SensorType MIST_LEVEL = SensorType::MIST_LEVEL;
 
         enum class BinarySensorType : uint8_t {
             FILTER_LOW = 0,
@@ -144,6 +149,10 @@ namespace levoit
             HUMIDIFYING = 5,      // Superior 6000S: actively misting
             QUIET_ACTIVE = 6,     // Eleva 300X: quiet period currently lowering the fan (CMD 02 21 55 REPORT key 09: 7 = start, 8 = end)
             POWER_BUTTON_HELD = 7, // Core: On/Off button held (CMD 01 02 D1: 02 = hold registered, 03 = released)
+            TANK_REMOVED = 8,     // LV600S: tank switch
+            MCU_FAULT = 9,        // LV600S: nonzero fault byte
+            HEATING_ENABLED = 10, // LV600S: derived from power, safety and warm mist level
+            MCU_CONNECTION = 11, // LV600S: fresh validated MCU status
         };
         static constexpr BinarySensorType FILTER_LOW = BinarySensorType::FILTER_LOW;
         static constexpr BinarySensorType COVER_OPEN = BinarySensorType::COVER_OPEN;
@@ -153,6 +162,10 @@ namespace levoit
         static constexpr BinarySensorType HUMIDIFYING = BinarySensorType::HUMIDIFYING;
         static constexpr BinarySensorType QUIET_ACTIVE = BinarySensorType::QUIET_ACTIVE;
         static constexpr BinarySensorType POWER_BUTTON_HELD = BinarySensorType::POWER_BUTTON_HELD;
+        static constexpr BinarySensorType TANK_REMOVED = BinarySensorType::TANK_REMOVED;
+        static constexpr BinarySensorType MCU_FAULT = BinarySensorType::MCU_FAULT;
+        static constexpr BinarySensorType HEATING_ENABLED = BinarySensorType::HEATING_ENABLED;
+        static constexpr BinarySensorType MCU_CONNECTION = BinarySensorType::MCU_CONNECTION;
 
         enum class ButtonType : uint8_t {
             RESET_FILTER_STATS = 0,
@@ -169,6 +182,7 @@ namespace levoit
             ERROR_MESSAGE = 5,
             SPROUT_EVENT = 6,   // Sprout: last MCU event string (CMD=02 08 55)
             MODEL = 7,          // configured model (`model:` of the levoit block), e.g. CORE300S
+            REPORTED_MODE = 8,  // LV600S: MCU mode, including read-only values
         };
         static constexpr TextSensorType MCU_VERSION = TextSensorType::MCU_VERSION;
         static constexpr TextSensorType ESP_VERSION = TextSensorType::ESP_VERSION;
@@ -178,6 +192,7 @@ namespace levoit
         static constexpr TextSensorType ERROR_MESSAGE = TextSensorType::ERROR_MESSAGE;
         static constexpr TextSensorType SPROUT_EVENT = TextSensorType::SPROUT_EVENT;
         static constexpr TextSensorType MODEL = TextSensorType::MODEL;
+        static constexpr TextSensorType REPORTED_MODE = TextSensorType::REPORTED_MODE;
 
 
 

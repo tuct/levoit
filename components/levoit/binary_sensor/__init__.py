@@ -18,6 +18,10 @@ TYPE_MAP = {
     "water_tank_empty": BinarySensorType.WATER_TANK_EMPTY,
     "dry_active": BinarySensorType.DRY_ACTIVE,
     "humidifying": BinarySensorType.HUMIDIFYING,
+    "tank_removed": BinarySensorType.TANK_REMOVED,
+    "mcu_fault": BinarySensorType.MCU_FAULT,
+    "heating_enabled": BinarySensorType.HEATING_ENABLED,
+    "mcu_connection": BinarySensorType.MCU_CONNECTION,
     # Eleva 300X only below
     "quiet_active": BinarySensorType.QUIET_ACTIVE,
     # Core models

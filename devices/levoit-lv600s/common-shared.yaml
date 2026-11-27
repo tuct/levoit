@@ -1,0 +1,113 @@
+# EU LV600S (LUH-A602S-WEUR, MCU 1.0.56). Shared Levoit core and ESPHome adapter.
+packages:
+  lv600s_controls: !include
+    file: lv600s-controls.yaml
+    vars:
+      lv600s_controls: 'id(humidifier).device().lv600s()'
+
+esphome:
+  on_boot:
+    priority: 300
+    then:
+      - lambda: |-
+          id(humidifier).device().lv600s().set_fan_selection_callback([] {
+            id(lv600s_start_mist) = lv600s_startup::unset;
+          });
+
+# The fan is the control surface. Keep the original presets package
+# available for existing standalone installations.
+switch:
+  - id: !remove humidifier_power
+select:
+  - id: !remove humidifier_mode
+number:
+  - id: !remove humidifier_mist
+
+uart:
+  id: mcu_uart
+  rx_pin: ${rx_pin}
+  tx_pin: ${tx_pin}
+  baud_rate: 9600
+
+levoit:
+  id: humidifier
+  uart_id: mcu_uart
+  model: LV600S
+
+fan:
+  - platform: levoit
+    levoit: humidifier
+    name: Humidifier
+    restore_mode: NO_RESTORE
+    icon: mdi:air-humidifier
+
+sensor:
+  - platform: levoit
+    levoit: humidifier
+    type: humidity
+    name: Humidity
+  - platform: levoit
+    levoit: humidifier
+    type: temperature
+    name: Temperature
+    accuracy_decimals: 0
+
+  - platform: levoit
+    levoit: humidifier
+    type: mist_level
+    name: Mist Level
+    icon: mdi:scent
+
+binary_sensor:
+  - platform: levoit
+    levoit: humidifier
+    type: water_tank_empty
+    name: Water Tank Empty
+    device_class: problem
+    icon: mdi:water-off
+  - platform: levoit
+    levoit: humidifier
+    type: tank_removed
+    name: Tank Removed
+    device_class: problem
+    icon: mdi:air-humidifier-off
+  - platform: levoit
+    levoit: humidifier
+    type: humidifying
+    name: Humidifying
+    icon: mdi:scent
+  - platform: levoit
+    levoit: humidifier
+    type: heating_enabled
+    name: Heating Enabled
+    icon: mdi:heat-wave
+  - platform: levoit
+    levoit: humidifier
+    type: mcu_connection
+    name: MCU Connection
+    device_class: connectivity
+    entity_category: diagnostic
+  - platform: levoit
+    levoit: humidifier
+    type: mcu_fault
+    name: MCU Fault
+    device_class: problem
+
+text_sensor:
+  - platform: levoit
+    levoit: humidifier
+    type: mcu_version
+    name: MCU Version
+  - platform: levoit
+    levoit: humidifier
+    type: esp_version
+    name: ESP Version
+  - platform: levoit
+    levoit: humidifier
+    type: model
+    name: Model
+    icon: mdi:air-humidifier
+  - platform: levoit
+    levoit: humidifier
+    type: error_message
+    name: Error
