@@ -2,6 +2,12 @@
 
 # Levoit Vital 100S - Custom Firmware (ESPHome)
 
+ESPHome on the Vital 100S, through the `levoit` component: the features below
+in Home Assistant, no cloud. Supported. Adding your own ESP32 is the
+recommended route; flashing the original ESP32-C3 works too. The steps shared
+by all devices are in the [install guide](../../docs/installing.md); this page
+has what is particular to the Vital 100S.
+
 ## Quick Facts
 
 | Item | Value |
@@ -61,7 +67,27 @@ speed `1` (`25%`) on the fan slider so the entity stays `ON`, while `Current CAD
 filter wear tracking apply the 63% sleep-speed derating (`34 m³/h` instead of `55 m³/h`
 on Vital 100S).
 
-## Teardown / Disassembly
+## 1. Build the firmware
+
+**With Home Assistant (recommended):** [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha)
+→ *Add device* → **Vital 100S** → the original ESP, Seeed XIAO ESP32-C3 or
+ESP32-S3. [Step by step](../../docs/installing.md#with-home-assistant-recommended).
+
+**Manually:** the files in this folder, built with the ESPHome CLI or pasted
+into the Device Builder. [Step by step](../../docs/installing.md#manually).
+
+| Board | ESPHome CLI | Device Builder / web builder |
+|-------|-------------|------------------------------|
+| original ESP32-C3-SOLO-1 | `levoit-vital100s.yaml` | `levoit-vital100s-builder.yaml` |
+| Seeed XIAO ESP32-C3 | `levoit-vital100s-c3.yaml` | `levoit-vital100s-builder-c3.yaml` |
+| Seeed XIAO ESP32-S3 | `levoit-vital100s-s3.yaml` | `levoit-vital100s-builder-s3.yaml` |
+| ESP32 dev kit, [custom hardware](#custom-hardware-if-pcbmcu-is-fried) | `vital100-custom.yaml` | — |
+
+```bash
+esphome run levoit-vital100s.yaml
+```
+
+## 2. Disassembly
 
 Remove the top cover to access the PCB. Start by carefully opening the left side with a plastic pry tool or kitchen knife:
 
@@ -83,7 +109,7 @@ PCB fully accessible:
 
 ![Open Vital 100s](./images/Vital100s-open_top_06_small.jpg)
 
-## Debug Header Pinout
+### Debug Header Pinout
 
 | Pin | Signal |
 |-----|--------|
@@ -97,7 +123,27 @@ PCB fully accessible:
 ![Board pinout](./images/Vital100s-board_pinout_small.jpg)
 ![Board connector](./images/Vital100s-board_connector_small.jpg)
 
-## Install New ESP32 (Recommended)
+## 3. Flash the original ESP32
+
+Connect to the [debug header](#debug-header-pinout) with a USB-UART adapter (3.3V TTL), crossing TX/RX:
+- Adapter TX → MCU RX
+- Adapter RX → MCU TX
+
+Connect **IO0 to GND before powering on** to enter bootloader mode.
+
+Then [back up, flash and, if needed, restore](../../docs/installing.md#3-flash-the-original-esp32):
+
+```bash
+esptool read_flash 0 ALL levoit-vital100s-backup.bin
+esphome run levoit-vital100s.yaml
+```
+
+> Note: backup may fail if watchdog-protected. Try while powered externally.
+
+Check the [component README](../../components/levoit/README.md) for the UART
+pin mapping per board.
+
+## 4. Add your own ESP32 (recommended)
 
 Adding your own ESP alongside the stock module leaves the original firmware
 untouched and the change fully reversible — nothing is desoldered.
@@ -105,11 +151,6 @@ untouched and the change fully reversible — nothing is desoldered.
 **Recommended modules:**
 - [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
 - [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
-
-> [!TIP]
-> No YAML to write: in Home Assistant, the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration's
-> *Add device* makes a ready-to-flash config for either board from this model's
-> template. You only add a name and your Wi-Fi.
 
 Photo by [@gorischek](https://github.com/tuct/levoit/issues/72), used with
 permission:
@@ -159,58 +200,23 @@ ESP's TX disconnected: both modules would otherwise drive the same line.
 > the photo is a worthwhile upgrade if your Wi-Fi is marginal — and the XIAO
 > variants with a u.FL connector need their antenna switch set in firmware.
 
-## Flash Original ESP32
+[Wiring, parking the original, strapping pins](../../docs/installing.md#4-add-your-own-esp32)
+in the install guide.
 
-### Prerequisites
+## 5. Assembly
 
-Connect to the debug header with a USB-UART adapter (3.3V TTL), crossing TX/RX:
-- Adapter TX → MCU RX
-- Adapter RX → MCU TX
+Reverse the disassembly: slide the cables back into the holder on the right
+side and fit the top cover back onto its hooks on both sides. For your own
+ESP32, the [photo in step 4](#4-add-your-own-esp32-recommended) shows one
+placement: the XIAO flat on the board to the right of the MCU, the FPC antenna
+stuck to the inside of the housing, hot glue at every wire anchor.
 
-Connect **IO0 to GND before powering on** to enter bootloader mode.
+Reassemble and enjoy! [What to check](../../docs/installing.md#5-assembly)
+once it is powered.
 
-### Backup Existing Firmware
+## Other routes
 
-```bash
-esptool read_flash 0 ALL levoit-vital100s-backup.bin
-```
-
-> Note: may fail if watchdog-protected. Try while powered externally.
-
-### Configure
-
-1. Copy `secrets-example.yaml` → `secrets.yaml` and fill in your Wi-Fi and encryption key
-2. Adjust the device name in the config if running multiple units
-3. Check the [component README](../../components/levoit/README.md) for UART pin mapping per board
-
-### Flash
-
-```bash
-esphome run levoit-vital100s.yaml
-```
-
-Reassemble and enjoy!
-
-### ESPHome Web Builder / Dashboard
-
-Use the pre-generated builder yaml to flash without a local clone — all config is inlined, no `!include` or packages needed:
-
-| File | Board |
-|------|-------|
-| `levoit-vital100s-builder.yaml` | original ESP32-C3-SOLO-1 |
-| `levoit-vital100s-builder-c3.yaml` | ESP32-C3 replacement |
-| `levoit-vital100s-builder-s3.yaml` | Seeed XIAO ESP32-S3 replacement |
-
-Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. Regenerate with `.\make-builder-yaml.ps1` from the `devices/` folder.
-
-### Restore Original Firmware
-
-```bash
-esptool erase_flash
-esptool write_flash 0x00 levoit-vital100s-backup.bin
-```
-
-## Custom Hardware (if PCB/MCU is fried)
+### Custom Hardware (if PCB/MCU is fried)
 
 Parts used for a full custom replacement build:
 
@@ -225,7 +231,9 @@ Parts used for a full custom replacement build:
 **Fan PWM info:** 24V, 5V signal, 1.6kHz, duty cycle 10–90% (`min: 0.1`, `max: 0.9`)
 **Fan speed signal:** 5V, frequency = speed (0=off, 60Hz=slowest, 185Hz=max)
 
-### Custom Schematics
+The config for this build is `vital100-custom.yaml`.
+
+#### Custom Schematics
 
 ![Schematics](./images/custom_schematics.png)
 

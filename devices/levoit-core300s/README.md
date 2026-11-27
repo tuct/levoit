@@ -2,6 +2,12 @@
 
 # Levoit Core 300S - Custom Firmware (ESPHome)
 
+ESPHome on the Core 300S, through the `levoit` component: every stock function
+in Home Assistant, no cloud. Supported. Adding your own ESP32 is the
+recommended route; flashing the original works too. The steps shared by all
+devices are in the [install guide](../../docs/installing.md); this page has
+what is particular to the Core 300S.
+
 ## Quick Facts
 
 | Item | Value |
@@ -42,19 +48,34 @@
 
 ![Core 300S Fan](./images/fan.png)
 
-
-## Teardown / Disassembly
-
-There are three ways onto this device, in rough order of how much you have to
-take apart:
+## Routes onto the device
 
 | Route | Teardown | Notes |
 |-------|----------|-------|
+| [Add your own ESP32](#4-add-your-own-esp32-recommended) | full | Recommended — keeps the original module intact and reversible |
+| [Flash the original ESP32](#3-flash-the-original-esp32) | full + soldering | Smallest parts count, hardest to undo |
 | [Over the air](#flash-over-the-air--no-disassembly-third-party) | **none** | Third-party proof of concept, hijacks the stock OTA over the LAN |
-| [Install a new ESP32](#install-new-esp32-recommended) | full | Recommended — keeps the original module intact and reversible |
-| [Flash the original ESP32](#flash-original-esp32) | full + soldering | Smallest parts count, hardest to undo |
 
-The rest of this section covers getting the unit open, needed for the latter two.
+## 1. Build the firmware
+
+**With Home Assistant (recommended):** [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha)
+→ *Add device* → **Core 300S** → the original ESP, Seeed XIAO ESP32-C3 or
+ESP32-S3. [Step by step](../../docs/installing.md#with-home-assistant-recommended).
+
+**Manually:** the files in this folder, built with the ESPHome CLI or pasted
+into the Device Builder. [Step by step](../../docs/installing.md#manually).
+
+| Board | ESPHome CLI | Device Builder / web builder |
+|-------|-------------|------------------------------|
+| original ESP32-SOLO-1C | `levoit-core300s.yaml` | `levoit-core300s-builder.yaml` |
+| Seeed XIAO ESP32-C3 | `levoit-core300s-c3.yaml` | `levoit-core300s-builder-c3.yaml` |
+| Seeed XIAO ESP32-S3 | `levoit-core300s-s3.yaml` | `levoit-core300s-builder-s3.yaml` |
+
+```bash
+esphome run levoit-core300s.yaml
+```
+
+## 2. Disassembly
 
 * Place upside down, remove base cover and filter to expose 8 screws (4 have washers)
 * Remove all 8 screws — they are soft metal, do not overtighten when reassembling
@@ -69,18 +90,38 @@ The rest of this section covers getting the unit open, needed for the latter two
 
 ![Teardown](./images/teardown_4.jpg)
 
-## Install New ESP32 (Recommended)
+## 3. Flash the original ESP32
 
-Replacing the original ESP32 allows switching back to original firmware without re-flashing and makes future updates easier.
+Solder wires to **TXD0, RXD0, IO0, +3V3, GND** near the ESP32 on the logic
+board and connect to a USB-UART converter. On some boards these are
+through-holes and soldering may not be needed. Connect **IO0 to GND before
+powering on** to enter bootloader mode.
+
+![PCB](./images/pcb_front.jpg)
+
+For flashing you only need to solder to the pin header; the black and white
+wires are connected to dump the ESP-to-MCU communication.
+
+Then [back up, flash and, if needed, restore](../../docs/installing.md#3-flash-the-original-esp32):
+
+```bash
+esptool read_flash 0 ALL levoit-core300s-backup.bin
+esphome run levoit-core300s.yaml
+```
+
+> Note: backup may fail on some boards — proceed at your own risk.
+
+Check the [component README](../../components/levoit/README.md) for the UART
+pin mapping per board.
+
+## 4. Add your own ESP32 (recommended)
+
+Replacing the original ESP32 allows switching back to original firmware
+without re-flashing and makes future updates easier.
 
 **Recommended modules** (compact and reliable):
 - [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
 - [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
-
-> [!TIP]
-> No YAML to write: in Home Assistant, the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration's
-> *Add device* makes a ready-to-flash config for either board from this model's
-> template. You only add a name and your Wi-Fi.
 
 **Wiring:** 4 wires — `+3.3V`, `GND`, `RX`, `TX`
 
@@ -89,15 +130,32 @@ Replacing the original ESP32 allows switching back to original firmware without 
 
 ![Custom ESP wires](./images/custom_esp_wire.jpg)
 
-**Placement of new ESP**
+**Power:** I connected to 5V, cause i had issues on the 3.3v with my xioa seeed
+s3. It rebooted with brownout (power issues). I think my en to gnd connection
+might not have been stable but still decided to use 5V.
 
-The small xiao seeeds fit into the small existing space, make sure to isolate and solder the connections.
+[Wiring, parking the original, strapping pins](../../docs/installing.md#4-add-your-own-esp32)
+in the install guide.
 
-I connected to 5V, cause i had issues on the 3.3v with my xioa seeed s3. It rebooted with brownout (power issues). I think my en to gnd connection might not have been stable but still decided to use 5V.
+## 5. Assembly
+
+**Placement of new ESP:** the small xiao seeeds fit into the small existing
+space, make sure to isolate and solder the connections.
 
 ![Custom ESP wires](./images/custom_esp_placement.jpg)
 
-## Flash Over the Air — No Disassembly (third-party)
+* Plug the logic board back in
+* Fit the top sleeve back onto the base
+* Refit the 8 screws (the 4 with washers where they came from) — they are soft
+  metal, do not overtighten
+* Filter and base cover back in
+
+Reassemble and enjoy! [What to check](../../docs/installing.md#5-assembly)
+once it is powered.
+
+## Other routes
+
+### Flash Over the Air — No Disassembly (third-party)
 
 [**nico202/levoit-core300s-ota-wifi-flash**](https://github.com/nico202/levoit-core300s-ota-wifi-flash)
 gets ESPHome onto the **stock ESP32 without opening the unit or soldering
@@ -107,7 +165,7 @@ documented for this model that needs no teardown at all.
 It is a **proof of concept by a third party**, not tested by this project. It
 worked on a Core 300S EU with stock `mainFw` 1.1.08, upgraded to 2.0.00.
 
-### Why it works
+#### Why it works
 
 * The purifier is told by the VeSync cloud to fetch an update, and then makes a
   **plain HTTP GET** for the firmware
@@ -116,7 +174,7 @@ worked on a Core 300S EU with stock `mainFw` 1.1.08, upgraded to 2.0.00.
 * There is **no firmware signature and Secure Boot is disabled**, so an image
   wrapped in that container is accepted
 
-### How it goes
+#### How it goes
 
 1. Build an ESPHome image and wrap it in the VeSync OTA container
 2. Serve it from a Linux box on the same subnet as the purifier
@@ -127,7 +185,7 @@ worked on a Core 300S EU with stock `mainFw` 1.1.08, upgraded to 2.0.00.
 5. The purifier reboots into the ESPHome fallback access point; enter Wi-Fi
    credentials, and from then on updates are ordinary ESPHome OTA
 
-### What you need
+#### What you need
 
 * A Linux machine with root on the same network — a Raspberry Pi is suggested
 * Python 3, `iptables`, and `scapy` or `dsniff`/`arpspoof`
@@ -139,7 +197,7 @@ The same method works on the **Core 400S** (confirmed by
 [@iNDi](https://github.com/tuct/levoit/issues/76)); see the
 [Core 400S guide](../levoit-core400s/README.md#flash-over-the-air--no-disassembly-third-party).
 
-### Caveats
+#### Caveats
 
 * **The version string in the header must match exactly** what the cloud
   announces, or the device aborts partway through the update
@@ -150,7 +208,7 @@ The same method works on the **Core 400S** (confirmed by
   Only do this to your own hardware
 * It may void your warranty, and the author offers no warranty of their own
 * A proof of concept — if it goes wrong mid-flash you are back to the soldered
-  route below to recover
+  routes above to recover
 
 MIT licensed. Credits acvigue, mulcmu, tuct, epicRE, and the pyvesync and
 ESPHome communities.
@@ -160,59 +218,6 @@ tool you run yourself, at your own risk. Once ESPHome is flashed, the device is
 ordinary: `esphome run` / `upload` work over Wi-Fi, and the
 [Levoit ESPHome Home Assistant integration](https://github.com/tuct/levoit-esphome-ha)
 keeps it updated over the air.
-
-## Flash Original ESP32
-
-### Prerequisites
-
-Solder wires to **TXD0, RXD0, IO0, +3V3, GND** near the ESP32 on the logic board and connect to a USB-UART converter. On some boards these are through-holes and soldering may not be needed.
-
-Connect **IO0 to GND before powering on** to enter bootloader mode.
-
-![PCB](./images/pcb_front.jpg)
-
-For flashing you only need to solder to the pin header, the black and white are connected to dump esp to mcu communication 
-
-### Backup Existing Firmware
-
-```bash
-esptool read_flash 0 ALL levoit-core300s-backup.bin
-```
-
-> Note: backup may fail on some boards — proceed at your own risk.
-
-### Configure
-
-1. Copy `secrets-example.yaml` → `secrets.yaml` and fill in your Wi-Fi and encryption key
-2. Adjust the device name in the config if running multiple units
-3. Check the [component README](../../components/levoit/README.md) for UART pin mapping per board
-
-### Flash
-
-```bash
-esphome run levoit-core300s.yaml
-```
-
-Reassemble and enjoy!
-
-### ESPHome Web Builder / Dashboard
-
-Use the pre-generated builder yaml to flash without a local clone — all config is inlined, no `!include` or packages needed:
-
-| File | Board |
-|------|-------|
-| `levoit-core300s-builder.yaml` | original ESP32-SOLO-1C |
-| `levoit-core300s-builder-c3.yaml` | ESP32-C3 replacement |
-| `levoit-core300s-builder-s3.yaml` | Seeed XIAO ESP32-S3 replacement |
-
-Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. Regenerate with `.\make-builder-yaml.ps1` from the `devices/` folder.
-
-### Restore Original Firmware
-
-```bash
-esptool erase_flash
-esptool write_flash 0x00 levoit-core300s-backup.bin
-```
 
 ## Related — the non-smart Core 300 variants
 

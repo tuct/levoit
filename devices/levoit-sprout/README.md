@@ -9,6 +9,11 @@ Air purifier with 4 fan speeds. Unlike other Levoit models, the Sprout has two u
 
 Uses the Vital flat-TLV protocol (`CMD=02 00 55`) as a base, with Sprout-specific extensions for the LED ring, white noise, PM sensors, and MCU async events.
 
+Flashing the original ESP32 is the route written up here; the teardown, the
+debug header and the wiring for your own ESP32 are still TODO. The steps
+shared by all devices are in the [install guide](../../docs/installing.md);
+this page has what is particular to the Sprout.
+
 ## Quick Facts
 
 | Item | Value |
@@ -106,54 +111,30 @@ or reverse?
 | Last MCU Event | text_sensor | Last async event from MCU (button press, white noise state change, cover) |
 | Cover Open | binary_sensor | Filter cover/door open sensor |
 
-## Teardown / Disassembly
+## 1. Build the firmware
 
-> TODO: add teardown steps and photos
+**With Home Assistant (recommended):** No Home Assistant template yet: build it
+manually.
 
-Twist open the top head counter clockwize
+**Manually:** the files in this folder, built with the ESPHome CLI or pasted
+into the Device Builder. [Step by step](../../docs/installing.md#manually).
 
-## Debug Header Pinout
+| Board | ESPHome CLI | Device Builder / web builder |
+|-------|-------------|------------------------------|
+| original ESP32 | `levoit-sprout.yaml` | `levoit-sprout-builder.yaml` (no sound) |
 
-> TODO: add pinout and photos
+The builder file is **kept by hand and has no sound**: the full config needs the local `levoit_audio` component and asset build script, which the Device Builder cannot use, so `make-builder-yaml.ps1` skips the Sprout.
 
-## Install New ESP32 (Recommended)
+Before building `levoit-sprout.yaml`:
 
-**Recommended modules:**
-- [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
-- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
-
-> TODO: add wiring photos and pin mapping
-![Open Vital 100s](./images/uart_2_i2c.jpg)
-
-## Flash Original ESP32
-
-### Prerequisites
-
-Connect to the debug header with a USB-UART adapter (3.3V TTL), crossing TX/RX:
-- Adapter TX → MCU RX
-- Adapter RX → MCU TX
-
-Connect **IO0 to GND before powering on** to enter bootloader mode.
-
-### Backup Existing Firmware
-
-```bash
-esptool.py --no-stub --chip esp32 -b 460800 read_flash 0 0x800000 firmware-backup.bin
-```
-
-Extract audio assets (MP3s from SPIFFS `assets` partition):
-```bash
-python extract_assets.py firmware-backup.bin
-# output written to assets_extracted/
-```
-
-> **Important:** Only 5 of the 15 white noise sounds are pre-loaded in flash. The rest must be downloaded via the original app before flashing. **Before replacing the firmware:**
-> 1. Open the original Levoit app → White Noise
-> 2. Add sounds **1–5** to the playlist and tap **Save** — the ESP32 will start downloading them
-> 3. Wait for the upload to finish, then add sounds **6–10** → **Save**
-> 4. Wait, then add sounds **11–15** → **Save**
->
-> Then re-dump the flash (`read_flash 0 0x800000`) — all 15 sounds will now be stored in the `assets` partition.
+1. Download the vendored MP3 decoder header (required once per checkout, gitignored — without it the build fails with `fatal error: dr_mp3.h: No such file or directory`):
+   ```bash
+   curl -L https://raw.githubusercontent.com/mackron/dr_libs/master/dr_mp3.h \
+     -o ../../components/levoit_audio/vendor/dr_mp3.h
+   ```
+   See the [levoit_audio README](../../components/levoit_audio/README.md) for details.
+2. Check and update the UART pin assignments in `levoit-sprout.yaml`
+3. Check the [component README](../../components/levoit/README.md) for UART pin mapping per board
 
 ### Audio Files
 
@@ -193,6 +174,46 @@ ASSETS_PARTITION_OFFSET = 0x320000
 ASSETS_PARTITION_SIZE   = 0x200000   # 2 MB
 ```
 
+## 2. Disassembly
+
+> TODO: add teardown steps and photos
+
+Twist open the top head counter clockwize
+
+### Debug Header Pinout
+
+> TODO: add pinout and photos
+
+## 3. Flash the original ESP32
+
+Connect to the [debug header](#debug-header-pinout) with a USB-UART adapter (3.3V TTL), crossing TX/RX:
+- Adapter TX → MCU RX
+- Adapter RX → MCU TX
+
+Connect **IO0 to GND before powering on** to enter bootloader mode. The
+generic procedure, and how to restore the backup, is in the
+[install guide](../../docs/installing.md#3-flash-the-original-esp32).
+
+### Backup Existing Firmware
+
+```bash
+esptool.py --no-stub --chip esp32 -b 460800 read_flash 0 0x800000 firmware-backup.bin
+```
+
+Extract audio assets (MP3s from SPIFFS `assets` partition):
+```bash
+python extract_assets.py firmware-backup.bin
+# output written to assets_extracted/
+```
+
+> **Important:** Only 5 of the 15 white noise sounds are pre-loaded in flash. The rest must be downloaded via the original app before flashing. **Before replacing the firmware:**
+> 1. Open the original Levoit app → White Noise
+> 2. Add sounds **1–5** to the playlist and tap **Save** — the ESP32 will start downloading them
+> 3. Wait for the upload to finish, then add sounds **6–10** → **Save**
+> 4. Wait, then add sounds **11–15** → **Save**
+>
+> Then re-dump the flash (`read_flash 0 0x800000`) — all 15 sounds will now be stored in the `assets` partition.
+
 ### Flash Audio Assets
 
 The SPIFFS image is built automatically during `esphome compile` and placed at:
@@ -223,51 +244,30 @@ python -m esptool --chip esp32 --port COMx --baud 460800 write_flash \
   0x290000 .esphome/build/levoit-sprout/.pioenvs/levoit-sprout/assets_spiffs.bin
 ```
 
-### Configure
-
-1. Download the vendored MP3 decoder header (required once per checkout, gitignored — without it the build fails with `fatal error: dr_mp3.h: No such file or directory`):
-   ```bash
-   curl -L https://raw.githubusercontent.com/mackron/dr_libs/master/dr_mp3.h \
-     -o ../../components/levoit_audio/vendor/dr_mp3.h
-   ```
-   See the [levoit_audio README](../../components/levoit_audio/README.md) for details.
-2. Copy `secrets-example.yaml` → `secrets.yaml` and fill in your Wi-Fi and encryption key
-3. Check and update the UART pin assignments in `levoit-sprout-c3.yaml`
-4. Check the [component README](../../components/levoit/README.md) for UART pin mapping per board
-
 ### Flash
 
 ```bash
-esphome run levoit-sprout-esp32.yaml
+esphome run levoit-sprout.yaml
 ```
 
-### ESPHome Web Builder / Dashboard
+## 4. Add your own ESP32 (recommended)
 
-Use the pre-generated builder yaml to flash without a local clone — all config is inlined, no `!include` or packages needed:
+**Recommended modules:**
+- [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
 
-| File | Board |
-|------|-------|
-| `levoit-sprout-builder.yaml` | original ESP32 |
+> TODO: add wiring photos and pin mapping
+![Open Vital 100s](./images/uart_2_i2c.jpg)
 
-Upload to the [ESPHome web builder](https://builder.esphome.io) or paste into the ESPHome dashboard. This one is **kept by hand and has no sound**: the full config needs the local `levoit_audio` component and asset build script, which the Device Builder cannot use, so `make-builder-yaml.ps1` skips the Sprout.
+[Wiring, parking the original, strapping pins](../../docs/installing.md#4-add-your-own-esp32)
+in the install guide.
 
-### Restore Original Firmware
+## 5. Assembly
 
-```bash
-esptool erase_flash
-esptool write_flash 0x00 firmware-backup.bin
-```
+Reverse the disassembly: twist the top head back on clockwise. No other notes
+specific to this model yet; [what to check once it is powered](../../docs/installing.md#5-assembly).
 
-## Protocol Notes
+## Hardware & protocol notes
 
-The Sprout uses the same Vital flat-TLV serial protocol. Additional Sprout commands:
-
-| CMD | Direction | Function |
-|-----|-----------|----------|
-| `02 08 55` | MCU→ESP | Async events: tag01=button press/release, tag03=white noise state change `{active, vol, sound}`, tag04=cover open/close |
-| `02 0B 55` | ESP→MCU | Nightlight: tag01=on/off, tag02=color temp (0–255), tag03=LE16 brightness (0–4095) |
-| `02 0C 55` | ESP→MCU | Breathing: tag01=mode, tag02=cycle time (1–10s), tag03=LE16 max brightness, tag04=min brightness |
-| `02 07 55` | ESP→MCU | White noise: tag01=`{active, volume, sound_index}` + constant trailer `03 03 05 08 F2` |
-| `02 02 55` | ESP→MCU | White noise fan mode: payload `10 01 01` (enable) / `10 01 00` (disable) |
-
-> **Note:** White noise volume and sound selection are handled entirely by the ESP32. The MCU only receives the final active/volume/sound state.
+The Sprout's additional serial commands (async events, nightlight, breathing,
+white noise) are in [PROTOCOL.md](./PROTOCOL.md).

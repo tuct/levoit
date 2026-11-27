@@ -191,7 +191,7 @@ component. Where each one stands: [docs/humidifiers.md](./docs/humidifiers.md).
 | [Core 300S](./devices/levoit-core300s) | 🟢 / 🔵 | 214 m³/h | 24–50 dB | Easy | PM2.5 + Auto mode |
 | [Core 400S](./devices/levoit-core400s) | 🟢 / 🔵 | 442 m³/h | 24–52 dB | Hard | 4 speeds |
 | [Core 600S](./devices/levoit-core600s) | 🟢 / 🔵 | 641 m³/h | 26–54 dB | Hard | 4 auto modes |
-| [Vital 100S](./devices/levoit-vital100s) | 🟢 / 🔵 | 221 m³/h | 23–52 dB | Easy | Pet mode; [detailed teardown](./devices/levoit-vital100s/README.md#teardown--disassembly) |
+| [Vital 100S](./devices/levoit-vital100s) | 🟢 / 🔵 | 221 m³/h | 23–52 dB | Easy | Pet mode; [detailed teardown](./devices/levoit-vital100s/README.md#2-disassembly) |
 | [Vital 200S (Pro)](./devices/levoit-vital200s) | 🟢 / 🔵 | 415 m³/h | 23–58 dB | Easy | |
 | [Everest Air](./devices/levoit-everest-air) | 🟢 / 🔵 | 612 m³/h | 24–56 dB | Easy | Vent louver, PM1.0/2.5/10, Turbo |
 | [Sprout](./devices/levoit-sprout) | 🟢 / 🔵 | 145 m³/h | 22–47 dB | Easy | White-noise audio (I2S MP3) via [`levoit_audio`](./components/levoit_audio/README.md) |
@@ -317,6 +317,10 @@ Someone else's projects, listed so you can find them. Not maintained here.
    [Levoit ESPHome](#home-assistant) integration builds a ready-to-flash config
    from the model's template; you add a name and your Wi-Fi. Or start from the
    YAML in the device folder and the [component README](./components/levoit/README.md).
+
+Every guide follows the same steps: build, disassembly, flash the original or
+add your own ESP32, assembly. The parts they share are in the
+[install guide](./docs/installing.md).
 
 <sub>[↑ Back to top](#readme-top)</sub>
 

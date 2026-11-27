@@ -4,7 +4,22 @@
 
 Custom PCB, 3D-printed parts, and ESPHome-based firmware to add smart home integration to the Levoit Mini Air Purifier without destroying the original device.
 
+A hardware hack: the original PCB is unplugged and a custom PCB with a XIAO
+ESP32-S3 takes its place. The steps shared by all devices are in the
+[install guide](../../docs/installing.md); this page has what is particular to
+the Mini.
+
 ![Levoit Mini Custom Build](./photos/da_06.jpg)
+
+## Quick Facts
+
+| Item | Value |
+|------|-------|
+| Model | Levoit Mini |
+| ESP Module | [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link), on a custom PCB |
+| Display | 0.91 Inch OLED Display I2C SSD1306 |
+| Fan Speeds | 3 |
+| Parts | [BOM](#bom) |
 
 ## Features
 
@@ -24,7 +39,6 @@ Custom PCB, 3D-printed parts, and ESPHome-based firmware to add smart home integ
 
 ## Usage Instructions
 
-
 Click Button One time, for at least 1/4s to turn on and cycle speeds.
 
 Double click Button quickly, to turn on and cycle preset modes (Manual, Auto, Sleep).
@@ -33,9 +47,18 @@ Long Press Button, 2.5s+ to turn off the device.
 
 Filter can be resetted via HomeAssistant integration
 
-## Build instructions
+## 1. Build the firmware
 
-### Disassembly 
+**With [Home Assistant](../../docs/installing.md#with-home-assistant-recommended):** No Home Assistant template yet: build it manually.
+
+**Manually:** the file in this folder, built with the ESPHome CLI or pasted
+into the Device Builder. [Step by step](../../docs/installing.md#manually).
+
+| Board | ESPHome CLI / Device Builder |
+|-------|------------------------------|
+| Seeed XIAO ESP32-S3 on the custom PCB | `mista-levoit-mini.yaml` |
+
+## 2. Disassembly
 
 * Remove the Air Filter
 * Remove the 4 Screws 
@@ -48,7 +71,7 @@ Filter can be resetted via HomeAssistant integration
 
   ![a](./photos/da_03.jpg)
 
-
+## 3. Build the custom PCB
 
 ### BOM
 
@@ -68,13 +91,15 @@ Filter can be resetted via HomeAssistant integration
 
 ![Custom PCB](./photos/pcb.png)
 
+Files: [Gerber and schematic](./PCB/), [schematic image](./photos/schematics.png).
+
 #### PCB Assembly 
 I used poor man's smd soldering, but using pin header will also work - 
 Add some solder to the bad with holes and then place the part on top and add solder to the top hole until it melts down, start with two opposite corners. Ensure connection is fine with Multimeter.
 
-
-
 ### 3D Printed Parts
+
+Models: [`3dparts/`](./3dparts/).
 
 **Button & LCD Assembly**
 
@@ -82,7 +107,7 @@ Add some solder to the bad with holes and then place the part on top and add sol
 * Insert the button into the button holder and slide into place; secure with hot glue or super glue
 * Glue the LCD into its mounting bracket using hot glue—**recommend powering on during gluing** to verify correct positioning
 
-### Device Assembly
+## 5. Assembly
 
 * Insert the replacement top housing (larger custom-printed part) and connect the new PCB to the device's internal connectors:
   ![PCB installed in device](./photos/da_05.jpg)
@@ -96,10 +121,8 @@ Add some solder to the bad with holes and then place the part on top and add sol
 
 * **Verification:** Device should respond to button presses and LCD should display correctly
 
-### Leftover Original Parts
+## Leftover Original Parts
 
 ![Original components not needed](./photos/leftovers.jpg)
 
 The original ESP32 and peripheral components from the factory PCB are no longer needed.
-
-![a](./photos/leftovers.jpg)
