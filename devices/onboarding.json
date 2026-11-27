@@ -3,6 +3,7 @@
   "devices": [
     {
       "id": "levoit-core200s",
+      "models": ["CORE200S"],
       "title": "Core 200S",
       "photo": "docs/images/devices/levoit-core200s.jpg",
       "guide": "devices/levoit-core200s",
@@ -14,6 +15,7 @@
     },
     {
       "id": "levoit-core300s",
+      "models": ["CORE300S"],
       "title": "Core 300S",
       "photo": "docs/images/devices/levoit-core300s.jpg",
       "guide": "devices/levoit-core300s",
@@ -25,6 +27,7 @@
     },
     {
       "id": "levoit-core400s",
+      "models": ["CORE400S"],
       "title": "Core 400S",
       "photo": "docs/images/devices/levoit-core400s.jpg",
       "guide": "devices/levoit-core400s",
@@ -36,6 +39,7 @@
     },
     {
       "id": "levoit-core600s",
+      "models": ["CORE600S"],
       "title": "Core 600S",
       "photo": "docs/images/devices/levoit-core600s.jpg",
       "guide": "devices/levoit-core600s",
@@ -47,6 +51,7 @@
     },
     {
       "id": "levoit-vital100s",
+      "models": ["VITAL100S"],
       "title": "Vital 100S",
       "photo": "docs/images/devices/levoit-vital100s.jpg",
       "guide": "devices/levoit-vital100s",
@@ -58,6 +63,7 @@
     },
     {
       "id": "levoit-vital200s",
+      "models": ["VITAL200S"],
       "title": "Vital 200S (Pro)",
       "photo": "docs/images/devices/levoit-vital200s.jpg",
       "guide": "devices/levoit-vital200s",
@@ -69,6 +75,7 @@
     },
     {
       "id": "levoit-everest-air",
+      "models": ["EVERESTAIR"],
       "title": "Everest Air",
       "photo": "docs/images/devices/levoit-everest-air.jpg",
       "guide": "devices/levoit-everest-air",
@@ -80,6 +87,7 @@
     },
     {
       "id": "levoit-eleva-300x",
+      "models": ["ELEVA300X"],
       "title": "Eleva 300X",
       "photo": "docs/images/devices/levoit-eleva-300x.jpg",
       "guide": "devices/levoit-eleva-300x",
@@ -92,6 +100,7 @@
     },
     {
       "id": "levoit-sprout",
+      "models": ["SPROUT"],
       "title": "Sprout",
       "photo": "docs/images/devices/levoit-sprout.jpg",
       "guide": "devices/levoit-sprout",
@@ -104,6 +113,7 @@
     },
     {
       "id": "levoit-superior-6000s",
+      "models": ["SUPERIOR6000S"],
       "title": "Superior 6000S",
       "photo": "docs/images/devices/levoit-superior-6000s.jpg",
       "guide": "devices/levoit-superior-6000s",
@@ -116,6 +126,7 @@
     },
     {
       "id": "levoit-lv600s",
+      "models": ["LV600S"],
       "title": "LV600S",
       "photo": "docs/images/devices/levoit-lv600s.jpg",
       "guide": "devices/levoit-lv600s",
@@ -172,6 +183,7 @@
     },
     {
       "id": "philips-600-series",
+      "models": ["AC0650", "AC0651"],
       "title": "600 series: AC0650, AC0651",
       "photo": "docs/images/devices/philips-600-series.jpg",
       "guide": "devices/philips-600-series",
@@ -183,6 +195,7 @@
     },
     {
       "id": "philips-900-series",
+      "models": ["AC0950", "AC0951"],
       "title": "900 series: AC0951, AC0950",
       "photo": "docs/images/devices/philips-900-series.jpg",
       "guide": "devices/philips-900-series",
