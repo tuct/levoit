@@ -8,8 +8,11 @@ Project-level changes. Component releases have their own log:
 ### Unreleased
 
 * **LV600S development support** adds fixed-layout UART control, an original-ESP32
-  example, and a wiring and protocol guide. Verified on one EU unit with MCU 1.0.56
-  using the secure owner profile. The development YAML uses the local component.
+  example, and a wiring and protocol guide. Verified on one EU unit with MCU 1.0.56.
+  The development YAML uses the local component. It is a separate
+  `lv600s_humidifier` component for now; the goal is `model: LV600S` in `levoit`
+  once the shared protocol core ([#147](https://github.com/tuct/levoit/issues/147))
+  exists.
 * **Core 300S on the `01 32 40` status: Display reads off in Sleep and while
   off.** The panel is dark then, but the display setting byte stays on, so
   *Display* showed on. It now shows what the panel does. The setting is

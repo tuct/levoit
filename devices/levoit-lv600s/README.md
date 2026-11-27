@@ -3,8 +3,8 @@
 # Levoit LV600S / LUH-A602S-WEUR
 
 Local ESPHome support for the ultrasonic warm/cool-mist LV600S, tested on one
-EU `LUH-A602S-WEUR` with the original ESP32-SOLO-1C and owner firmware through
-`1.2.09-target-preset-startup`. [Live verification](RELEASE-REVIEW.md)
+EU `LUH-A602S-WEUR` with the original ESP32-SOLO-1C and MCU 1.0.56. See
+[Verification](#verification) for what was checked on that unit.
 
 - Module: ESP32-SOLO-1C / ESP32-S0WD, single core, 4 MB on the observed board.
 - MCU UART: GPIO17 TX → MCU RX, GPIO16 RX ← MCU TX, **9600 8N1**.
@@ -35,7 +35,6 @@ original partition table and encrypted native OTA. This profile uses one
 device-specific key for the API and native OTA, plus separate setup Wi-Fi and
 portal upload passwords. Its physical reset clears the stored Wi-Fi login and
 settings. The credentials compiled into the firmware survive the reset.
-[Secure owner recovery guide (German)](https://github.com/mvs90/levoit-lv600s-local/blob/codex/tuct-alignment/docs/RESET-AND-SECURE-SETUP.md#lv600s-wieder-erreichbar-machen)
 
 Keep the currently accepted OTA credential, setup Wi-Fi password, any
 separate portal upload password, matching recovery image and partition
@@ -49,6 +48,11 @@ Recover over UART0 if the network paths are unavailable.
 Power, display, Manual/Auto/Sleep, target RH 40–80%, mist 1–9, warmth 0–3 and
 a timer up to 720 minutes. Original Auto and unknown mode are display-only.
 The companion Home Assistant integration exposes a native humidifier entity.
+
+The *Target Humidity* number is the target saved on the ESP. Whenever the
+appliance is on in Humidity mode and the MCU reports a different target, the
+ESP writes the saved one. A target changed on the appliance panel is therefore
+not shown here and is replaced at the next power-on or mode change.
 
 **English.** Set mist, warm mist or timer minutes on the ESPHome entities while
 the appliance is in standby. The ESP saves them and applies them after a safe,
@@ -81,7 +85,31 @@ ausgeschaltetem Countdown.
 | Timer Remaining / Timer Restzeit | `mdi:progress-clock` |
 
 [Wire format, commands, safety and evidence](PROTOCOL.md).
-[Release review and dependencies](RELEASE-REVIEW.md).
+
+## Verification
+
+One EU unit, MCU 1.0.56, running this component over the author's
+encrypted-OTA builds:
+
+- Power, display, Manual/Humidity/Sleep, target humidity, mist 1–9 and
+  warmth 0–3, each confirmed by the MCU's following status report.
+- Tank removed, empty tank installed, refilled tank, and water running out
+  while on (the MCU goes to standby about 10 s later by itself). With an empty
+  tank the component rejected power-on, mist, warmth, mode, timer and display
+  writes and confirmed an explicit off.
+- Timer start and cancel, a one-minute timer running to expiry with automatic
+  power-off, and standby presets for mist, warmth and timer applied after
+  power-on.
+- Pairing and reset events from the physical power button.
+- Sleep entered from Manual with no configured target, which the MCU reports
+  as target 100; an earlier candidate timed out on that.
+
+Not covered: the stock ESP firmware's power-up handshake with the MCU, other
+board or MCU revisions, long-term operation, and the heater's actual output
+(warmth is the commanded level, not a temperature). Original Auto is read-only.
+The native tests in `components/lv600s_humidifier/tests` replay payloads
+captured from this unit inside synthetic frames; the full captures are the
+author's and are not in the repository.
 
 Prior work: [wdm230/levoit-lv600s-esphome](https://github.com/wdm230/levoit-lv600s-esphome).
 No source from that repository is bundled here. The component belongs to this

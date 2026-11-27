@@ -35,13 +35,22 @@ void LV600SHumidifier::publish_() {
   const float values[] = {float(v[9]), float(v[10]), get_target_humidity(), float(v[12]), float(v[13]),
                          float(v[6]), float(v[11]), float(v[7]), float(v[4]), float(v[14]),
                          float(v[15]), get_timer_remaining()};
-  for (size_t i = 0; i < sensors_.size(); ++i) if (sensors_[i]) sensors_[i]->publish_state(fresh ? values[i] : NAN);
+  for (size_t i = 0; i < sensors_.size(); ++i) {
+    if (!sensors_[i]) continue;
+    const float value = fresh ? values[i] : NAN;
+    if (published_ && same_(published_values_[i], value)) continue;
+    published_values_[i] = value;
+    sensors_[i]->publish_state(value);
+  }
   const bool flags[] = {s.power(), s.display(), s.water_empty(), s.tank_removed(), s.humidifying(),
                         s.heating_enabled(), fresh, v[15] != 0};
   for (size_t i = 0; i < binaries_.size(); ++i) {
     if (!binaries_[i]) continue;
-    if (fresh || i == 6) binaries_[i]->publish_state(flags[i]);
-    else binaries_[i]->invalidate_state();
+    const int8_t flag = (fresh || i == 6) ? int8_t(flags[i]) : int8_t(-1);
+    if (published_ && published_flags_[i] == flag) continue;
+    published_flags_[i] = flag;
+    if (flag < 0) binaries_[i]->invalidate_state();
+    else binaries_[i]->publish_state(flag != 0);
   }
   char version[24]; std::snprintf(version, sizeof(version), "%u.%u.%02u", v[2], v[1], v[0]);
   char raw[61]{};
@@ -61,6 +70,11 @@ void LV600SHumidifier::publish_() {
   }
   const std::string states[] = {fresh ? version : "Unknown", protocol_.result, fresh ? raw : "Unknown",
                                  fresh ? fault : "Unknown", LV600S_VERSION " esphome", "LV600S"};
-  for (size_t i = 0; i < texts_.size(); ++i) if (texts_[i]) texts_[i]->publish_state(states[i]);
+  for (size_t i = 0; i < texts_.size(); ++i) {
+    if (!texts_[i] || (published_ && published_texts_[i] == states[i])) continue;
+    published_texts_[i] = states[i];
+    texts_[i]->publish_state(states[i]);
+  }
+  published_ = true;
 }
 }  // namespace esphome::lv600s_humidifier

@@ -83,8 +83,7 @@ operating conditions](https://documentation.espressif.com/esp32-solo-1_datasheet
   and keep a private copy in a second location. The dumps and generated firmware
   may contain credentials or device identifiers. Keep both private. Use the
   verified original partition table for the owner profile. A validated initial
-  image set and its offsets are specific to that table and device. See the
-  [owner's verified flash record](https://github.com/mvs90/levoit-lv600s-local/blob/codex/tuct-alignment/HANDOFF.md).
+  image set and its offsets are specific to that table and device.
 
 ## What the first conversion established
 
@@ -103,4 +102,4 @@ operating conditions](https://documentation.espressif.com/esp32-solo-1_datasheet
   the temporary wires and boot strap, reconnect the harnesses and reinstall the
   board and housing. Check for pinched wiring or loose hardware. Refit the tank
   and loose parts and reconnect mains only with the housing closed. Subsequent
-  owner-profile updates used encrypted ESPHome OTA. [Live verification](https://github.com/mvs90/levoit/blob/codex/owner-test/docs/esphome-devices/owner-test.md)
+  owner-profile updates used encrypted ESPHome OTA.

@@ -7,9 +7,7 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  project:
-    name: tuct.levoit_lv600s
-    version: "1.2.09-target-preset-startup"
+  min_version: 2026.6.0
 
 esp32:
   board: esp32dev

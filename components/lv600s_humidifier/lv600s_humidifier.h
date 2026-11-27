@@ -85,6 +85,12 @@ class LV600SHumidifier : public Component, public uart::UARTDevice {
   std::array<binary_sensor::BinarySensor *, 8> binaries_{};
   std::array<text_sensor::TextSensor *, 6> texts_{};
   uint32_t interval_{5000}, poll_at_{0}, publish_at_{0};
+  // What publish_() last sent, so it only publishes a change (1 s sampling).
+  bool published_{false};
+  std::array<float, 12> published_values_{};
+  std::array<int8_t, 8> published_flags_{};  // 0/1, or -1 for an invalidated state
+  std::array<std::string, 6> published_texts_{};
+  static bool same_(float a, float b) { return (std::isnan(a) && std::isnan(b)) || a == b; }
   uint8_t target_() const { auto t = protocol_.status.raw[8]; return t >= 40 && t <= 80 ? t : 55; }
   bool send_(Command command, Bytes payload) { return protocol_.enqueue(command, std::move(payload), millis()); }
   void publish_();
