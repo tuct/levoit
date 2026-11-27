@@ -1,7 +1,11 @@
 name: LV600S regressions
 on:
   pull_request:
-    paths: ['components/lv600s_humidifier/**', 'devices/levoit-lv600s/**', '.github/workflows/lv600s-tests.yml']
+    paths:
+      - 'components/lv600s_humidifier/**'
+      - 'components/levoit/levoit_message.h'
+      - 'devices/levoit-lv600s/**'
+      - '.github/workflows/lv600s-tests.yml'
   push:
     branches: [main]
 jobs:
