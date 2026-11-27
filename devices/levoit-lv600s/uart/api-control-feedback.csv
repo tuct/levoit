@@ -1,0 +1,23 @@
+case,elapsed_ms,direction,opcode_hex,frame_hex
+power-display-mist-warmth,0,RX,4110,A5 12 05 18 00 9E 01 10 41 00 38 00 01 00 00 00 64 01 64 1E 15 01 05 00 00 00 00 00 00 00
+power-display-mist-warmth,579,TX,A000,A5 22 06 05 00 8B 01 00 A0 00 01
+power-display-mist-warmth,663,RX,A000,A5 12 06 04 00 9D 01 00 A0 00
+power-display-mist-warmth,663,RX,4111,A5 02 90 18 00 22 01 11 41 00 38 00 01 01 00 00 64 00 64 1E 15 01 05 00 00 00 00 00 00 00
+power-display-mist-warmth,794,TX,A105,A5 22 08 05 00 20 01 05 A1 00 64
+power-display-mist-warmth,842,RX,A105,A5 12 08 04 00 95 01 05 A1 00
+power-display-mist-warmth,842,RX,4111,A5 02 91 18 00 22 01 11 41 00 38 00 01 01 00 00 64 00 64 1E 14 01 05 00 00 00 00 00 00 00
+power-display-mist-warmth,872,TX,4113,A5 22 09 08 00 D1 01 13 41 00 01 00 00 00
+power-display-mist-warmth,954,RX,4113,A5 12 09 04 00 E6 01 13 41 00
+power-display-mist-warmth,954,RX,4111,A5 02 92 18 00 24 01 11 41 00 38 00 01 01 00 00 64 00 64 1E 15 01 01 00 00 00 00 00 00 00
+power-display-mist-warmth,1462,TX,4113,A5 22 0A 08 00 CC 01 13 41 00 05 00 00 00
+power-display-mist-warmth,1547,RX,4113,A5 12 0A 04 00 E5 01 13 41 00
+power-display-mist-warmth,1547,RX,4111,A5 02 93 18 00 1F 01 11 41 00 38 00 01 01 00 00 64 00 64 1E 15 01 05 00 00 00 00 00 00 00
+power-display-mist-warmth,2449,TX,4112,A5 22 0B 09 00 CF 01 12 41 00 01 00 00 00 00
+power-display-mist-warmth,2529,RX,4112,A5 12 0B 04 00 E5 01 12 41 00
+power-display-mist-warmth,2529,RX,4111,A5 02 94 18 00 1D 01 11 41 00 38 00 01 01 00 00 64 00 64 1E 15 01 05 01 00 00 00 00 00 00
+power-display-mist-warmth,3379,TX,4112,A5 22 0C 09 00 CF 01 12 41 00 00 00 00 00 00
+power-display-mist-warmth,3462,RX,4112,A5 12 0C 04 00 E4 01 12 41 00
+power-display-mist-warmth,3462,RX,4111,A5 02 95 18 00 1D 01 11 41 00 38 00 01 01 00 00 64 00 64 1E 15 01 05 00 00 00 00 00 00 00
+power-display-mist-warmth,4343,TX,A000,A5 22 0D 05 00 85 01 00 A0 00 00
+power-display-mist-warmth,4429,RX,A000,A5 12 0D 04 00 96 01 00 A0 00
+power-display-mist-warmth,4429,RX,4111,A5 02 96 18 00 1D 01 11 41 00 38 00 01 00 00 00 64 01 64 1E 14 01 05 00 00 00 00 00 00 00

@@ -1,0 +1,273 @@
+# Compile coverage for the LV600S board and every optional entity.
+substitutions:
+  device_name: levoit-lv600s
+  wifi_ap_ssid: Levoit LV600S Setup
+  rx_pin: GPIO16
+  tx_pin: GPIO17
+
+esphome:
+  name: ${device_name}
+  min_version: 2026.6.0
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+
+external_components:
+  - source: ../..
+    components: [lv600s_humidifier]
+globals:
+  - id: lv600s_saved_target
+    type: uint8_t
+    restore_value: true
+    initial_value: '0'
+  - id: lv600s_target_submitted
+    type: uint8_t
+    restore_value: false
+    initial_value: '0'
+  - id: lv600s_start_mist
+    type: int16_t
+    restore_value: true
+    initial_value: '-1'
+  - id: lv600s_start_warm
+    type: int16_t
+    restore_value: true
+    initial_value: '-1'
+  - id: lv600s_start_timer
+    type: int16_t
+    restore_value: true
+    initial_value: '-1'
+
+logger:
+  baud_rate: 0
+  level: INFO
+api:
+  encryption:
+    key: "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
+ota:
+  - platform: esphome
+    password: "compile-test-ota"
+wifi:
+  ssid: "compile-test"
+  password: "compile-test-pass"
+  ap:
+    ssid: ${wifi_ap_ssid}
+    password: "compile-test-ap"
+captive_portal:
+uart:
+  id: mcu_uart
+  rx_pin: ${rx_pin}
+  tx_pin: ${tx_pin}
+  baud_rate: 9600
+lv600s_humidifier:
+  id: humidifier
+  uart_id: mcu_uart
+  model: LV600S
+  current_humidity:
+    name: Humidity
+  current_temperature:
+    name: Temperature
+  target_humidity:
+    name: Target Humidity Reported
+  water_lacks:
+    name: Water Tank Empty
+    icon: mdi:water-off
+  tank_removed:
+    name: Tank Removed
+  humidifying:
+    name: Humidifying
+    icon: mdi:scent
+  warm_enabled:
+    name: Heating Enabled
+    icon: mdi:heat-wave
+  online:
+    name: MCU Connection
+  fault:
+    name: MCU Fault
+  other_exception:
+    name: MCU Fault Raw
+  fault_message:
+    name: Error
+  command_result:
+    name: Command Result
+  mcu_version:
+    name: MCU Version
+  esp_version:
+    name: ESP Version
+  model_sensor:
+    name: Model
+  timer_remaining:
+    name: Timer Remaining Seconds
+switch:
+  - platform: template
+    name: Power
+    id: humidifier_power
+    restore_mode: DISABLED
+    lambda: |-
+      if (!id(humidifier).has_status()) return {};
+      return id(humidifier).is_power_on();
+    turn_on_action:
+      - lambda: id(humidifier).set_power(true);
+    turn_off_action:
+      - lambda: id(humidifier).set_power(false);
+  - platform: template
+    name: Display
+    id: humidifier_display
+    lambda: |-
+      if (!id(humidifier).has_status()) return {};
+      return id(humidifier).is_display_on();
+    turn_on_action:
+      - lambda: id(humidifier).set_display(true);
+    turn_off_action:
+      - lambda: id(humidifier).set_display(false);
+select:
+  - platform: template
+    name: Operating Mode
+    id: humidifier_mode
+    options: [Manual, Humidity, Humidity Sleep]
+    optimistic: false
+    update_interval: 1s
+    lambda: |-
+      if (!id(humidifier).has_status()) return {};
+      const auto mode = id(humidifier).get_mode();
+      if (mode != 1 && mode != 2 && mode != 3) return {};
+      return id(humidifier).get_mode_name();
+    set_action:
+      - lambda: |-
+          if (x == "Manual") id(humidifier).set_manual_mode();
+          else if (x == "Humidity") id(humidifier).set_target_humidity_mode();
+          else if (x == "Humidity Sleep") id(humidifier).set_sleep_mode();
+
+text_sensor:
+  - platform: template
+    name: Operating Mode Status
+    entity_category: diagnostic
+    update_interval: 1s
+    lambda: |-
+      if (!id(humidifier).has_status()) return std::string("Unknown");
+      switch (uint8_t(id(humidifier).get_mode())) {
+        case 0: return std::string("Auto (read only)");
+        case 1: return std::string("Manual");
+        case 2: return std::string("Humidity Sleep");
+        case 3: return std::string("Humidity");
+        default: return std::string("Unknown");
+      }
+
+  - platform: template
+    name: Timer Duration
+    icon: mdi:timer
+    update_interval: 1s
+    lambda: |-
+      auto &device = *id(humidifier);
+      return device.format_timer_duration(lv600s_startup::timer_duration(device, id(lv600s_start_timer)));
+  - platform: template
+    name: Timer Remaining
+    icon: mdi:progress-clock
+    update_interval: 1s
+    lambda: |-
+      auto &device = *id(humidifier);
+      return device.format_timer_duration(lv600s_startup::timer_remaining(device));
+
+interval:
+  - interval: 500ms
+    then:
+      - lambda: |-
+          static lv600s_startup::Settings startup;
+          startup.apply(*id(humidifier), id(lv600s_start_mist), id(lv600s_start_warm), id(lv600s_start_timer));
+      - lambda: |-
+          auto *device = id(humidifier);
+          auto &submitted = id(lv600s_target_submitted);
+          static uint8_t confirmed = 0;
+          if (!device->can_set_target_humidity()) {
+            submitted = 0;
+            confirmed = 0;
+            return;
+          }
+          const auto target = id(lv600s_saved_target);
+          if (target < 40 || target > 80) return;
+          // A confirmed Auto state is required, including entries from the appliance panel.
+          if (device->get_target_humidity() == target) {
+            if (confirmed != target) {
+              ESP_LOGI("lv600s.target", "MCU confirmed Auto target humidity: %u%%", static_cast<unsigned>(target));
+              confirmed = target;
+            }
+            submitted = target;
+          } else if (target != submitted && device->set_target_humidity(target)) {
+            submitted = target;
+          }
+
+number:
+  - platform: template
+    name: Timer (min)
+    device_class: duration
+    unit_of_measurement: min
+    mode: slider
+    min_value: 0
+    max_value: 720
+    step: 1
+    update_interval: 1s
+    lambda: |-
+      return lv600s_startup::timer_minutes(*id(humidifier), id(lv600s_start_timer));
+    set_action:
+      - lambda: lv600s_startup::set_timer_minutes(*id(humidifier), id(lv600s_start_timer), x);
+  - platform: template
+    name: Target Humidity Preset
+    id: humidifier_target_preset
+    icon: mdi:water-percent
+    entity_category: config
+    unit_of_measurement: "%"
+    update_interval: 1s
+    min_value: 40
+    max_value: 80
+    step: 1
+    lambda: |-
+      const auto saved = id(lv600s_saved_target);
+      if (saved >= 40 && saved <= 80) return float(saved);
+      const auto reported = id(humidifier).get_target_humidity();
+      return reported >= 40 && reported <= 80 ? reported : 55.0f;
+    set_action:
+      - lambda: |-
+          if (!(x >= 40 && x <= 80)) return;
+          id(lv600s_saved_target) = static_cast<uint8_t>(lroundf(x));
+          id(lv600s_target_submitted) = 0;
+  - platform: template
+    name: Mist Level
+    icon: mdi:scent
+    update_interval: 1s
+    min_value: 1
+    max_value: 9
+    step: 1
+    lambda: |-
+      auto &device = *id(humidifier);
+      if (!device.has_status()) return NAN;
+      if (!device.is_power_on() && id(lv600s_start_mist) > 0) return float(id(lv600s_start_mist));
+      return device.get_mist_level();
+    set_action:
+      - lambda: |-
+          auto &device = *id(humidifier);
+          if (!device.has_status() || !(x >= 1 && x <= 9)) return;
+          const auto level = static_cast<uint8_t>(lroundf(x));
+          if (!device.is_power_on()) id(lv600s_start_mist) = level;
+          else if (device.set_mist_level(level)) id(lv600s_start_mist) = lv600s_startup::unset;
+  - platform: template
+    name: Warm Level
+    icon: mdi:heat-wave
+    update_interval: 1s
+    min_value: 0
+    max_value: 3
+    step: 1
+    lambda: |-
+      auto &device = *id(humidifier);
+      if (!device.has_status()) return NAN;
+      if (!device.is_power_on() && id(lv600s_start_warm) >= 0) return float(id(lv600s_start_warm));
+      return device.get_warm_level();
+    set_action:
+      - lambda: |-
+          auto &device = *id(humidifier);
+          if (!device.has_status() || !(x >= 0 && x <= 3)) return;
+          const auto level = static_cast<uint8_t>(lroundf(x));
+          if (!device.is_power_on()) id(lv600s_start_warm) = level;
+          else if (device.set_warm_level(level)) id(lv600s_start_warm) = lv600s_startup::unset;

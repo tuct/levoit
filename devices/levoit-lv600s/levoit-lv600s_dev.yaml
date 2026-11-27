@@ -1,0 +1,24 @@
+# LUH-A602S-WEUR: original ESP32-SOLO-1C, 4 MB. Verify your board before flashing.
+substitutions:
+  device_name: levoit-lv600s
+  wifi_ap_ssid: Levoit LV600S Setup
+  rx_pin: GPIO16
+  tx_pin: GPIO17
+
+esphome:
+  name: ${device_name}
+  min_version: 2026.6.0
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+
+packages:
+  common: !include common.yaml
+
+external_components:
+  - source: ../../components
+    components: [lv600s_humidifier]
