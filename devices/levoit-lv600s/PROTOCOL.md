@@ -109,7 +109,10 @@ on the MCU. Directions are from the ESP's point of view.
 | Mist and warmth writes | `0x4113` and `0x4112` requests were each answered by an empty same-opcode, same-sequence reply, then an unsolicited `0x4111` with the new value in byte 12 or 13 after 80–85 ms. The reply alone leaves the command pending. |
 | Wi-Fi provisioning | 71 frames recovered from RAM after a physical reset, the first complete one 404 ms after boot. The stock ESP firmware's own power-up handshake with the MCU was not captured. |
 
-The full captures are the owner's and are not in the repository.
+The [UART extracts](uart/README.md) include complete frames for the status
+polls, unsolicited panel reports, timer expiry, button events and
+API-initiated power, display, mist and warmth writes. Full sessions and
+private setup logs remain with the device owner.
 
 ## Observations from the assembled EU unit
 
