@@ -8,9 +8,9 @@ runs `python tools/changelog.py release`, which moves these files into the
 Same rules as [`changelog.d/`](../../../changelog.d/README.md) at the repo
 root: `<pr>-<slug>.md`; first line the area, then one sentence, two at most,
 on what changed; fragments with the same area become one bullet, the PR link
-is appended from the file name. The group in brackets (`[core]`, `[devices]`,
-`[enhancements]`, `[fixes]`) is optional here; with it, the entry is laid out by
-group like the project log. Links are relative to
+is appended from the file name. The tags for where (`[levoit-core]` and the
+others) and what (`[new]`, `[enhancement]`, `[fix]`) are optional here; with
+them, the entry is laid out like the project log. Links are relative to
 `components/levoit/README.md`, so a capture is
 `../../devices/levoit-core300s/uart/status_32_40.txt`.
 

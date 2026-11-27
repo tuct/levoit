@@ -1,4 +1,5 @@
-[core] Change log
-release entries are laid out by group: a fragment starts with `[core]`,
-`[devices]`, `[enhancements]` or `[fixes]`, and says what changed in one
-sentence, two at most, so the release step summarises and groups on its own
+[project][new] Change log
+release entries are laid out by where a change lands (project, the Levoit
+component or one of its model families, LV600S, Philips) and what it is (new,
+enhancement, fix); a fragment carries both tags and one sentence, so the
+release step summarises and groups on its own

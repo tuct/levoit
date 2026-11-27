@@ -51,14 +51,17 @@ Instead add
 - `components/levoit/changelog.d/<pr>-<slug>.md` as well when the component's
   behaviour changed.
 
-A fragment is two parts: the first line names the group in brackets, one of
-`[core]`, `[devices]`, `[enhancements]`, `[fixes]`, and the area (the device or
-feature; reuse an existing fragment's area word for word when one fits, so the
-release folds them into one bullet), the rest is one sentence, two at most, on
-what changed, for which models, and why, with the capture or issue it rests
-on. No bullet marker, no test report, under 300 characters; the PR link is
-appended from the file name. The release lays the entry out by group, so a
-fragment is the whole summary of its PR: write it crisp. Format and example:
+A fragment is two parts: the first line says where the change lands
+(`[project]`, `[levoit]`, `[levoit-core]`, `[levoit-vital]`,
+`[levoit-humidifiers]`, `[lv600s]`, `[philips]`; more than one family is
+`[levoit]`), what it is (`[new]`, `[enhancement]`, `[fix]`), and the area (the
+device or feature; reuse an existing fragment's area word for word when one
+fits, so the release folds them into one bullet). The rest is one sentence,
+two at most, on what changed, for which models, and why, with the capture or
+issue it rests on. No bullet marker, no test report, under 300 characters;
+the PR link is appended from the file name. The release lays the entry out
+from the tags, so a fragment is the whole summary of its PR: write it crisp.
+Format and example:
 [`changelog.d/README.md`](./changelog.d/README.md). Run
 `python tools/changelog.py check`.
 

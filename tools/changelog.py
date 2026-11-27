@@ -10,24 +10,25 @@ the logs:
     components/levoit/changelog.d/<pr>-<slug>.md -> components/levoit/README.md
                                                     (the component change log)
 
-The log is summarised by change, not by PR. A fragment's first line names
-the group in brackets (core, devices, enhancements, fixes) and the area (the
-bold lead of the bullet), the rest is one sentence, two at most, on what
-changed; fragments with the same area become one bullet at release, and the
-bullets are laid out by group:
+The log is summarised by change, not by PR. A fragment's first line says
+where the change lands and what kind it is, in brackets, then the area (the
+bold lead of the bullet); the rest is one sentence, two at most, on what
+changed. At release the entry is laid out under one heading per scope, the
+kind is a bold prefix, and fragments with the same kind and area become one
+bullet:
 
-    [devices] Core 300S on the `01 32 40` status
+    [levoit-core][fix] Core 300S on the `01 32 40` status
     speed reads the running speed in Sleep, `00` shown as the lowest speed,
     instead of the last manual speed. Frames in
     [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
 
-    **Devices**
+    **Levoit Core models**
 
-    * **Core 300S on the `01 32 40` status**: Display reads off in Sleep and
-      while off, as the panel does ([#148](...)); speed reads the running
-      speed in Sleep, ... ([#151](...))
+    * **Fix** · **Core 300S on the `01 32 40` status**: Display reads off in
+      Sleep and while off, as the panel does ([#148](...)); speed reads the
+      running speed in Sleep, ... ([#151](...))
 
-The group is required in changelog.d/ and optional in the component log.
+Both tags are required in changelog.d/ and optional in the component log.
 
 Links are relative to the log the fragment lands in. The PR link is
 appended from the file name when the text does not mention #151 already.
@@ -69,15 +70,21 @@ appear."""
 MAX_ITEM = 300
 WIDTH = 80
 
-# The groups a release entry is laid out in, in this order. A project fragment
-# names its group in brackets at the start of the area line ("[fixes] UART
-# frame handling"); a component fragment may.
-GROUPS = {
-    "core": "Core",
-    "devices": "Devices",
-    "enhancements": "Enhancements",
-    "fixes": "Fixes",
+# Where a change lands: the headings of a release entry, in this order. One
+# model family takes that family's heading; shared code, or a change that
+# touches more than one family, takes [levoit].
+SCOPES = {
+    "project": "Project",
+    "levoit": "Levoit component",
+    "levoit-core": "Levoit Core models",
+    "levoit-vital": "Levoit Vital models",
+    "levoit-humidifiers": "Levoit humidifiers",
+    "lv600s": "LV600S component",
+    "philips": "Philips component",
 }
+# What kind of change: a bold prefix on the bullet, sorted in this order.
+KINDS = {"new": "New", "enhancement": "Enhancement", "fix": "Fix"}
+TAGS = {**{k: ("scope", k) for k in SCOPES}, **{k: ("kind", k) for k in KINDS}}
 
 LEAD_MARK = "<!-- release lead:"
 LEAD_COMMENT = (
@@ -107,7 +114,8 @@ class Fragment:
     number: int | None
     area: str
     text: str
-    group: str | None = None  # a key of GROUPS
+    scope: str | None = None  # a key of SCOPES
+    kind: str | None = None  # a key of KINDS
 
 
 def rel(path: Path) -> str:
@@ -140,18 +148,22 @@ def parse_fragment(path: Path, errors: list[str], require_group: bool) -> Fragme
         errors.append(f"{where}:1: the first line is the area, the bold lead of the "
                       f"bullet, without '* ' or '#' (see {rel(PROJECT.fragments)}/README.md)")
         return None
-    group = None
-    m = re.match(r"^\[([^\]]*)\]\s*(.*)$", area)
-    if m:
+    scope = kind = None
+    while (m := re.match(r"^\[([^\]]*)\]\s*(.*)$", area)):
         tag, area = m.group(1).strip().casefold(), m.group(2).strip()
-        if tag not in GROUPS:
-            errors.append(f"{where}:1: unknown group [{tag}]; one of "
-                          + ", ".join(f"[{g}]" for g in GROUPS))
+        if tag not in TAGS:
+            errors.append(f"{where}:1: unknown tag [{tag}]; where: "
+                          + ", ".join(f"[{k}]" for k in SCOPES) + "; what: "
+                          + ", ".join(f"[{k}]" for k in KINDS))
             return None
-        group = tag
-    elif require_group:
-        errors.append(f"{where}:1: start the area line with the group, one of "
-                      + ", ".join(f"[{g}]" for g in GROUPS)
+        if TAGS[tag][0] == "scope":
+            scope = tag
+        else:
+            kind = tag
+    if require_group and (scope is None or kind is None):
+        errors.append(f"{where}:1: start the area line with where and what, e.g. "
+                      f"[levoit-core][fix]; where: " + ", ".join(f"[{k}]" for k in SCOPES)
+                      + "; what: " + ", ".join(f"[{k}]" for k in KINDS)
                       + f" (see {rel(PROJECT.fragments)}/README.md)")
         return None
     if area.startswith("**"):
@@ -174,7 +186,7 @@ def parse_fragment(path: Path, errors: list[str], require_group: bool) -> Fragme
     number = int(m.group(1)) if m else None
     if number is not None and not re.search(rf"#{number}\b", body):
         body += f" ([#{number}]({PR_URL.format(n=number)}))"
-    return Fragment(path, number, area, body, group)
+    return Fragment(path, number, area, body, scope, kind)
 
 
 def load(log: Log, errors: list[str]) -> list[Fragment]:
@@ -238,14 +250,17 @@ def report(errors: list[str]) -> int:
 
 
 def bullets(fragments: list[Fragment]) -> str:
-    """One bullet per area, newest area first, its items oldest first."""
-    areas: dict[str, list[Fragment]] = {}
+    """One bullet per kind and area: kinds in KINDS order, then newest area
+    first, its items oldest first. The kind is a bold prefix on the bullet."""
+    kind_order = {k: i for i, k in enumerate(KINDS)}
+    areas: dict[tuple[int, str], list[Fragment]] = {}
     for f in fragments:  # sorted newest first, so the dict keeps that order
-        areas.setdefault(f.area.casefold(), []).append(f)
+        areas.setdefault((kind_order.get(f.kind, len(KINDS)), f.area.casefold()), []).append(f)
     out = []
-    for items in areas.values():
+    for (_, _), items in sorted(areas.items(), key=lambda kv: kv[0][0]):
         items.sort(key=lambda f: (f.number is None, f.number or 0, f.path.name))
-        line = f"* **{items[0].area}**: " + "; ".join(f.text for f in items)
+        lead = f"**{KINDS[items[0].kind]}** · " if items[0].kind else ""
+        line = f"* {lead}**{items[0].area}**: " + "; ".join(f.text for f in items)
         out.append("\n".join(textwrap.wrap(
             line, WIDTH, subsequent_indent="  ",
             break_long_words=False, break_on_hyphens=False)))
@@ -253,17 +268,17 @@ def bullets(fragments: list[Fragment]) -> str:
 
 
 def assembled(fragments: list[Fragment]) -> str:
-    """The bullets, laid out by group in GROUPS order under a bold group name.
-    Fragments without a group (allowed in the component log) come last, with
-    no heading; a log with no groups at all is a plain list, as before."""
-    if not any(f.group for f in fragments):
+    """The bullets under a bold heading per scope, in SCOPES order; empty
+    scopes are left out. Fragments without a scope (allowed in the component
+    log) come last with no heading; a log with no scopes is a plain list."""
+    if not any(f.scope for f in fragments):
         return bullets(fragments)
     parts = []
-    for key, title in GROUPS.items():
-        items = [f for f in fragments if f.group == key]
+    for key, title in SCOPES.items():
+        items = [f for f in fragments if f.scope == key]
         if items:
             parts.append(f"**{title}**\n\n{bullets(items)}")
-    rest = [f for f in fragments if f.group is None]
+    rest = [f for f in fragments if f.scope is None]
     if rest:
         parts.append(bullets(rest))
     return "\n\n".join(parts)
