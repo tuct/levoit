@@ -11,17 +11,23 @@ the logs:
                                                     (the component change log)
 
 The log is summarised by change, not by PR. A fragment's first line names
-the area (the bold lead of the bullet), the rest is one or two sentences on
-what changed; fragments with the same area become one bullet at release:
+the group in brackets (core, devices, humidifiers, fixes) and the area (the
+bold lead of the bullet), the rest is one sentence, two at most, on what
+changed; fragments with the same area become one bullet at release, and the
+bullets are laid out by group:
 
-    Core 300S on the `01 32 40` status
+    [devices] Core 300S on the `01 32 40` status
     speed reads the running speed in Sleep, `00` shown as the lowest speed,
     instead of the last manual speed. Frames in
     [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
 
+    **Devices**
+
     * **Core 300S on the `01 32 40` status**: Display reads off in Sleep and
       while off, as the panel does ([#148](...)); speed reads the running
       speed in Sleep, ... ([#151](...))
+
+The group is required in changelog.d/ and optional in the component log.
 
 Links are relative to the log the fragment lands in. The PR link is
 appended from the file name when the text does not mention #151 already.
@@ -58,10 +64,20 @@ Changes merged since the last release are collected in
 the next release. `python tools/changelog.py preview` shows them as they will
 appear."""
 
-# Characters of item text, links counted by their text only. Two sentences
-# fit; a test report or a byte-by-byte account does not, and belongs in the PR.
-MAX_ITEM = 450
+# Characters of item text, links counted by their text only. One sentence,
+# two at most; a test report or a byte-by-byte account belongs in the PR.
+MAX_ITEM = 300
 WIDTH = 80
+
+# The groups a release entry is laid out in, in this order. A project fragment
+# names its group in brackets at the start of the area line ("[fixes] UART
+# frame handling"); a component fragment may.
+GROUPS = {
+    "core": "Core",
+    "devices": "Devices",
+    "humidifiers": "Humidifiers",
+    "fixes": "Fixes",
+}
 
 LEAD_MARK = "<!-- release lead:"
 LEAD_COMMENT = (
@@ -91,6 +107,7 @@ class Fragment:
     number: int | None
     area: str
     text: str
+    group: str | None = None  # a key of GROUPS
 
 
 def rel(path: Path) -> str:
@@ -110,7 +127,7 @@ def write(path: Path, text: str, eol: str) -> None:
         fh.write(text.replace("\n", eol))
 
 
-def parse_fragment(path: Path, errors: list[str]) -> Fragment | None:
+def parse_fragment(path: Path, errors: list[str], require_group: bool) -> Fragment | None:
     text, _ = read(path)
     text = text.strip()
     where = rel(path)
@@ -123,8 +140,25 @@ def parse_fragment(path: Path, errors: list[str]) -> Fragment | None:
         errors.append(f"{where}:1: the first line is the area, the bold lead of the "
                       f"bullet, without '* ' or '#' (see {rel(PROJECT.fragments)}/README.md)")
         return None
+    group = None
+    m = re.match(r"^\[([^\]]*)\]\s*(.*)$", area)
+    if m:
+        tag, area = m.group(1).strip().casefold(), m.group(2).strip()
+        if tag not in GROUPS:
+            errors.append(f"{where}:1: unknown group [{tag}]; one of "
+                          + ", ".join(f"[{g}]" for g in GROUPS))
+            return None
+        group = tag
+    elif require_group:
+        errors.append(f"{where}:1: start the area line with the group, one of "
+                      + ", ".join(f"[{g}]" for g in GROUPS)
+                      + f" (see {rel(PROJECT.fragments)}/README.md)")
+        return None
     if area.startswith("**"):
         area = area.strip("*").rstrip(":").strip()
+    if not area:
+        errors.append(f"{where}:1: no area after the group")
+        return None
     body = " ".join(ln for ln in lines[1:] if ln).strip()
     if body.endswith("."):
         body = body[:-1]
@@ -133,14 +167,14 @@ def parse_fragment(path: Path, errors: list[str]) -> Fragment | None:
         return None
     visible = re.sub(r"\]\([^)]*\)", "]", body)
     if len(visible) > MAX_ITEM:
-        errors.append(f"{where}: {len(visible)} characters; keep it to about two "
-                      f"sentences ({MAX_ITEM} max), details belong in the PR")
+        errors.append(f"{where}: {len(visible)} characters; one sentence, two at most "
+                      f"({MAX_ITEM} max), details belong in the PR")
         return None
     m = re.match(r"^(\d+)-", path.name)
     number = int(m.group(1)) if m else None
     if number is not None and not re.search(rf"#{number}\b", body):
         body += f" ([#{number}]({PR_URL.format(n=number)}))"
-    return Fragment(path, number, area, body)
+    return Fragment(path, number, area, body, group)
 
 
 def load(log: Log, errors: list[str]) -> list[Fragment]:
@@ -153,7 +187,7 @@ def load(log: Log, errors: list[str]) -> list[Fragment]:
         if path.suffix != ".md":
             errors.append(f"{rel(path)}: fragments are .md files")
             continue
-        fragment = parse_fragment(path, errors)
+        fragment = parse_fragment(path, errors, require_group=log is PROJECT)
         if fragment:
             found.append(fragment)
     # Newest PR first, like the logs; unnumbered files after them, by name.
@@ -203,19 +237,36 @@ def report(errors: list[str]) -> int:
     return 1 if errors else 0
 
 
-def assembled(fragments: list[Fragment]) -> str:
+def bullets(fragments: list[Fragment]) -> str:
     """One bullet per area, newest area first, its items oldest first."""
-    groups: dict[str, list[Fragment]] = {}
+    areas: dict[str, list[Fragment]] = {}
     for f in fragments:  # sorted newest first, so the dict keeps that order
-        groups.setdefault(f.area.casefold(), []).append(f)
-    bullets = []
-    for items in groups.values():
+        areas.setdefault(f.area.casefold(), []).append(f)
+    out = []
+    for items in areas.values():
         items.sort(key=lambda f: (f.number is None, f.number or 0, f.path.name))
         line = f"* **{items[0].area}**: " + "; ".join(f.text for f in items)
-        bullets.append("\n".join(textwrap.wrap(
+        out.append("\n".join(textwrap.wrap(
             line, WIDTH, subsequent_indent="  ",
             break_long_words=False, break_on_hyphens=False)))
-    return "\n".join(bullets)
+    return "\n".join(out)
+
+
+def assembled(fragments: list[Fragment]) -> str:
+    """The bullets, laid out by group in GROUPS order under a bold group name.
+    Fragments without a group (allowed in the component log) come last, with
+    no heading; a log with no groups at all is a plain list, as before."""
+    if not any(f.group for f in fragments):
+        return bullets(fragments)
+    parts = []
+    for key, title in GROUPS.items():
+        items = [f for f in fragments if f.group == key]
+        if items:
+            parts.append(f"**{title}**\n\n{bullets(items)}")
+    rest = [f for f in fragments if f.group is None]
+    if rest:
+        parts.append(bullets(rest))
+    return "\n\n".join(parts)
 
 
 def cmd_check(_: argparse.Namespace) -> int:

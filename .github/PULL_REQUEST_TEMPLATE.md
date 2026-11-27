@@ -19,7 +19,7 @@
 
 ## Checklist
 
-- [ ] Change log fragment `changelog.d/<pr>-<slug>.md` added (and `components/levoit/changelog.d/` for a component change), or no user-visible change
+- [ ] Change log fragment `changelog.d/<pr>-<slug>.md` added, first line `[core|devices|humidifiers|fixes] <area>`, one sentence after it (and `components/levoit/changelog.d/` for a component change), or no user-visible change
 - [ ] A decode change cites a capture committed under `devices/<model>/uart/`
 - [ ] Builder files regenerated with `devices/make-builder-yaml.ps1` if a device yaml or `common.yaml` changed
 - [ ] `components/levoit/VERSION` and released change log entries untouched (release PRs only)
