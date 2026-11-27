@@ -448,9 +448,13 @@ namespace levoit
                 break;
 
             case SelectType::DRY_LEVEL:
-                // Remembered only. Drying is started from the fan entity's Dry mode,
-                // which then applies this level - the MCU has no standalone dry-level command.
-                this->dry_level_preference_ = (value <= 1) ? (uint8_t) value : 0;
+                if (this->model_ != ModelType::SUPERIOR6000S || value > 1)
+                    break;
+                this->set_dry_level_preference((uint8_t) value);
+                // MCU 1.0.9: this command also starts drying (uart/dry_controls.txt).
+                // While inactive, retain the choice for the next explicit Dry request.
+                if (this->get_binary_sensor_state(BinarySensorType::DRY_ACTIVE))
+                    this->sendCommand(value == 1 ? setDryLevelHigh : setDryLevelLow);
                 break;
 
             case SelectType::FAN_OPERATING_MODE_SELECT:

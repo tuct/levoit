@@ -158,6 +158,7 @@ namespace levoit
           if (t.value_len >= 5 && t.value_ptr != nullptr)
           {
             uint16_t dry_remaining = t.value_ptr[0] | (t.value_ptr[1] << 8);
+            self->set_dry_remaining(dry_remaining);
             uint8_t auto_dry = t.value_ptr[2];
             uint8_t dry_active_flag = t.value_ptr[3];
             uint8_t dry_level = t.value_ptr[4];
@@ -174,10 +175,12 @@ namespace levoit
             self->publish_binary_sensor(BinarySensorType::DRY_ACTIVE, dry_active);
 
             // Dry level: 01=Low(idx 0), 02=High(idx 1)
-            if (dry_level >= 1 && dry_level <= 2)
+            if (dry_level >= 1 && dry_level <= 2 &&
+                (dry_active || !self->has_dry_level_preference()))
             {
               self->publish_select(SelectType::DRY_LEVEL, dry_level - 1);
-              // Update the stored dry level preference
+              // Seed the preference at boot, then follow active drying reports.
+              // Inactive reports must not erase the next-cycle choice.
               self->set_dry_level_preference(dry_level - 1);
             }
           }

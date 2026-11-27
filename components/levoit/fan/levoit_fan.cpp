@@ -1,5 +1,6 @@
 #include "levoit_fan.h"
 #include "../levoit.h"
+#include "../fan_modes.h"
 #include "esphome/core/log.h"
 #include <set>
 
@@ -165,7 +166,7 @@ namespace esphome
             }
 
             // Only sends fields != -1 (as long as your parent respects sentinels)
-            if (mode_cmd != -1)
+            if (mode_cmd != -1 && ::levoit::fan_operating_mode_to_option(mode_cmd) != nullptr)
             {
                 parent_->publish_select(SelectType::FAN_OPERATING_MODE_SELECT, mode_cmd);
             }
@@ -205,7 +206,8 @@ namespace esphome
             }
 
             const char *preset = device_mode_to_preset(mode);
-            if (mode != -1 && this->parent_ != nullptr)
+            if (mode != -1 && this->parent_ != nullptr &&
+                ::levoit::fan_operating_mode_to_option(mode) != nullptr)
             {
                 this->parent_->publish_select(SelectType::FAN_OPERATING_MODE_SELECT, mode);
             }

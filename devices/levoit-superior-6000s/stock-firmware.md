@@ -60,6 +60,12 @@ That is not a capture of the app leaving Humidity/Dry mode. The PR retains
 the separately captured mode-before-speed sequence in
 [mode_speed.txt](uart/mode_speed.txt), section 06.
 
+The builder name alone does not establish that it only sets a preference.
+[MCU 1.0.9 captures](uart/dry_controls.txt), sections 01 and 04–06, show
+`set_dry_lvl` starts drying from Manual and changes an active cycle's level,
+restarting its countdown (High ~30 min, Low ~2 h). This is ESPHome-generated
+traffic, not a capture of the stock app.
+
 The force-power command might bypass drying; it has not been exercised and
 is not used by this PR. Stock-app Pet availability was not established.
 Additional leads include completed/interrupted drying events, filter wet-time

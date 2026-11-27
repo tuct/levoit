@@ -27,3 +27,21 @@ not independent physical observations.
 The mode capture demonstrates the corrected ordering; it does not reproduce
 the old speed-before-mode failure. Tag 14 is a five-byte composite value;
 its complete bytes must remain available to the decoder.
+
+## Dry controls follow-up
+
+[dry_controls.txt](dry_controls.txt) uses LEH-S602S-WUS / MCU **1.0.9**,
+ESPHome 2026.10.2, PR `762aac8` (section 01), then the review fixes (03–07).
+Same UART pins and framing; DEBUG logger, default 150-byte chunk limit,
+10 ms timeout. Commands came from HA with both auto-dry switches off.
+
+`02 46 55 / 02 01 02` starts High drying from Manual: tag 07 becomes 0,
+tag 14 reports `07 07 00 01 02` (1,799 s, active, High). Low similarly
+reports `1F 1C 00 01 01` (7,199 s). Changing the level during drying sends
+the same command and restarts that level's countdown. An inactive Low
+selection survives an MCU High report (03), then starts Low drying (04).
+These are MCU reports, not physical observations or stock-app traffic.
+
+Models affected by #176: `SUPERIOR6000S`; hardware evidence is limited to
+LEH-S602S-WUS / MCU 1.0.9. The tag 00 fallback has synthetic tests only;
+no other MCU version, full drying cycle, or Humidity-mode transition was tested.

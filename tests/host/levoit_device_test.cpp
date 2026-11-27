@@ -603,6 +603,7 @@ static void test_superior_capture() {
   CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
   CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
   CHECK(rig.host.switches[SwitchType::AUTO_DRY_POWER_OFF] == true);
+  CHECK(rig.device.get_dry_remaining() == 7199); // tag 14: 1F 1C, excluding auto-dry flag
   // Repeated off while drying: the unchanged push is suppressed during grace,
   // but neither the core nor the host may optimistically report power off.
   const int reports = rig.host.fan_reports;
@@ -622,6 +623,46 @@ static void test_superior_capture() {
   CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
   CHECK(rig.host.switches[SwitchType::AUTO_DRY_POWER_OFF] == false);
   CHECK(rig.host.texts[TextSensorType::MCU_VERSION] == "1.0.9");
+}
+
+// Replay dry_controls.txt: Manual, High start, Low start, High/Low changes.
+static void test_superior_dry_controls_capture() {
+  Rig rig("SUPERIOR6000S");
+  // baseline, 2026-11-27T16:43:24.734+00:00
+  rig.feed(hex("A5 22 6A 5D 00 89 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 01 08 01 2D 09 01 39 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 20 1C 00 02 02 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 39"), 1000);
+  CHECK(rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == true);
+  CHECK(rig.device.get_dry_remaining() == 7200);
+  CHECK(rig.device.get_dry_level_preference() == 1);
+  // 01-manual-to-dry-high, 2026-11-27T16:43:34.702+00:00
+  rig.feed(hex("A5 22 6C 5D 00 B9 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 2D 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 07 07 00 01 02 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 2000);
+  CHECK(rig.host.fan_mode == 6);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.device.get_dry_remaining() == 1799);
+  CHECK(rig.device.get_dry_level_preference() == 1);
+  // 04-fixed-manual-to-dry-low, 2026-11-27T16:45:44.687+00:00
+  rig.feed(hex("A5 22 79 5D 00 7A 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 2D 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 1F 1C 00 01 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 3000);
+  CHECK(rig.host.fan_mode == 6);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.device.get_dry_remaining() == 7199);
+  CHECK(rig.device.get_dry_level_preference() == 0);
+  // 05-fixed-active-select-high, 2026-11-27T16:46:08.546+00:00
+  rig.feed(hex("A5 22 7C 5D 00 A4 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 2D 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 07 07 00 01 02 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 37"), 4000);
+  CHECK(rig.host.fan_mode == 6);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.device.get_dry_remaining() == 1799);
+  CHECK(rig.device.get_dry_level_preference() == 1);
+  // 06-fixed-active-select-low, 2026-11-27T16:46:23.356+00:00
+  rig.feed(hex("A5 22 7F 5D 00 74 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 2D 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 1F 1C 00 01 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 5000);
+  CHECK(rig.host.fan_mode == 6);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.device.get_dry_remaining() == 7199);
+  CHECK(rig.device.get_dry_level_preference() == 0);
 }
 
 // Synthetic malformed-field and command-emission checks.
@@ -667,6 +708,37 @@ static void test_superior_power_and_commands() {
   report({0x02, 2, 1, 0}, 6000); // invalid width
   CHECK(rig.host.fan_power == 0);
 
+  // A level preference while inactive must survive subsequent MCU reports.
+  report({0x14, 5, 0x1F, 0x1C, 1, 2, 1}, 6100);
+  CHECK(rig.device.get_dry_remaining() == 7199);
+  rig.platform.tx.clear();
+  rig.device.on_select_command(SelectType::DRY_LEVEL, 1);
+  CHECK(rig.platform.tx.empty()); // sending the level here would start drying
+  report({0x14, 5, 0x1E, 0x1C, 0, 2, 1}, 6200);
+  CHECK(rig.device.get_dry_level_preference() == 1);
+  uint32_t level = 0;
+  CHECK(rig.device.state().get_select(SelectType::DRY_LEVEL, level) && level == 1);
+  rig.platform.tx.clear();
+  rig.device.on_fan_command(-1, -1, 6);
+  CHECK(rig.platform.tx.size() == 1);
+  if (rig.platform.tx.size() == 1)
+    CHECK(Bytes(rig.platform.tx[0].begin() + 6, rig.platform.tx[0].end()) ==
+          Bytes({2, 0x46, 0x55, 0, 2, 1, 2}));
+  report({0x14, 5, 0x07, 0x07, 0, 1, 2}, 6300);
+  CHECK(rig.device.get_dry_remaining() == 1799);
+  rig.platform.tx.clear();
+  rig.device.on_select_command(SelectType::DRY_LEVEL, 0);
+  CHECK(rig.platform.tx.size() == 1);
+  if (rig.platform.tx.size() == 1)
+    CHECK(Bytes(rig.platform.tx[0].begin() + 6, rig.platform.tx[0].end()) ==
+          Bytes({2, 0x46, 0x55, 0, 2, 1, 1}));
+  report({0x14, 5, 0x1F, 0x1C, 0, 1, 1}, 6400);
+  CHECK(rig.device.get_dry_level_preference() == 0);
+  CHECK(rig.device.get_dry_remaining() == 7199);
+  // Short fields leave the decoded countdown alone.
+  report({0x14, 4, 0, 0, 1, 2}, 6500);
+  CHECK(rig.device.get_dry_remaining() == 7199);
+
   rig.platform.tx.clear();
   rig.device.on_fan_command(1, 1, 0);
   CHECK(rig.device.state().fan.power == 0); // wait for the MCU, including on requests
@@ -700,6 +772,7 @@ static void test_superior_power_and_commands() {
 
 int main() {
   test_superior_capture();
+  test_superior_dry_controls_capture();
   test_superior_power_and_commands();
   test_core300s_capture();
   test_command();
