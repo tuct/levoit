@@ -41,8 +41,6 @@ namespace esphome
         void LevoitFan::setup()
         {
             ModelType model = parent_->get_model();
-            bool isCore200s = model == ModelType::CORE200S;
-            bool isCore300s = model == ModelType::CORE300S;
             bool isCoreModel = model == ModelType::CORE200S || model == ModelType::CORE300S || model == ModelType::CORE400S || model == ModelType::CORE600S;
             bool isSprout = model == ModelType::SPROUT;
             bool isEverest = model == ModelType::EVERESTAIR;
@@ -64,21 +62,19 @@ namespace esphome
                     continue; // Core models do not have Pet mode
                 if (isEleva && std::strcmp(m.preset, "Pet") == 0)
                     continue; // Eleva 300X: Manual/Sleep/Auto; turbo is fan level 4
-                if (isCore200s && std::strcmp(m.preset, "Auto") == 0)
+                if (!parent_->device().has_auto() && std::strcmp(m.preset, "Auto") == 0)
                     continue; // Core200S has no Auto mode (no PM2.5 sensor)
                 if (isSprout && (std::strcmp(m.preset, "Sleep") == 0 || std::strcmp(m.preset, "Pet") == 0))
                     continue; // Sprout only has Manual and Auto modes
                 preset_modes.push_back(m.preset);
             }
 
-            // Set speed count based on model
-            if (isCore200s || isCore300s || isEverest) {
-                // Core200S/Core300S have 3 speeds; EverestAir manual range is 1-3
-                // (its 4th step is the "Turbo" preset, not a fan level).
-                this->speed_count_ = 3;
-            } else {
-                this->speed_count_ = 4;  // Other models have 4 speeds
-            }
+            // The speed count is the core's per-model fact (LevoitDevice::speed_count):
+            // 3 on the Core 200S / 300S and the EverestAir (its 4th step is the
+            // "Turbo" preset, not a fan level), 9 on the Superior 6000S, 4 elsewhere.
+            // The entity had its own table with 4 for the Superior, which clamped
+            // its speeds 5-9 to 4.
+            this->speed_count_ = parent_->device().speed_count();
 
             // Construct traits
             this->traits_ =
