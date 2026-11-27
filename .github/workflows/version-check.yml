@@ -37,6 +37,14 @@ jobs:
             exit 1
           fi
 
+          # The ESP-IDF component manifest carries the same version
+          manifest="$(grep -m1 -oE '^version: *"[^"]+"' components/levoit/idf_component.yml | grep -oE '[0-9][^"]*')"
+          echo "idf_component.yml: $manifest"
+          if [ "$version" != "$manifest" ]; then
+            echo "::error file=components/levoit/idf_component.yml::version is $manifest but components/levoit/VERSION is $version — bump both in the same PR"
+            exit 1
+          fi
+
           if [ "${GITHUB_REF_TYPE:-}" = "tag" ] && [ "$GITHUB_REF_NAME" != "$version" ]; then
             echo "::error::Tag $GITHUB_REF_NAME does not match components/levoit/VERSION ($version)"
             exit 1
