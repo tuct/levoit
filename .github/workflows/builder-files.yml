@@ -17,6 +17,7 @@ on:
       - 'components/**'
       - '.github/scripts/builder_ci_config.py'
       - '.github/scripts/builder_ci_matrix.py'
+      - '.github/scripts/check_onboarding.py'
       - '.github/workflows/builder-files.yml'
   push:
     branches: [main]
@@ -25,6 +26,7 @@ on:
       - 'components/**'
       - '.github/scripts/builder_ci_config.py'
       - '.github/scripts/builder_ci_matrix.py'
+      - '.github/scripts/check_onboarding.py'
       - '.github/workflows/builder-files.yml'
   workflow_dispatch:
 
@@ -47,6 +49,9 @@ jobs:
       - name: Regenerate and compare
         shell: pwsh
         run: ./devices/make-builder-yaml.ps1 -Check
+
+      - name: Add device content (devices/onboarding.json)
+        run: python3 .github/scripts/check_onboarding.py
 
       - name: Builder files to build
         id: list
