@@ -32,7 +32,7 @@ wifi:
   password: !secret wifi_password
   ap:
     ssid: LV-PUR131 Fallback Hotspot
-    password: !secret ap_password
+    password: !secret wifi_ap_password
   passive_scan: true
   on_connect: 
     - globals.set:

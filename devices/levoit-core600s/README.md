@@ -14,7 +14,7 @@ this page has what is particular to the Core 600S.
 |------|-------|
 | Model | Core 600S |
 | Tested MCU FW | 2.0.1 |
-| ESP Module | ESP32-C3-SOLO-1 |
+| ESP Module | ESP32-SOLO-1C or ESP32-C3-SOLO-1: both found in retail units, check yours |
 | Fan Speeds | 4 |
 | CADR (spec) | 641 m³/h |
 | Noise | 26–54 dB |
@@ -46,7 +46,7 @@ this page has what is particular to the Core 600S.
 ## 1. Build the firmware
 
 **With Home Assistant (recommended):** [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha)
-→ *Add device* → **Core 600S** → the original ESP, Seeed XIAO ESP32-C3 or
+→ *Add device* → **Core 600S** → the original ESP (ESP32-SOLO-1C only), Seeed XIAO ESP32-C3 or
 ESP32-S3. [Step by step](../../docs/installing.md#with-home-assistant-recommended).
 
 **Manually:** the files in this folder, built with the ESPHome CLI or pasted
@@ -103,12 +103,14 @@ The header for the microvontroller is highlighted in yellow. This is not what yo
 
 ![Levoit 600S Control Board](images/C600S_control_board_annotated.jpg)
 
-The Core 600S uses an **ESP32-C3-SOLO-1** on the original board. It is recommended to replace it with a new ESP module.
+It is recommended to replace the original module with a new ESP module.
 
 **Recommended modules:** see [Add your own ESP32](#4-add-your-own-esp32-recommended).
 
-`levoit-core600s.yaml` is for an original **ESP32-SOLO-1C** (`esp32dev`); this
-folder has no config for an original ESP32-C3-SOLO-1.
+`levoit-core600s.yaml`, its builder file and the Home Assistant *original*
+template are for the **ESP32-SOLO-1C** (`esp32dev`, UART on GPIO16/17). There
+is no config for an original **ESP32-C3-SOLO-1** yet; on a unit with that
+module, [add your own ESP32](#4-add-your-own-esp32-recommended).
 
 Back up first, then [flash and, if needed, restore](../../docs/installing.md#3-flash-the-original-esp32):
 
