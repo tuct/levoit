@@ -10,6 +10,22 @@ Project-level changes. Component releases have their own log:
 * **Auto room size**: the Core 600S diagnostic control uses the same 147 m²
   upper limit as its preset. The Vital 100S rounds reported and restored room
   sizes to the nearest m² when configured with a 1 m² step.
+* **Towards one protocol core for ESPHome and Matter**
+  ([#147](https://github.com/tuct/levoit/issues/147)): the plan in
+  [docs/shared-core.md](./docs/shared-core.md), and its first step: the
+  protocol sources log through `levoit_log.h` (ESPHome's, ESP-IDF's or a
+  host's log), `fan_modes.h` no longer needs ESPHome, and a new *Host tests*
+  workflow builds the frame layer with a plain `g++` against captured frames.
+  Nothing changes in an ESPHome build.
+* **Levoit UART frame handling.** Decode both length bytes, discard impossible
+  or truncated frames, and preserve complete frames in long bursts.
+  Core 600S and Vital 100S echo the incoming sequence in ACKs and reject
+  frames with an unexpected protocol version or error result.
+* **Core 300S on the `01 32 40` status: speed reads 1 in Sleep.** The fan showed
+  the last manual speed in Sleep, often 3, though it runs slower than speed 1. It
+  now reads the running speed, `00` in Sleep, as Auto already did, which the fan
+  shows as its lowest speed. Frames in
+  [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt) ("sleep")
 * **Core 300S on the `01 32 40` status: Display reads off in Sleep and while
   off.** The panel is dark then, but the display setting byte stays on, so
   *Display* showed on. It now shows what the panel does. The setting is
