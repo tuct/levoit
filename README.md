@@ -19,7 +19,7 @@ No cloud, native Home Assistant, and the features of the stock app.
 
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P4P721ETB5)
 
-[Home Assistant](#home-assistant) · [Matter](#matter-and-apple-home) · [Devices](#devices) · [Get started](#get-started) · [Components](#components) · [Contributing](#contributing)
+[Matter](#matter-and-apple-home) · [Devices](#devices) · [Get started](#get-started) · [Home Assistant](#home-assistant) · [Components](#components) · [Contributing](#contributing)
 
 <img src="./header.jpg" alt="Levoit air purifiers lined up on a shelf, all running ESPHome">
 
@@ -39,25 +39,6 @@ without the vendor app.
 - **Reversible.** Back up the stock firmware before flashing, or leave the original ESP in place and add your own.
 
 The protocol, frame by frame: [LEVOIT_UART.md](./LEVOIT_UART.md).
-
-## Home Assistant
-
-<img src="./docs/images/logo/levoit-esphome-ha.svg" width="56" align="left" alt="Levoit ESPHome for Home Assistant logo">
-
-**[Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha)** is the
-companion integration. It finds every device running the `levoit` or `philips`
-component.
-
-<br clear="left">
-
-- **Updates**: a new release shows up under *Settings → Updates*, and *Install* compiles and uploads it through the ESPHome Device Builder.
-- **Add device**: a ready-to-flash config from a template, for the original ESP, a [XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link) or [ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link), or your own board.
-- **Sidebar page**: every purifier as a card (power, mode, speed, PM2.5, AQI, CADR), a page per device with its settings and air quality history, and a tab with versions, channel and filter %.
-
-[![Open your Home Assistant instance and open this repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tuct&repository=levoit-esphome-ha&category=integration)
-or follow the [setup steps](https://github.com/tuct/levoit-esphome-ha#installation).
-
-![The Levoit ESPHome sidebar page in Home Assistant: seven purifiers as cards, each with power, mode and speed buttons, PM2.5, AQI and CADR, and an Update chip](./docs/images/levoit-esphome-ha-overview.png)
 
 ## Matter and Apple Home
 
@@ -352,6 +333,27 @@ Someone else's projects, listed so you can find them. Not maintained here.
    [Levoit ESPHome](#home-assistant) integration builds a ready-to-flash config
    from the model's template; you add a name and your Wi-Fi. Or start from the
    YAML in the device folder and the [component README](./components/levoit/README.md).
+
+<sub>[↑ Back to top](#readme-top)</sub>
+
+## Home Assistant
+
+<img src="./docs/images/logo/levoit-esphome-ha.svg" width="56" align="left" alt="Levoit ESPHome for Home Assistant logo">
+
+**[Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha)** is the
+companion integration. It finds every device running the `levoit` or `philips`
+component.
+
+<br clear="left">
+
+- **Updates**: a new release shows up under *Settings → Updates*, and *Install* compiles and uploads it through the ESPHome Device Builder.
+- **Add device**: a ready-to-flash config from a template, for the original ESP, a [XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link) or [ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link), or your own board.
+- **Sidebar page**: every purifier as a card (power, mode, speed, PM2.5, AQI, CADR), a page per device with its settings and air quality history, and a tab with versions, channel and filter %.
+
+[![Open your Home Assistant instance and open this repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tuct&repository=levoit-esphome-ha&category=integration)
+or follow the [setup steps](https://github.com/tuct/levoit-esphome-ha#installation).
+
+![The Levoit ESPHome sidebar page in Home Assistant: seven purifiers as cards, each with power, mode and speed buttons, PM2.5, AQI and CADR, and an Update chip](./docs/images/levoit-esphome-ha-overview.png)
 
 <sub>[↑ Back to top](#readme-top)</sub>
 
