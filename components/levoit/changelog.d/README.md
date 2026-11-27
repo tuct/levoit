@@ -9,7 +9,7 @@ Same rules as [`changelog.d/`](../../../changelog.d/README.md) at the repo
 root: `<pr>-<slug>.md`; first line the area, then one sentence, two at most,
 on what changed; fragments with the same area become one bullet, the PR link
 is appended from the file name. The group in brackets (`[core]`, `[devices]`,
-`[humidifiers]`, `[fixes]`) is optional here; with it, the entry is laid out by
+`[enhancements]`, `[fixes]`) is optional here; with it, the entry is laid out by
 group like the project log. Links are relative to
 `components/levoit/README.md`, so a capture is
 `../../devices/levoit-core300s/uart/status_32_40.txt`.

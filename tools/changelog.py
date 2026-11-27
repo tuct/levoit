@@ -11,7 +11,7 @@ the logs:
                                                     (the component change log)
 
 The log is summarised by change, not by PR. A fragment's first line names
-the group in brackets (core, devices, humidifiers, fixes) and the area (the
+the group in brackets (core, devices, enhancements, fixes) and the area (the
 bold lead of the bullet), the rest is one sentence, two at most, on what
 changed; fragments with the same area become one bullet at release, and the
 bullets are laid out by group:
@@ -75,7 +75,7 @@ WIDTH = 80
 GROUPS = {
     "core": "Core",
     "devices": "Devices",
-    "humidifiers": "Humidifiers",
+    "enhancements": "Enhancements",
     "fixes": "Fixes",
 }
 

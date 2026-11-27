@@ -19,8 +19,8 @@ fragment when one fits.
 | Group | For |
 |-------|-----|
 | `[core]` | the component's internals and tooling, what every model shares: protocol core, build, CI, change log |
-| `[devices]` | one model or family: what it reports, what it can be told, its entities, its docs |
-| `[humidifiers]` | the humidifier models and their plans |
+| `[devices]` | a new model, or a model's guide, example YAML or captures |
+| `[enhancements]` | something a supported model can do or report now that it could not before |
 | `[fixes]` | something that was wrong and is right now |
 
 **The rest**: one sentence, two at most, on what changed for the user, for
@@ -30,7 +30,7 @@ repo root, where CHANGELOG.md lives. Test reports and byte-level detail belong
 in the PR; the check refuses an item past 300 characters.
 
 ```
-[devices] Core 300S on the `01 32 40` status
+[fixes] Core 300S on the `01 32 40` status
 speed reads the running speed in Sleep, `00` shown as the lowest speed, instead
 of the last manual speed. Frames in
 [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
@@ -40,7 +40,7 @@ Two fragments with that area become one bullet, items in PR order, each with
 its PR link, under the group's heading:
 
 ```markdown
-**Devices**
+**Fixes**
 
 * **Core 300S on the `01 32 40` status**: Display reads off in Sleep and while
   off, as the panel does; the setting is kept and comes back on leaving Sleep

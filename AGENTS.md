@@ -52,7 +52,7 @@ Instead add
   behaviour changed.
 
 A fragment is two parts: the first line names the group in brackets, one of
-`[core]`, `[devices]`, `[humidifiers]`, `[fixes]`, and the area (the device or
+`[core]`, `[devices]`, `[enhancements]`, `[fixes]`, and the area (the device or
 feature; reuse an existing fragment's area word for word when one fits, so the
 release folds them into one bullet), the rest is one sentence, two at most, on
 what changed, for which models, and why, with the capture or issue it rests

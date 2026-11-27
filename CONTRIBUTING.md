@@ -60,7 +60,7 @@ them:
 | [CHANGELOG.md](./CHANGELOG.md), the project log | `changelog.d/<pr>-<slug>.md` | Every user-visible change: devices, configs, docs, component |
 | [Component change log](./components/levoit/README.md#change-log) | `components/levoit/changelog.d/<pr>-<slug>.md` | Changes in what the component does; released with a version bump |
 
-A fragment names its group (`[core]`, `[devices]`, `[humidifiers]`, `[fixes]`)
+A fragment names its group (`[core]`, `[devices]`, `[enhancements]`, `[fixes]`)
 and area on the first line and says in one sentence, two at most, what
 changed; at release, the entry is laid out by group and fragments with the
 same area become one bullet with the PR links inline, so the log reads by
