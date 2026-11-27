@@ -75,6 +75,10 @@ struct FanState {
     if (m != -1 && m != mode) { mode = m; changed = true; }
     return changed;
   }
+  // The manual speed the fan returns to: selected_speed where the status
+  // carries it apart from the running speed, otherwise speed, which already
+  // holds the manual value on the layouts that do not separate the two.
+  int manual_speed() const { return selected_speed != -1 ? selected_speed : speed; }
 };
 
 struct LevoitState {
@@ -114,7 +118,9 @@ struct LevoitState {
 
 // What a host hears from the core. Each method is called when that slot
 // changed, with the new value; fan_changed on every fan status report, with
-// -1 for the fields the report did not carry.
+// -1 for the fields the report did not carry. A host that needs the manual
+// speed the fan will resume to reads state().fan.manual_speed() inside
+// fan_changed, which fires on every report.
 class LevoitHost {
  public:
   virtual ~LevoitHost() = default;

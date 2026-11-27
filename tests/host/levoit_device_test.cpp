@@ -177,6 +177,7 @@ static void test_core300s_capture() {
   rig.feed(hex("A5 22 DC 17 00 61 01 32 40 00 00 00 01 01 01 03 00 64 01 00 00 01 05 00 00 00 00 00 00"), 2000);
   CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 0 && rig.host.fan_mode == 1);
   CHECK(rig.device.state().fan.selected_speed == 3);
+  CHECK(rig.device.state().fan.manual_speed() == 3);  // running speed is 0 in Sleep
   CHECK(rig.host.switches[SwitchType::DISPLAY] == false);
 
   // "power off, at the panel" at 189.370: off, the kept manual speed 1
