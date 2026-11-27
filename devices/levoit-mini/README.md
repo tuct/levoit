@@ -93,6 +93,22 @@ into the Device Builder. [Step by step](../../docs/installing.md#manually).
 
 Files: [Gerber and schematic](./PCB/), [schematic image](./photos/schematics.png).
 
+The schematic's module symbol (U2) is EasyEDA's *XIAO ESP32C3* part. Fit a
+**XIAO ESP32-S3**, as in the BOM: both XIAO boards have the same footprint and
+D-pin positions, and `mista-levoit-mini.yaml` is written for the S3's GPIOs.
+The nets by D-pin:
+
+| XIAO pin | Net | ESP32-S3 GPIO in the YAML |
+|----------|-----|---------------------------|
+| D4 | SPEED (fan speed pulses, via the level shifter) | GPIO5 |
+| D5 | PWM (fan speed, via the level shifter) | GPIO6 |
+| D7 | BTN | GPIO44 |
+| D8 | SDA (display) | GPIO7 |
+| D9 | SCK (display) | GPIO8 |
+
+A XIAO ESP32-C3 fits the board too, but the YAML would need the C3's GPIO
+numbers for those pins; this folder has no config for it.
+
 #### PCB Assembly 
 I used poor man's smd soldering, but using pin header will also work - 
 Add some solder to the bad with holes and then place the part on top and add solder to the top hole until it melts down, start with two opposite corners. Ensure connection is fine with Multimeter.
