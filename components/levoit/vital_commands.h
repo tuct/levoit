@@ -7,9 +7,9 @@ namespace esphome
 {
   namespace levoit
   {
-    class Levoit; // forward declaration
+    class LevoitDevice; // forward declaration
 
-    std::vector<uint8_t> build_vital_command(Levoit *self, CommandType cmd);
+    std::vector<uint8_t> build_vital_command(LevoitDevice *self, CommandType cmd);
 
   } // namespace levoit
 } // namespace esphome

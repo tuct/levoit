@@ -17,7 +17,7 @@ namespace esphome
     //   tag=01 len=01 val=01/00  →  button press / toggle event
     //   tag=03 len=03 val=01 {LE16}  →  PM threshold crossed, LE16 = PM raw value
     //   tag=04 len=01 val=00/01  →  cover sensor (0=closed, 1=open)
-    void decode_sprout_event(Levoit *self,
+    void decode_sprout_event(LevoitDevice *self,
                              const uint8_t *payload,
                              size_t payload_len)
     {

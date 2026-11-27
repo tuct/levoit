@@ -1,6 +1,6 @@
 #include "vital_commands.h"
 #include "levoit_message.h"
-#include "levoit.h"
+#include "levoit_device.h"
 #include "levoit_log.h"
 
 namespace esphome
@@ -9,7 +9,7 @@ namespace esphome
   {
     static const char *const TAG_VITAL_CMD = "levoit.vital_cmd";
 
-    std::vector<uint8_t> build_vital_command(Levoit *self, CommandType cmd)
+    std::vector<uint8_t> build_vital_command(LevoitDevice *self, CommandType cmd)
     {
       std::vector<uint8_t> msg_type;
       std::vector<uint8_t> payload;

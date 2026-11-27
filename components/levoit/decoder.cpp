@@ -12,17 +12,6 @@ namespace esphome
   {
 
     static const char *const TAG_DEC = "levoit.decoder";
-    struct PayloadHashCacheEntry
-    {
-      uint8_t model; // ModelType
-      uint8_t ptype0;
-      uint8_t ptype1;
-      uint8_t hash; // fingerprint of payload
-      bool valid;
-    };
-
-    static PayloadHashCacheEntry g_payload_hash_cache[16];
-
     static uint8_t compute_payload_hash_(const uint8_t *payload, size_t len)
     {
       uint8_t h = 0;
@@ -34,7 +23,9 @@ namespace esphome
       return h;
     }
 
-    static bool payload_changed_(ModelType model,
+    // The cache lives in the device (one per device, not one per process),
+    // so two devices in one firmware, or two in one test, do not share it.
+    static bool payload_changed_(LevoitDevice *self,
                                  uint8_t ptype0,
                                  uint8_t ptype1,
                                  const uint8_t *payload,
@@ -44,12 +35,12 @@ namespace esphome
         return true;
 
       const uint8_t hash = compute_payload_hash_(payload, payload_len);
+      auto &cache = self->payload_hash_cache();
 
       // Find existing entry
-      for (auto &e : g_payload_hash_cache)
+      for (auto &e : cache)
       {
         if (e.valid &&
-            e.model == (uint8_t)model &&
             e.ptype0 == ptype0 &&
             e.ptype1 == ptype1)
         {
@@ -65,12 +56,11 @@ namespace esphome
       }
 
       // New entry
-      for (auto &e : g_payload_hash_cache)
+      for (auto &e : cache)
       {
         if (!e.valid)
         {
           e.valid = true;
-          e.model = (uint8_t)model;
           e.ptype0 = ptype0;
           e.ptype1 = ptype1;
           e.hash = hash;
@@ -96,7 +86,7 @@ namespace esphome
              (ptype0 == 0x40 && ptype1 == 0x41);   // Core 600S
     }
 
-    void dispatch_decoder(Levoit *self,
+    void dispatch_decoder(LevoitDevice *self,
                           ModelType model,
                           uint8_t msg_type,
                           uint8_t seq,
@@ -190,7 +180,7 @@ namespace esphome
       // and async event notifications must always be processed even when two
       // consecutive frames carry identical payloads.
       if (is_status_push_(model, msg_type, ptype0, ptype1) &&
-          !payload_changed_(model, ptype0, ptype1, payload, payload_len))
+          !payload_changed_(self, ptype0, ptype1, payload, payload_len))
       {
         ESP_LOGV(TAG_DEC,
                  "skip decode (unchanged payload): model=%d ptype=%02X%02X",

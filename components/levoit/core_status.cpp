@@ -13,7 +13,7 @@ namespace esphome
 
     static const char *const TAG_CORE = "levoit.core";
 
-    void decode_core_timer(Levoit *self,
+    void decode_core_timer(LevoitDevice *self,
                            ModelType model,
                            const uint8_t *payload,
                            size_t payload_len)
@@ -54,7 +54,7 @@ namespace esphome
         self->set_timer_stop_pending(false);  // MCU confirmed timer off
       }
     }
-    void decode_core_status(Levoit *self,
+    void decode_core_status(LevoitDevice *self,
                             ModelType model,
                             const uint8_t *payload,
                             size_t payload_len)
@@ -205,7 +205,7 @@ namespace esphome
     //   [15] auto mode, 1:1 with 01 E6 A5
     //   [16..17] efficiency area LE16, as sent in 01 E6 A5
     //   [18] 0x00/0x01, meaning unconfirmed
-    void decode_core300s_status_19(Levoit *self,
+    void decode_core300s_status_19(LevoitDevice *self,
                                    const uint8_t *payload,
                                    size_t payload_len)
     {

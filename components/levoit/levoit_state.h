@@ -122,6 +122,14 @@ class LevoitHost {
   virtual void text_changed(TextSensorType type, const std::string &value) = 0;
   virtual void binary_changed(BinarySensorType type, bool state) = 0;
   virtual void fan_changed(int power, int speed, int mode) = 0;
+  // Sprout LED ring, as the MCU reports it. Not part of the typed slots yet;
+  // a host without a Sprout mapping can leave it.
+  virtual void sprout_light_changed(bool on, float brightness, float color_temp, bool breathing) {
+    (void) on;
+    (void) brightness;
+    (void) color_temp;
+    (void) breathing;
+  }
 };
 
 }  // namespace levoit
