@@ -13,6 +13,17 @@ Project-level changes. Component releases have their own log:
   `lv600s_humidifier` component for now; the goal is `model: LV600S` in `levoit`
   once the shared protocol core ([#147](https://github.com/tuct/levoit/issues/147))
   exists.
+* **Towards one protocol core for ESPHome and Matter**
+  ([#147](https://github.com/tuct/levoit/issues/147)): the plan in
+  [docs/shared-core.md](./docs/shared-core.md), and its first step: the
+  protocol sources log through `levoit_log.h` (ESPHome's, ESP-IDF's or a
+  host's log), `fan_modes.h` no longer needs ESPHome, and a new *Host tests*
+  workflow builds the frame layer with a plain `g++` against captured frames.
+  Nothing changes in an ESPHome build.
+* **Levoit UART frame handling.** Decode both length bytes, discard impossible
+  or truncated frames, and preserve complete frames in long bursts.
+  Core 600S and Vital 100S echo the incoming sequence in ACKs and reject
+  frames with an unexpected protocol version or error result.
 * **Core 300S on the `01 32 40` status: speed reads 1 in Sleep.** The fan showed
   the last manual speed in Sleep, often 3, though it runs slower than speed 1. It
   now reads the running speed, `00` in Sleep, as Auto already did, which the fan

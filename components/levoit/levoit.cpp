@@ -301,7 +301,8 @@ namespace esphome
                 return false;
             if (type == SelectType::FAN_OPERATING_MODE_SELECT || type == SelectType::DAYTIME_FAN_MODE)
             {
-                int mode = fan_operating_mode_to_raw(sel->current_option());
+                const auto option = sel->current_option();
+                int mode = fan_operating_mode_to_raw(option.c_str(), option.size());
                 if (mode < 0)
                     return false;
                 out = static_cast<size_t>(mode);
@@ -1221,143 +1222,148 @@ namespace esphome
                 ESP_LOGD(TAG, "Polling timer status (stop pending)");
                 this->sendCommand(requestTimerStatus);
             }
-            // 1) Read incoming bytes into buffer_
-            while (available())
+            // 1) Read incoming bytes into buffer_. Abandon an interrupted frame
+            // before consuming a new burst, so a corrupt length cannot hold the
+            // next status reports hostage until the whole buffer fills.
+            if (buf_len_ && uint32_t(millis() - last_rx_byte_ms_) > 250)
+                buf_len_ = 0;
+            // Drain one buffer at a time so a burst of valid frames larger than
+            // the buffer does not discard frames that were already complete.
+            bool read_failed = false;
+            do
             {
-                uint8_t b;
-                read_byte(&b);
-
-                if (buf_len_ < sizeof(buffer_))
+                while (buf_len_ < sizeof(buffer_) && available())
                 {
+                    uint8_t b;
+                    if (!read_byte(&b))
+                    {
+                        read_failed = true;
+                        break;
+                    }
+                    last_rx_byte_ms_ = millis();
                     buffer_[buf_len_++] = b;
                 }
-                else
+
+                // 2) Parse as many frames as possible from the buffer
+                while (true)
                 {
-                    ESP_LOGW(TAG, "RX buffer overflow -> reset");
-                    buf_len_ = 0;
-                    return;
-                }
-            }
+                    if (buf_len_ < 1)
+                        break;
 
-            // 2) Parse as many frames as possible from the buffer
-            while (true)
-            {
-                if (buf_len_ < 1)
-                    break;
+                    // Find 0xA5
+                    size_t start = 0;
+                    while (start < buf_len_ && buffer_[start] != 0xA5)
+                        start++;
 
-                // Find 0xA5
-                size_t start = 0;
-                while (start < buf_len_ && buffer_[start] != 0xA5)
-                    start++;
-
-                if (start == buf_len_)
-                { // no start
-                    buf_len_ = 0;
-                    break;
-                }
-
-                // Drop junk before start
-                if (start > 0)
-                {
-                    memmove(buffer_, buffer_ + start, buf_len_ - start);
-                    buf_len_ -= start;
-                }
-
-                // Need at least 6 bytes (up to checksum byte)
-                if (buf_len_ < 6)
-                    break;
-
-                const uint8_t size_after_checksum = buffer_[3];
-                const size_t expected_len = 6 + size_after_checksum;
-
-                // sanity guard (avoid insane lengths)
-                if (expected_len > sizeof(buffer_))
-                {
-                    ESP_LOGW(TAG, "RX length too big (%u) -> resync", (unsigned)expected_len);
-                    memmove(buffer_, buffer_ + 1, buf_len_ - 1);
-                    buf_len_ -= 1;
-                    continue;
-                }
-
-                if (buf_len_ < expected_len)
-                    break; // wait more bytes
-
-                // Validate checksum over the WHOLE frame length, excluding byte[5]
-                const uint8_t expected_chk = levoit_checksum(buffer_, expected_len);
-                const uint8_t got_chk = buffer_[5];
-
-                if (got_chk != expected_chk)
-                {
-                    ESP_LOGW(TAG, "Bad checksum: got=0x%02X expected=0x%02X; resync", got_chk, expected_chk);
-                    // resync: drop start byte and try again
-                    memmove(buffer_, buffer_ + 1, buf_len_ - 1);
-                    buf_len_ -= 1;
-                    continue;
-                }
-
-                // Good frame -> you can now split header/payload
-                // bytes 0..9 are your "header fields" (if size allows)
-                const uint8_t *frame = buffer_;
-                const size_t frame_len = expected_len;
-
-                // after-checksum block begins at byte 6
-                const uint8_t *after_checksum = frame + 6;
-                const size_t after_checksum_len = frame_len - 6;
-
-                // if you want "payload after your 10-byte header"
-                const uint8_t *payload = nullptr;
-                size_t payload_len = 0;
-                if (frame_len >= 10)
-                {
-                    payload = frame + 10;
-                    payload_len = frame_len - 10;
-                }
-
-                // Debug log frame
-                char hexbuf[1024];
-                size_t pos = 0;
-                for (size_t i = 0; i < frame_len && pos < sizeof(hexbuf) - 6; i++)
-                {
-                    pos += snprintf(hexbuf + pos, sizeof(hexbuf) - pos, "0x%02X ", frame[i]);
-                }
-
-                ESP_LOGV(TAG, "<<< RX packet (%u bytes): %s", (unsigned)frame_len, hexbuf);
-
-                // Example: log key header bytes if present
-                if (frame_len >= 10)
-                {
-                    ESP_LOGD(TAG,
-                             "<<< HEADER: ptype=0x%02X 0x%02X | type=0x%02X ",
-                             frame[7], frame[8], frame[1]);
-                }
-                if (frame_len > 10)
-                {
-                    const uint8_t *payload = frame + 10;
-                    size_t payload_len = frame_len - 10;
-
-                    char phex[512];
-                    size_t pos = 0;
-
-                    for (size_t i = 0; i < payload_len && pos < sizeof(phex) - 6; i++)
-                    {
-                        pos += snprintf(phex + pos, sizeof(phex) - pos, "0x%02X ", payload[i]);
+                    if (start == buf_len_)
+                    { // no start
+                        buf_len_ = 0;
+                        break;
                     }
 
-                    ESP_LOGD(TAG, "<<< PAYLOAD Size: %u bytes", (unsigned)payload_len);
-                    ESP_LOGV(TAG, "<<< PAYLOAD: %s", phex);
-                }
-                else
-                {
-                    ESP_LOGD(TAG, "<<< PAYLOAD Size: 0 bytes");
-                }
+                    // Drop junk before start
+                    if (start > 0)
+                    {
+                        memmove(buffer_, buffer_ + start, buf_len_ - start);
+                        buf_len_ -= start;
+                    }
 
-                // Process
-                process_message((uint8_t *)frame, (int)frame_len);
+                    // Need at least 6 bytes (up to checksum byte)
+                    if (buf_len_ < 6)
+                        break;
 
-                // Remove processed packet
-                memmove(buffer_, buffer_ + frame_len, buf_len_ - frame_len);
-                buf_len_ -= frame_len;
-            }
+                    const uint16_t size_after_checksum = uint16_t(buffer_[3]) | (uint16_t(buffer_[4]) << 8);
+                    const size_t expected_len = 6 + size_after_checksum;
+
+                    // sanity guard (avoid insane lengths)
+                    if (size_after_checksum < 4 || expected_len > sizeof(buffer_))
+                    {
+                        ESP_LOGW(TAG, "Invalid RX frame length (%u) -> resync", (unsigned)expected_len);
+                        memmove(buffer_, buffer_ + 1, buf_len_ - 1);
+                        buf_len_ -= 1;
+                        continue;
+                    }
+
+                    if (buf_len_ < expected_len)
+                        break; // wait more bytes
+
+                    // Validate checksum over the WHOLE frame length, excluding byte[5]
+                    const uint8_t expected_chk = levoit_checksum(buffer_, expected_len);
+                    const uint8_t got_chk = buffer_[5];
+
+                    if (got_chk != expected_chk)
+                    {
+                        ESP_LOGW(TAG, "Bad checksum: got=0x%02X expected=0x%02X; resync", got_chk, expected_chk);
+                        // resync: drop start byte and try again
+                        memmove(buffer_, buffer_ + 1, buf_len_ - 1);
+                        buf_len_ -= 1;
+                        continue;
+                    }
+
+                    // Good frame -> you can now split header/payload
+                    // bytes 0..9 are your "header fields" (if size allows)
+                    const uint8_t *frame = buffer_;
+                    const size_t frame_len = expected_len;
+
+                    // after-checksum block begins at byte 6
+                    const uint8_t *after_checksum = frame + 6;
+                    const size_t after_checksum_len = frame_len - 6;
+
+                    // if you want "payload after your 10-byte header"
+                    const uint8_t *payload = nullptr;
+                    size_t payload_len = 0;
+                    if (frame_len >= 10)
+                    {
+                        payload = frame + 10;
+                        payload_len = frame_len - 10;
+                    }
+
+                    // Debug log frame
+                    char hexbuf[1024];
+                    size_t pos = 0;
+                    for (size_t i = 0; i < frame_len && pos < sizeof(hexbuf) - 6; i++)
+                    {
+                        pos += snprintf(hexbuf + pos, sizeof(hexbuf) - pos, "0x%02X ", frame[i]);
+                    }
+
+                    ESP_LOGV(TAG, "<<< RX packet (%u bytes): %s", (unsigned)frame_len, hexbuf);
+
+                    // Example: log key header bytes if present
+                    if (frame_len >= 10)
+                    {
+                        ESP_LOGD(TAG,
+                                 "<<< HEADER: ptype=0x%02X 0x%02X | type=0x%02X ",
+                                 frame[7], frame[8], frame[1]);
+                    }
+                    if (frame_len > 10)
+                    {
+                        const uint8_t *payload = frame + 10;
+                        size_t payload_len = frame_len - 10;
+
+                        char phex[512];
+                        size_t pos = 0;
+
+                        for (size_t i = 0; i < payload_len && pos < sizeof(phex) - 6; i++)
+                        {
+                            pos += snprintf(phex + pos, sizeof(phex) - pos, "0x%02X ", payload[i]);
+                        }
+
+                        ESP_LOGD(TAG, "<<< PAYLOAD Size: %u bytes", (unsigned)payload_len);
+                        ESP_LOGV(TAG, "<<< PAYLOAD: %s", phex);
+                    }
+                    else
+                    {
+                        ESP_LOGD(TAG, "<<< PAYLOAD Size: 0 bytes");
+                    }
+
+                    // Process
+                    process_message((uint8_t *)frame, (int)frame_len);
+
+                    // Remove processed packet
+                    memmove(buffer_, buffer_ + frame_len, buf_len_ - frame_len);
+                    buf_len_ -= frame_len;
+                }
+            } while (!read_failed && available());
 
             delay(1);
         }
@@ -1372,9 +1378,16 @@ namespace esphome
             if (msg[0] != 0xA5)
                 return;
 
+            // Byte 6 is the model's protocol version, byte 9 the result code.
+            // A checksum alone does not make an error response valid status.
+            if ((this->model_ == ModelType::CORE600S && msg[6] != 0x01) ||
+                (this->model_ == ModelType::VITAL100S && msg[6] != 0x02) ||
+                ((this->model_ == ModelType::CORE600S || this->model_ == ModelType::VITAL100S) && msg[9] != 0))
+                return;
+
             const uint8_t msg_type = msg[1];
             const uint8_t seq = msg[2];
-            const uint8_t size_af = msg[3];
+            const uint16_t size_af = uint16_t(msg[3]) | (uint16_t(msg[4]) << 8);
             const uint8_t cmd_sz = msg[6];
             const uint8_t ptype0 = msg[7];
             const uint8_t ptype1 = msg[8];
@@ -1644,7 +1657,7 @@ namespace esphome
 #endif
         }
 
-        void Levoit::ackMessage(uint8_t ptype0, uint8_t ptype1)
+        void Levoit::ackMessage(uint8_t ptype0, uint8_t ptype1, uint8_t sequence)
         {
 
             uint8_t pv = 0x01;
@@ -1657,22 +1670,23 @@ namespace esphome
             // Core600S state push (ptype 0x40/0x41) uses 0x52 with trailing 0x01, not a standard ACK
             if (this->model_ == ModelType::CORE600S && ptype0 == 0x40 && ptype1 == 0x41)
             {
-                std::vector<uint8_t> message = {0xA5, 0x52, 0xFF, 0x04, 0xFF, 0x00, 0x01, ptype0, ptype1, 0x01};
-                levoit_finalize_message(message, messageUpCounter);
+                std::vector<uint8_t> message = {0xA5, 0x52, 0xFF, 0x04, 0x00, 0x00, 0x01, ptype0, ptype1, 0x01};
+                levoit_finalize_message(message, sequence);
                 if (message.size() > 0)
                 {
                     ESP_LOGI(TAG, ">>> Sending 0x52 recv for: 0x%02X 0x%02X", ptype0, ptype1);
                     this->write_array(message.data(), message.size());
                     this->flush();
-                    if (messageUpCounter == 255) messageUpCounter = 16;
-                    else messageUpCounter++;
                 }
                 return;
             }
 
-            std::vector<uint8_t> message = {0xA5, 0x12, 0xFF, 0x04, 0xFF, 0x00, pv, ptype0, ptype1, 0x00};
+            const bool echo_sequence = this->model_ == ModelType::CORE600S ||
+                                       this->model_ == ModelType::VITAL100S;
+            const uint8_t length_high = echo_sequence ? 0x00 : 0xFF;
+            std::vector<uint8_t> message = {0xA5, 0x12, 0xFF, 0x04, length_high, 0x00, pv, ptype0, ptype1, 0x00};
 
-            levoit_finalize_message(message, messageUpCounter);
+            levoit_finalize_message(message, echo_sequence ? sequence : messageUpCounter);
 
             if (message.size() > 0)
             {
@@ -1680,11 +1694,8 @@ namespace esphome
 
                 this->write_array(message.data(), message.size());
                 this->flush();
-                // update the message counter
-                if (messageUpCounter == 255)
-                    messageUpCounter = 16;
-                else
-                    messageUpCounter++;
+                if (!echo_sequence)
+                    messageUpCounter = messageUpCounter == 255 ? 16 : messageUpCounter + 1;
             }
         }
 

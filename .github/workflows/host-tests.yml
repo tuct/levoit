@@ -1,0 +1,37 @@
+name: Host tests
+
+# Builds the ESPHome-free part of components/levoit with a plain g++ and runs
+# its checks (tests/host). It fails when one of those files starts depending
+# on ESPHome again. See docs/shared-core.md.
+on:
+  pull_request:
+    paths:
+      - 'components/levoit/**'
+      - 'tests/host/**'
+      - '.github/workflows/host-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'components/levoit/**'
+      - 'tests/host/**'
+      - '.github/workflows/host-tests.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  levoit-frame:
+    name: levoit frame layer without ESPHome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run
+        run: |
+          g++ -std=c++17 -Wall -Wextra \
+            tests/host/levoit_frame_test.cpp \
+            components/levoit/tlv.cpp \
+            components/levoit/levoit_message.cpp \
+            -o /tmp/levoit-frame-test
+          /tmp/levoit-frame-test
