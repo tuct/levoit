@@ -121,7 +121,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <sub>Vent louver, PM1.0/2.5/10, Turbo</sub><br>
 <sub>🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
-<sub><a href="./devices/levoit-everest-air">Guide</a> · <a href="https://amzn.to/3Q1cMB">Amazon</a></sub>
+<sub><a href="./devices/levoit-everest-air">Guide</a> · <a href="https://link.amazon/B0hWvoUMh">Amazon</a></sub>
 </td>
 <td align="center" valign="top" width="33%">
 <a href="./devices/levoit-eleva-300x"><img src="./docs/images/devices/levoit-eleva-300x.jpg" width="150" alt="Eleva 300X"></a><br>
@@ -130,7 +130,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <sub>PM1.0/2.5/10, quiet period, timer</sub><br>
 <sub>🟧🟧⬜ Medium to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
-<sub><a href="./devices/levoit-eleva-300x">Guide</a></sub>
+<sub><a href="./devices/levoit-eleva-300x">Guide</a> · <a href="https://link.amazon/B057hJduV">Amazon</a></sub>
 </td>
 <td align="center" valign="top" width="33%">
 <a href="./devices/levoit-sprout"><img src="./docs/images/devices/levoit-sprout.jpg" width="150" alt="Sprout"></a><br>
@@ -158,7 +158,7 @@ component. Where each one stands: [docs/humidifiers.md](./docs/humidifiers.md).
 <sub>Evaporative, 9 fan speeds, target humidity, auto-dry</sub><br>
 <sub>🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
-<sub><a href="./devices/levoit-superior-6000s">Guide</a></sub>
+<sub><a href="./devices/levoit-superior-6000s">Guide</a> · <a href="https://link.amazon/B0gWAbu66">Amazon</a></sub>
 </td>
 <td align="center" valign="top" width="33%">
 <a href="./devices/levoit-lv600s"><img src="./docs/images/devices/levoit-lv600s.jpg" width="150" alt="LV600S"></a><br>
@@ -168,7 +168,7 @@ component. Where each one stands: [docs/humidifiers.md](./docs/humidifiers.md).
 <sub>On <a href="./devices/levoit-lv600s/levoit-lv600s-shared_dev.yaml"><code>levoit</code>, <code>model: LV600S</code></a></sub><br>
 <sub>🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash original ESP</sub><br>
-<sub><a href="./devices/levoit-lv600s">Guide</a></sub>
+<sub><a href="./devices/levoit-lv600s">Guide</a> · <a href="https://link.amazon/B05PReF5t">Amazon</a></sub>
 </td>
 <td align="center" valign="top" width="33%">
 <a href="./docs/humidifiers.md"><img src="./docs/images/devices/levoit-dual200s.jpg" width="150" alt="Dual 200S"></a><br>
@@ -280,7 +280,7 @@ On the [`philips`](./components/philips/README.md) component.
 <sub>PM2.5, allergen index, child lock, beep, sleep timer</sub><br>
 <sub>🟩🟩🟩 Easy to open</sub><br>
 <sub>🔵 Add ESP</sub><br>
-<sub><a href="./devices/philips-900-series">Guide</a></sub>
+<sub><a href="./devices/philips-900-series">Guide</a> · <a href="https://link.amazon/B0g6TbYbk">Amazon</a></sub>
 </td>
 </tr>
 </table>
