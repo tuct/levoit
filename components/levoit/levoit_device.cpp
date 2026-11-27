@@ -21,10 +21,8 @@
 #include "decoder_helpers.h"   // format_duration_minutes
 #include "sprout_status.h"
 
-namespace esphome
+namespace levoit
 {
-    namespace levoit
-    {
 
         static const char *const TAG = "levoit";
 
@@ -880,7 +878,7 @@ namespace esphome
             return life_left_percent;
         }
 
-        /// @brief The main loop, that is triggeed by the esphome framework automatically
+        /// @brief Once per main loop pass: LEDs, timers, CADR, filter life
         void LevoitDevice::tick(uint32_t now)
         {
             // Every minute: track CADR usage and runtime
@@ -1503,5 +1501,4 @@ namespace esphome
             }
         }
 
-    } // namespace levoit
-} // namespace esphome
+} // namespace levoit

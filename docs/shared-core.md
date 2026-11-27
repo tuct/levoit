@@ -109,9 +109,15 @@ a config without one; filter life goes through `publish_sensor`, so an
 unchanged value is no longer re-sent every 10 s; the hex in TX logs is
 formatted by the core.
 
-**3b, next:** the core moves to namespace `levoit::`. The ESPHome side stays
-`esphome::levoit` with a using-directive so codegen's
-`esphome::levoit::SwitchType` keeps resolving.
+**3b (this branch):** the core moves to namespace `levoit`; no core file
+mentions `esphome` any more. The ESPHome side moves to
+`esphome::levoit_component`, not `esphome::levoit` as first planned:
+ESPHome's generated `main.cpp` says `using namespace esphome;`, so a bare
+`levoit::` there would be ambiguous between the two. Codegen names the new
+namespace for the component classes and `::levoit` for the enums
+(`levoit_core_ns` in `__init__.py`); `esphome_ns.h` makes the core's names
+visible on the ESPHome side. The move is mechanical: only the namespace lines
+changed, the code inside keeps its indentation.
 
 ### 4. Packaging for a Matter firmware
 
@@ -132,10 +138,10 @@ stay at the top level of `components/levoit/`.
 
 ## Decisions and what is still open
 
-* **Namespace:** the core moves to a neutral `levoit::` as part of step 3, not
-  as a separate rename. The ESPHome side stays `esphome::levoit` because of
-  ESPHome's codegen. levoit-matter renames its own `levoit` namespace first so
-  the two do not collide (agreed in #147).
+* **Namespace:** the core is in a neutral `levoit` since 3b; the ESPHome side
+  is `esphome::levoit_component` (see 3b for why not `esphome::levoit`).
+  levoit-matter renames its own `levoit` namespace so the two do not collide
+  (agreed in #147).
 * **Philips:** a separate protocol in `components/philips`, same shape, later.
 * **LV600S:** `components/lv600s_humidifier` (#152) speaks the same Levoit
   frame with a fixed-layout payload at 9600 baud. The goal is `model: LV600S`

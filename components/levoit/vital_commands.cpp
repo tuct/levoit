@@ -3,10 +3,8 @@
 #include "levoit_device.h"
 #include "levoit_log.h"
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
     static const char *const TAG_VITAL_CMD = "levoit.vital_cmd";
 
     std::vector<uint8_t> build_vital_command(LevoitDevice *self, CommandType cmd)
@@ -449,5 +447,4 @@ namespace esphome
       return build_levoit_message(msg_type, payload, messageUpCounter);
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

@@ -1,9 +1,10 @@
 #pragma once
 #include "esphome/components/select/select.h"
 #include "../types.h"
+#include "../esphome_ns.h"
 
 namespace esphome {
-namespace levoit {
+namespace levoit_component {
 
 class Levoit;
 
@@ -21,5 +22,5 @@ class LevoitSelect :  public select::Select, public Component {
   SelectType type_{SelectType::AUTO_MODE};
 };
 
-}  // namespace levoit
+}  // namespace levoit_component
 }  // namespace esphome

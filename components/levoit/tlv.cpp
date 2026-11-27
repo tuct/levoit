@@ -2,7 +2,6 @@
 #include "tlv.h"
 #include "levoit_log.h"
 
-namespace esphome {
 namespace levoit {
 
 static uint32_t read_le_u32_(const uint8_t *p, uint8_t n) {
@@ -50,5 +49,4 @@ bool extract_tlvs_from_payload(ModelType model,
   return true;
 }
 
-} // namespace levoit
-} // namespace esphome
+}  // namespace levoit

@@ -4,10 +4,8 @@
 #include "decoder_helpers.h"
 #include "levoit_log.h"
 
-namespace esphome
+namespace levoit
 {
-    namespace levoit
-    {
         static const char *const TAG_CORE_CMD = "levoit.core_cmd";
 
         std::vector<uint8_t> build_core_command(LevoitDevice *self, CommandType cmd)
@@ -223,5 +221,4 @@ namespace esphome
             return build_levoit_message(msg_type, payload, messageUpCounter);
         }
 
-    } // namespace levoit
-} // namespace esphome
+} // namespace levoit

@@ -6,10 +6,8 @@
 #include <vector>
 #include <string>
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
 
     static const char *const TAG_CORE = "levoit.core";
 
@@ -248,5 +246,4 @@ namespace esphome
       self->apply_fan_status(power, fan_speed, fan_mode);
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

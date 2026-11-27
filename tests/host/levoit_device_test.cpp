@@ -23,7 +23,7 @@
 #include "../../components/levoit/levoit_device.h"
 #include "../../components/levoit/levoit_message.h"
 
-using namespace esphome::levoit;
+using namespace levoit;
 
 static int failures = 0;
 

@@ -3,12 +3,12 @@ import esphome.config_validation as cv
 from esphome.components import button
 from esphome.const import CONF_ID, CONF_ICON, CONF_ENTITY_CATEGORY, ENTITY_CATEGORY_CONFIG
 
-from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
+from .. import Levoit, CONF_LEVOIT_ID, levoit_ns, levoit_core_ns
 
 CONF_TYPE = "type"
 
 LevoitButton = levoit_ns.class_("LevoitButton", button.Button, cg.Component)
-ButtonType = levoit_ns.enum("ButtonType")
+ButtonType = levoit_core_ns.enum("ButtonType")
 
 TYPE_MAP = {
     "reset_filter_stats": ButtonType.RESET_FILTER_STATS,

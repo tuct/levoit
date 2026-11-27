@@ -20,7 +20,6 @@
 
 #include "types.h"
 
-namespace esphome {
 namespace levoit {
 
 // Enough slots for every entry of the enums in types.h, with headroom. An
@@ -133,4 +132,3 @@ class LevoitHost {
 };
 
 }  // namespace levoit
-}  // namespace esphome

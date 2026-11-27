@@ -6,10 +6,8 @@
 #include "levoit_log.h"
 #include "types.h"
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
 
     static const char *const TAG_DEC = "levoit.decoder";
     static uint8_t compute_payload_hash_(const uint8_t *payload, size_t len)
@@ -320,5 +318,4 @@ namespace esphome
       // Other models: add other decoders later
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

@@ -2,9 +2,10 @@
 #include "esphome/components/number/number.h"
 #include "esphome/core/preferences.h"
 #include "../types.h"
+#include "../esphome_ns.h"
 
 namespace esphome {
-namespace levoit {
+namespace levoit_component {
 
 class Levoit;
 
@@ -24,5 +25,5 @@ class LevoitNumber :  public number::Number, public Component {
   ESPPreferenceObject pref_;
 };
 
-}  // namespace levoit
+}  // namespace levoit_component
 }  // namespace esphome

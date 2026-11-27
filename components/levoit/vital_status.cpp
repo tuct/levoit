@@ -6,10 +6,8 @@
 #include <vector>
 #include <string>
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
 
     static const char *const TAG_VITAL = "levoit.vital"; 
 
@@ -519,5 +517,4 @@ namespace esphome
         self->apply_fan_status(pwr, spd, mod);
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

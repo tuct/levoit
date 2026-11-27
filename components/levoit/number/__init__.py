@@ -14,12 +14,12 @@ from esphome.const import (
     CONF_MODE,
 )
 
-from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
+from .. import Levoit, CONF_LEVOIT_ID, levoit_ns, levoit_core_ns
 
 CONF_TYPE = "type"
 
 LevoitNumber = levoit_ns.class_("LevoitNumber", number.Number, cg.Component)
-NumberType = levoit_ns.enum("NumberType")
+NumberType = levoit_core_ns.enum("NumberType")
 
 TYPE_MAP = {
     "timer": NumberType.TIMER,

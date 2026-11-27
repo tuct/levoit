@@ -3,12 +3,12 @@ import esphome.config_validation as cv
 from esphome.components import text_sensor
 from esphome.const import CONF_ID, CONF_ICON, CONF_ENTITY_CATEGORY, ENTITY_CATEGORY_DIAGNOSTIC
 
-from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
+from .. import Levoit, CONF_LEVOIT_ID, levoit_ns, levoit_core_ns
 
 CONF_TYPE = "type"
 
 LevoitTextSensor = levoit_ns.class_("LevoitTextSensor", text_sensor.TextSensor, cg.Component)
-TextSensorType = levoit_ns.enum("TextSensorType")
+TextSensorType = levoit_core_ns.enum("TextSensorType")
 
 TYPE_MAP = {
     "mcu_version": TextSensorType.MCU_VERSION,

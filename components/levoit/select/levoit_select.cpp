@@ -1,13 +1,14 @@
 #include "levoit_select.h"
 #include "../levoit.h"
 #include "../types.h"
+#include "../esphome_ns.h"
 #include "../fan_modes.h"
 #include "esphome/core/log.h"
 #include "esphome/components/select/select_traits.h"
 
 namespace esphome
 {
-  namespace levoit
+  namespace levoit_component
   {
 
     static const char *const TAG = "levoit.select";
@@ -120,5 +121,5 @@ namespace esphome
       parent_->on_select_command(this->type_, index);
     }
 
-  } // namespace levoit
+  } // namespace levoit_component
 } // namespace esphome

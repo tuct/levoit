@@ -7,7 +7,7 @@
 
 namespace esphome
 {
-  namespace levoit
+  namespace levoit_component
   {
 
     static const char *const TAG = "levoit.number";
@@ -115,5 +115,5 @@ namespace esphome
       parent_->on_number_command(this->type_, state);
     }
 
-  } // namespace levoit
+  } // namespace levoit_component
 } // namespace esphome

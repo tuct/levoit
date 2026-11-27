@@ -6,10 +6,8 @@
 #include <vector>
 #include <string>
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
 
     static const char *const TAG_SUP = "levoit.superior";
 
@@ -310,5 +308,4 @@ namespace esphome
       }
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

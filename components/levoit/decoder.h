@@ -4,7 +4,6 @@
 #include "levoit_device.h"
 #include "types.h"
 
-namespace esphome {
 namespace levoit {
 
 void dispatch_decoder(LevoitDevice *self,
@@ -18,4 +17,3 @@ void dispatch_decoder(LevoitDevice *self,
                       size_t payload_len);
 
 }  // namespace levoit
-}  // namespace esphome

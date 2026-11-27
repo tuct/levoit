@@ -16,7 +16,6 @@
 #include "levoit_state.h"
 #include "types.h"
 
-namespace esphome {
 namespace levoit {
 
 // Eleva 300X auto-mode configuration block (CMD 02 21 55), cached from the
@@ -268,4 +267,3 @@ class LevoitDevice {
 };
 
 }  // namespace levoit
-}  // namespace esphome

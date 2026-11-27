@@ -3,9 +3,10 @@
 #include "esphome/core/component.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "../types.h"
+#include "../esphome_ns.h"
 
 namespace esphome {
-namespace levoit {
+namespace levoit_component {
 
 class Levoit;
 
@@ -22,5 +23,5 @@ class LevoitBinarySensor : public Component, public binary_sensor::BinarySensor 
   BinarySensorType type_{BinarySensorType::FILTER_LOW};
 };
 
-}  // namespace levoit
+}  // namespace levoit_component
 }  // namespace esphome

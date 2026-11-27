@@ -3,13 +3,10 @@
 #include <cstdint>
 #include "types.h"
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
     class LevoitDevice; // forward declaration
 
     std::vector<uint8_t> build_superior_command(LevoitDevice *self, CommandType cmd);
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

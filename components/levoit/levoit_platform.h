@@ -10,7 +10,6 @@
 #include <cstdint>
 #include <functional>
 
-namespace esphome {
 namespace levoit {
 
 enum class NetworkState : uint8_t {
@@ -43,4 +42,3 @@ class LevoitPlatform {
 };
 
 }  // namespace levoit
-}  // namespace esphome
