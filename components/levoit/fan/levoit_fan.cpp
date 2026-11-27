@@ -103,7 +103,13 @@ namespace esphome
             if (call.get_state().has_value())
             {
                 bool new_state = *call.get_state();
-                if (new_state != cur_state)
+                if (parent_ && parent_->get_model() == ModelType::SUPERIOR6000S)
+                {
+                    // The MCU may keep running to dry the filter after an off
+                    // request. Wait for its report and allow explicit retries.
+                    power_cmd = new_state ? 1 : 0;
+                }
+                else if (new_state != cur_state)
                 {
                     this->state = new_state;
                     power_cmd = new_state ? 1 : 0;
@@ -120,7 +126,9 @@ namespace esphome
                 // MCU reports no fan level for those modes (apply_device_status gets
                 // speed_level == -1), so "same level" is not "no change" here.
                 const bool leaving_preset =
-                    preset == nullptr && !cur_preset.empty() && cur_preset != "Manual";
+                    preset == nullptr && cur_preset != "Manual" &&
+                    (!cur_preset.empty() ||
+                     (parent_ && parent_->get_model() == ModelType::SUPERIOR6000S));
                 if (new_speed != cur_speed || leaving_preset)
                 {
                     this->speed = new_speed;

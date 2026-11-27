@@ -1,0 +1,30 @@
+Superior 6000S: owner observations, MCU 1.0.9
+
+Source: jasongill's customized levoit component, vendored from
+72c0201e94233017d0ff3e16035aff8348a54af5; LOCAL_PATCHES.txt dated 2026-11-09.
+These are preserved test notes, NOT a raw UART capture or a test of this PR.
+
+- The command dispatcher omitted SUPERIOR6000S. After routing it to
+  build_superior_command, real power-on and Humidifying ON were confirmed.
+  Auto-dry settings had to be sent again because previous writes were dropped.
+- The notes record status tag 0x00=1 with 0x02=0 after off, and 0x02=1 when
+  on/drying. The local decoder uses a one-byte 0x02 value of 0 or 1 for power.
+  Tag 0x00 remained constant; calling it a device ID is an interpretation.
+- Sending speed then Manual restored the MCU's remembered speed 5 instead
+  of requested speed 1. Sending Manual then speed fixed this on the unit.
+- Final checks: MCU power ON + Manual speed 1 + Humidifying ON; then MCU
+  power OFF + Humidifying OFF + Drying OFF after full-off.
+- The local fan publishes power only after an MCU report and always sends
+  explicit power requests so lost commands can be retried.
+
+A later local YAML note labels water_tank_empty as "Empty Tank Reported":
+it may remain set after refilling until the unit is turned on. It is a
+reported empty condition, not a continuous water-level measurement.
+Cover removal, humidifying and drying are separate status fields.
+
+Raw captures are not available with these notes. The host test payloads are
+synthetic fixtures, not recovered recordings. Before treating the mapping as
+verified across firmware revisions, capture off/on/drying and transitions
+between Auto and Manual with a remembered manual speed different from the
+requested speed. Commit those recordings under uart/ with firmware version,
+action and direction. See LEVOIT_UART.md for framing/checksum definitions.

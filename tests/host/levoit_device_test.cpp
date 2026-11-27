@@ -12,6 +12,7 @@
 // No -I on the component folder, as in an ESPHome build (its VERSION file
 // would shadow <version> on a case-insensitive file system).
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <functional>
@@ -562,7 +563,65 @@ static void test_parser() {
   CHECK(wrap.platform.acks() == 1);
 }
 
+// Synthetic fixtures based on the MCU 1.0.9 observations in the local
+// devices/levoit-superior-6000s/observations-1.0.9.txt.
+// These are NOT captured UART frames.
+static void test_superior_power_and_commands() {
+  Rig rig("SUPERIOR6000S");
+  auto report = [&rig](Bytes payload, uint32_t now) {
+    Bytes f(10 + payload.size(), 0);
+    f[0] = 0xA5; f[1] = 0x22;
+    f[3] = static_cast<uint8_t>(payload.size() + 4);
+    f[6] = 2; f[7] = 0x30; f[8] = 0x55;
+    std::copy(payload.begin(), payload.end(), f.begin() + 10);
+    levoit_finalize_message(f, 7);
+    rig.feed(f, now);
+  };
+  report({0x00, 1, 1, 0x02, 1, 0}, 1000);
+  CHECK(rig.host.fan_power == 0);
+  report({0x00, 1, 1, 0x02, 1, 1}, 2000);
+  CHECK(rig.host.fan_power == 1);
+  report({0x00, 1, 1, 0x02, 1, 0}, 3000);
+  CHECK(rig.host.fan_power == 0);
+  report({0x00, 1, 1}, 4000); // no power field: keep the last state
+  CHECK(rig.host.fan_power == 0);
+  report({0x02, 1, 2}, 5000); // invalid enum: do not invent a state
+  CHECK(rig.host.fan_power == 0);
+  report({0x02, 2, 1, 0}, 6000); // invalid width
+  CHECK(rig.host.fan_power == 0);
+
+  rig.platform.tx.clear();
+  rig.device.on_fan_command(1, 1, 0);
+  CHECK(rig.platform.tx.size() == 3);
+  if (rig.platform.tx.size() == 3) {
+    // Power, Manual, speed 1, in that order; compare command and payload.
+    const Bytes commands[] = {{2, 0, 0x50}, {2, 0x32, 0x55}, {2, 0x33, 0x55}};
+    for (size_t i = 0; i < 3; i++) {
+      const auto &f = rig.platform.tx[i];
+      CHECK(f.size() == 13);
+      if (f.size() == 13) {
+        CHECK(Bytes(f.begin() + 6, f.begin() + 9) == commands[i]);
+        CHECK(Bytes(f.begin() + 10, f.end()) == Bytes({1, 1, 1}));
+        CHECK(f[5] == levoit_checksum(f.data(), f.size()));
+      }
+    }
+  }
+  rig.platform.tx.clear();
+  rig.device.on_fan_command(0, -1, -1);
+  CHECK(rig.platform.tx.size() == 1);
+  if (rig.platform.tx.size() == 1)
+    CHECK(rig.platform.tx[0].back() == 0);
+  // An explicit retry must still reach the wire when core state is already off.
+  rig.device.on_fan_command(0, -1, -1);
+  CHECK(rig.platform.tx.size() == 2);
+  report({0x00, 1, 1, 0x02, 1, 1}, 7000);
+  CHECK(rig.host.fan_power == 1); // MCU still running after the off request
+  report({0x00, 1, 1, 0x02, 1, 0}, 8000);
+  CHECK(rig.host.fan_power == 0);
+}
+
 int main() {
+  test_superior_power_and_commands();
   test_core300s_capture();
   test_command();
   test_dedup();

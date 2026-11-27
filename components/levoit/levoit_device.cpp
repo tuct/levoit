@@ -620,8 +620,11 @@ namespace levoit
             // plus "Manual" (see LevoitFan::control). Sent level-then-Manual, the
             // Everest does not end up in Manual at the requested level (#92);
             // Manual-then-level is the sequence that works on the unit (preset
-            // first, then speed). Other models keep level-then-mode.
-            const bool mode_before_speed = this->model_ == ModelType::EVERESTAIR;
+            // first, then speed). Superior MCU 1.0.9 also restores its remembered
+            // speed on entering Manual, so the explicit level must follow it.
+            // Other models keep level-then-mode.
+            const bool mode_before_speed = this->model_ == ModelType::EVERESTAIR ||
+                                           this->model_ == ModelType::SUPERIOR6000S;
 
             if (power != -1)
             {
@@ -1249,7 +1252,11 @@ namespace levoit
             ESP_LOGD(TAG, "Command triggered: %s", command_type_to_string(commandType));
             std::vector<uint8_t> message;
 
-            if (this->model_ == ModelType::CORE200S || this->model_ == ModelType::CORE300S || this->model_ == ModelType::CORE400S || this->model_ == ModelType::CORE600S)
+            if (this->model_ == ModelType::SUPERIOR6000S)
+            {
+                message = build_superior_command(this, commandType);
+            }
+            else if (this->model_ == ModelType::CORE200S || this->model_ == ModelType::CORE300S || this->model_ == ModelType::CORE400S || this->model_ == ModelType::CORE600S)
             {
                 message = build_core_command(this, commandType);
             }

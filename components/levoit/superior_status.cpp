@@ -44,9 +44,8 @@ namespace levoit
         switch (t.tag)
         {
         case 0x00:
-          ESP_LOGV(TAG_SUP, "Power=%u", (unsigned)t.value_u32);
-          have_power = true;
-          power = (t.value_u32 == 1);
+          // MCU 1.0.9: this remains 1 when the appliance is off.
+          ESP_LOGV(TAG_SUP, "ID=%u", (unsigned)t.value_u32);
           break;
 
         case 0x01:
@@ -63,6 +62,15 @@ namespace levoit
           }
           break;
         }
+
+        case 0x02:
+          // MCU 1.0.9: 0=off, 1=on (including active drying).
+          if (t.value_len == 1 && t.value_u32 <= 1)
+          {
+            have_power = true;
+            power = (t.value_u32 == 1);
+          }
+          break;
 
         case 0x03:
           ESP_LOGV(TAG_SUP, "CoverRemoved=%u", (unsigned)t.value_u32);
