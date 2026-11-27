@@ -209,6 +209,60 @@ class LevoitDevice {
   // estimate stays authoritative for the sensor. The Eleva 300X takes
   // 02 05 55 + 03 00, the frame its stock app sends.
   bool has_mcu_filter_reset() const { return this->model_ == ModelType::CORE200S || this->model_ == ModelType::ELEVA300X; }
+  // Per-model facts a consumer would otherwise keep its own table of. Each
+  // says why it is here:
+  //   speed_count     - the fan's speed range to advertise (Turbo on the
+  //                     EverestAir is a mode, not a speed, so it is not counted)
+  //   has_auto        - whether to offer an Auto mode
+  //   has_air_quality - whether the model reports PM2.5, i.e. whether to show it
+  //   display_name    - a name to label the device with
+  uint8_t speed_count() const {
+    switch (this->model_) {
+      case ModelType::CORE200S:
+      case ModelType::CORE300S:
+      case ModelType::EVERESTAIR:
+        return 3;
+      case ModelType::SUPERIOR6000S:
+        return 9;
+      default:
+        return 4;
+    }
+  }
+  bool has_auto() const { return this->model_ != ModelType::CORE200S; }
+  bool has_air_quality() const {
+    return this->model_ != ModelType::CORE200S && this->model_ != ModelType::SUPERIOR6000S;
+  }
+  // get_model_name() returns the configured key ("CORE300S"); this is "Core 300S".
+  const char *display_name() const {
+    switch (this->model_) {
+      case ModelType::CORE200S: return "Core 200S";
+      case ModelType::CORE300S: return "Core 300S";
+      case ModelType::CORE400S: return "Core 400S";
+      case ModelType::CORE600S: return "Core 600S";
+      case ModelType::VITAL100S: return "Vital 100S";
+      case ModelType::VITAL200S: return "Vital 200S";
+      case ModelType::SPROUT: return "Sprout";
+      case ModelType::EVERESTAIR: return "EverestAir";
+      case ModelType::SUPERIOR6000S: return "Superior 6000S";
+      case ModelType::ELEVA300X: return "Eleva 300X";
+      default: return "Levoit";
+    }
+  }
+  // Set the filter life to a percentage, the inverse of
+  // calculate_filter_life_left_percent(): for a host that offers a "set filter
+  // %" control (restoring the value the vendor app showed, say). Seeds the
+  // used-CADR counter from the model's CADR and the configured lifetime, so a
+  // consumer needs neither. Reset to new stays set_used_cadr(0).
+  void set_filter_percent(uint8_t percent) {
+    if (percent > 100)
+      percent = 100;
+    float months;
+    if (!this->state_.get_number(NumberType::FILTER_LIFETIME_MONTHS, months) || months <= 0.0f)
+      return;
+    const uint64_t capacity = (uint64_t) this->rated_cadr() * 24 * 30 * (uint32_t) months;
+    this->set_used_cadr((uint32_t)((capacity * (100 - percent) + 99) / 100));
+    this->publish_filter_stats_now();
+  }
   void sendCommand(CommandType commandType);
   void process_message(uint8_t *msg, int len);
   void track_cadr_usage();  // Track CADR and runtime based on fan state
@@ -221,6 +275,23 @@ class LevoitDevice {
   static constexpr const char *PREF_TOTAL_RUNTIME = "levoit_runtime";
 
  protected:
+  // Per-model rated CADR (m³/h); begin() seeds the counter from it and
+  // set_filter_percent inverts the filter-life calc with it.
+  uint16_t rated_cadr() const {
+    switch (this->model_) {
+      case ModelType::VITAL200S: return 415;
+      case ModelType::VITAL100S: return 221;
+      case ModelType::CORE300S: return 214;
+      case ModelType::CORE400S: return 442;
+      case ModelType::CORE200S: return 167;
+      case ModelType::CORE600S: return 641;
+      case ModelType::SPROUT: return 145;      // spec smoke CADR 144.5 m³/h (rounded)
+      case ModelType::EVERESTAIR: return 612;
+      case ModelType::SUPERIOR6000S: return 500;  // humidifier: nominal, feeds the CADR counters
+      case ModelType::ELEVA300X: return 273;   // spec 161 CFM smoke/dust/PM2.5
+      default: return 235;
+    }
+  }
   // Frame-parse everything complete in buffer_, resyncing on bad bytes
   void parse_rx_();
   // Core models: the filter LED follows FILTER_LOW
