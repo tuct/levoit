@@ -223,6 +223,26 @@ static void test_dedup() {
   CHECK(rig.host.sensors[SensorType::PM25] == 3);
 }
 
+// A command the MCU does not carry out: the next push repeats the last
+// payload, and that push must still be decoded so the requested value does
+// not stay in the state.
+static void test_refused_command() {
+  Rig rig("CORE300S");
+  const Bytes push = hex("A5 22 D8 17 00 63 01 32 40 00 00 00 01 01 00 03 00 64 01 03 00 01 05 00 00 00 00 00 00");
+  rig.feed(push, 1000);
+  CHECK(rig.host.switches[SwitchType::DISPLAY] == true);
+
+  rig.device.on_switch_command(SwitchType::DISPLAY, false);
+  rig.host.switches.clear();
+  rig.feed(push, 2000);
+  bool display = false;
+  CHECK(rig.device.try_get_switch_state(SwitchType::DISPLAY, display) && display);
+  CHECK(rig.host.switches.count(SwitchType::DISPLAY) == 1 && rig.host.switches[SwitchType::DISPLAY] == true);
+
+  rig.feed(push, 3000);
+  CHECK(rig.host.fan_reports == 2);
+}
+
 // begin(): counters restored through the platform, the Core 300S asks for its
 // status once if nothing arrived, CADR tracking runs on the device state.
 static void test_begin_and_tracking() {
@@ -385,6 +405,7 @@ int main() {
   test_core300s_capture();
   test_command();
   test_dedup();
+  test_refused_command();
   test_begin_and_tracking();
   test_wifi_led();
   test_acks();

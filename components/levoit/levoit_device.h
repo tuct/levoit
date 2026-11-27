@@ -177,6 +177,13 @@ class LevoitDevice {
   };
   static constexpr size_t PAYLOAD_HASH_CACHE_SIZE = 16;
   PayloadHashCacheEntry (&payload_hash_cache())[PAYLOAD_HASH_CACHE_SIZE] { return payload_hash_cache_; }
+  // After a command the state holds the requested value. The next push is
+  // decoded even when it repeats the last payload, so a command the MCU did
+  // not carry out is reported back instead of staying in the state.
+  void forget_payload_hashes() {
+    for (auto &e : payload_hash_cache_)
+      e.valid = false;
+  }
 
   // ---- model knowledge ----
   // Core 200S / 300S / 400S / 600S: the Core protocol (it has a filter LED command)
