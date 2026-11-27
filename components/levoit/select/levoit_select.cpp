@@ -100,7 +100,7 @@ namespace esphome
       uint32_t index = it - options.begin();
       if (this->type_ == SelectType::FAN_OPERATING_MODE_SELECT ||
           this->type_ == SelectType::DAYTIME_FAN_MODE) {
-        int mode = fan_operating_mode_to_raw(StringRef(value));
+        int mode = fan_operating_mode_to_raw(value);
         if (mode < 0) {
           ESP_LOGW(TAG, "Unknown fan operating mode option: %s", value.c_str());
           return;

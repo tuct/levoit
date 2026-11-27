@@ -2,8 +2,7 @@
 #include "levoit_message.h"
 #include "levoit.h"
 #include "decoder_helpers.h"
-#include "esphome/core/defines.h"
-#include "esphome/core/log.h"
+#include "levoit_log.h"
 
 namespace esphome
 {
