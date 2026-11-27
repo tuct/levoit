@@ -107,7 +107,6 @@ namespace esphome
                           size_t payload_len)
     {
       (void)msg_type;
-      (void)seq;
       (void)cmd_size_code;
 
       ESP_LOGD(TAG_DEC, "dispatch: model=%d ptype=%02X%02X payload_len=%u",
@@ -121,7 +120,7 @@ namespace esphome
         if (model == ModelType::SUPERIOR6000S && ptype0 == 0x44 && ptype1 == 0x55)
           self->ackFilterReset(ptype0, ptype1);
         else
-          self->ackMessage(ptype0, ptype1);
+          self->ackMessage(ptype0, ptype1, seq);
       }
 
       // Eleva 300X: echo every sensor REPORT back, like the stock firmware.

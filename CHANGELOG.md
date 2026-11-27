@@ -7,6 +7,10 @@ Project-level changes. Component releases have their own log:
 
 ### Unreleased
 
+* **Levoit UART frame handling.** Decode both length bytes, discard impossible
+  or truncated frames, and preserve complete frames in long bursts.
+  Core 600S and Vital 100S echo the incoming sequence in ACKs and reject
+  frames with an unexpected protocol version or error result.
 * **Core 300S on the `01 32 40` status: speed reads 1 in Sleep.** The fan showed
   the last manual speed in Sleep, often 3, though it runs slower than speed 1. It
   now reads the running speed, `00` in Sleep, as Auto already did, which the fan
