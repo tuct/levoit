@@ -88,6 +88,9 @@ class LevoitDevice {
   // means "not reported in this frame, leave the field alone". Do not narrow
   // these - the Vital and Superior decoders rely on that sentinel.
   void apply_fan_status(int power, int speed, int mode);
+  // The selected manual speed where the status carries it apart from the
+  // running speed (FanState::selected_speed); call before apply_fan_status.
+  void set_selected_speed(int speed) { this->state_.fan.selected_speed = speed; }
   // helper to compute and publish filter stats immediately
   void publish_filter_stats_now();
   // EverestAir: push computed filter % to the MCU panel when it changes

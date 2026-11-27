@@ -243,6 +243,7 @@ namespace levoit
       self->publish_number(NumberType::EFFICIENCY_ROOM_SIZE, efficency_area_m2);
 
       ESP_LOGV(TAG_CORE, "Core300S (19-byte) fan: power=%d speed=%d mode=%d", power, fan_speed, (int)fan_mode);
+      self->set_selected_speed(payload[5]);
       self->apply_fan_status(power, fan_speed, fan_mode);
     }
 
