@@ -90,6 +90,14 @@ class Levoit : public Component, public uart::UARTDevice, public LevoitHost, pub
   void set_total_runtime(uint32_t value) { this->device_.set_total_runtime(value); }
   uint8_t get_dry_level_preference() const { return this->device_.get_dry_level_preference(); }
   void set_dry_level_preference(uint8_t level) { this->device_.set_dry_level_preference(level); }
+  // ---- and for YAML lambdas on the hub id, as before the split ----
+  void send_aqi_to_mcu(uint16_t aqi) { this->device_.send_aqi_to_mcu(aqi); }
+  uint32_t get_used_cadr() const { return this->device_.get_used_cadr(); }
+  uint32_t get_total_runtime() const { return this->device_.get_total_runtime(); }
+  float calculate_filter_life_left_percent() const { return this->device_.calculate_filter_life_left_percent(); }
+  uint32_t calculate_current_cadr_per_hour() const { return this->device_.calculate_current_cadr_per_hour(); }
+  bool is_timer_active() const { return this->device_.is_timer_active(); }
+  bool is_core_model() const { return this->device_.is_core_model(); }
 
   // ---- LevoitHost: a changed slot goes to its entity ----
   void switch_changed(SwitchType type, bool state) override;
