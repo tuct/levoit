@@ -569,6 +569,8 @@ namespace levoit
             ESP_LOGD(TAG, "on_fan_command: power=%d speed_level=%d mode=%d", power, speed_level, mode);
             this->state_.set_fan(power, speed_level, mode);
             this->forget_payload_hashes();
+            if (speed_level != -1 && this->state_.fan.selected_speed != -1)
+                this->state_.fan.selected_speed = speed_level;
             // Optional: restrict by model
             // if (model_ != ModelType::VITAL200S && type == SwitchType::QUICK_CLEAN) return;
 
