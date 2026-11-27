@@ -121,7 +121,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <sub>Vent louver, PM1.0/2.5/10, Turbo</sub><br>
 <sub>🟩🟩🟩 Easy to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
-<sub><a href="./devices/levoit-everest-air">Guide</a> · <a href="https://amzn.to/3Q1cMB">Amazon</a></sub>
+<sub><a href="./devices/levoit-everest-air">Guide</a> · <a href="https://link.amazon/B0hWvoUMh">Amazon</a></sub>
 </td>
 <td align="center" valign="top" width="33%">
 <a href="./devices/levoit-eleva-300x"><img src="./docs/images/devices/levoit-eleva-300x.jpg" width="150" alt="Eleva 300X"></a><br>
@@ -130,7 +130,7 @@ All on the <a href="./components/levoit/README.md"><code>levoit</code></a> compo
 <sub>PM1.0/2.5/10, quiet period, timer</sub><br>
 <sub>🟧🟧⬜ Medium to open</sub><br>
 <sub>🟢 Flash · 🔵 Add ESP</sub><br>
-<sub><a href="./devices/levoit-eleva-300x">Guide</a></sub>
+<sub><a href="./devices/levoit-eleva-300x">Guide</a> · <a href="https://link.amazon/B057hJduV">Amazon</a></sub>
 </td>
 <td align="center" valign="top" width="33%">
 <a href="./devices/levoit-sprout"><img src="./docs/images/devices/levoit-sprout.jpg" width="150" alt="Sprout"></a><br>
