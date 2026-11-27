@@ -19,7 +19,7 @@ No cloud, native Home Assistant, and the features of the stock app.
 
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P4P721ETB5)
 
-[Matter](#matter-and-apple-home) · [Devices](#devices) · [Get started](#get-started) · [Home Assistant](#home-assistant) · [Components](#components) · [Contributing](#contributing)
+[Devices](#devices) · [Get started](#get-started) · [Home Assistant](#home-assistant) · [Matter](#matter-and-apple-home) · [Components](#components) · [Contributing](#contributing)
 
 <img src="./header.jpg" alt="Levoit air purifiers lined up on a shelf, all running ESPHome">
 
@@ -39,22 +39,6 @@ without the vendor app.
 - **Reversible.** Back up the stock firmware before flashing, or leave the original ESP in place and add your own.
 
 The protocol, frame by frame: [LEVOIT_UART.md](./LEVOIT_UART.md).
-
-## Matter and Apple Home
-
-No Home Assistant? [@tadhglewis](https://github.com/tadhglewis) puts these
-purifiers on Matter, built on the [shared protocol core](./docs/shared-core.md)
-of the `levoit` component. You pair them by scanning a QR code, with no cloud
-and no hub.
-
-- **[levoit-matter](https://github.com/tadhglewis/levoit-matter)**: Matter
-  firmware on the purifier's own ESP32, without ESPHome. Power, speed, Auto,
-  filter life, air quality, and Matter OTA updates. It runs on a Core 300S;
-  the other Core models, Vital, Everest Air, Sprout and Eleva 300X build but
-  have not run on hardware yet.
-- **[esphome-levoit-matter](https://github.com/tadhglewis/esphome-levoit-matter)**
-  (work in progress): the same with ESPHome and the `levoit` component, on a
-  fork of esphome-matter. Runs on one Core 300S.
 
 ## Devices
 
@@ -354,6 +338,24 @@ component.
 or follow the [setup steps](https://github.com/tuct/levoit-esphome-ha#installation).
 
 ![The Levoit ESPHome sidebar page in Home Assistant: seven purifiers as cards, each with power, mode and speed buttons, PM2.5, AQI and CADR, and an Update chip](./docs/images/levoit-esphome-ha-overview.png)
+
+<sub>[↑ Back to top](#readme-top)</sub>
+
+## Matter and Apple Home
+
+No Home Assistant? [@tadhglewis](https://github.com/tadhglewis) puts these
+purifiers on Matter, built on the [shared protocol core](./docs/shared-core.md)
+of the `levoit` component. You pair them by scanning a QR code, with no cloud
+and no hub.
+
+- **[levoit-matter](https://github.com/tadhglewis/levoit-matter)**: Matter
+  firmware on the purifier's own ESP32, without ESPHome. Power, speed, Auto,
+  filter life, air quality, and Matter OTA updates. It runs on a Core 300S;
+  the other Core models, Vital, Everest Air, Sprout and Eleva 300X build but
+  have not run on hardware yet.
+- **[esphome-levoit-matter](https://github.com/tadhglewis/esphome-levoit-matter)**
+  (work in progress): the same with ESPHome and the `levoit` component, on a
+  fork of esphome-matter. Runs on one Core 300S.
 
 <sub>[↑ Back to top](#readme-top)</sub>
 
