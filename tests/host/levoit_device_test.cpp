@@ -741,16 +741,19 @@ static void test_lv600s_shared_commands() {
   CHECK(timer && (*timer)[10] == 60);
   rig.feed(hex("A5 12 F0 04 00 4D 01 64 A2 00"), 140);
   CHECK(!controls.timer_write_confirmed(timer_id));
-  rig.feed(hex("A5 22 59 0C 00 52 01 66 A2 00 3C 00 00 00 3C 00 00 00"), 150);
+  const auto running_timer = hex("A5 22 59 0C 00 52 01 66 A2 00 3C 00 00 00 3C 00 00 00");
+  const auto cleared_timer = hex("A5 22 5B 0C 00 8C 01 66 A2 00 00 00 00 00 3C 00 00 00");
+  rig.feed(running_timer, 150);
   CHECK(controls.timer_write_confirmed(timer_id) && controls.get_timer_duration() == 60);
   rig.platform.now = 1150;
   device.tick(1150);
   CHECK(controls.get_timer_remaining() == 59);
   CHECK(rig.host.texts[TextSensorType::TIMER_DURATION_CURRENT] == "1 min");
+  CHECK(rig.host.numbers[NumberType::TIMER] == 1);
   device.on_number_command(NumberType::TIMER, 0);
   timer = rig.platform.last_with(0x64, 0xA2);
   CHECK(timer && (*timer)[10] == 0);
-  rig.feed(hex("A5 22 5B 0C 00 8C 01 66 A2 00 00 00 00 00 3C 00 00 00"), 1200);
+  rig.feed(cleared_timer, 1200);
   CHECK(controls.get_timer_remaining() == 0 && controls.get_timer_duration() == 0);
 
   report(5, 1, 1250);
@@ -766,7 +769,27 @@ static void test_lv600s_shared_commands() {
   CHECK(!rig.host.binaries[BinarySensorType::MCU_CONNECTION]);
   CHECK(std::isnan(rig.host.sensors[SensorType::HUMIDITY]));
   CHECK(rig.host.texts[TextSensorType::TIMER_DURATION_CURRENT] == "Unknown");
+  CHECK(std::isnan(rig.host.numbers[NumberType::TIMER]));
   CHECK(rig.platform.acks() == 0);
+
+  report(3, 1, 16500);
+  rig.feed(running_timer, 16600);
+  rig.platform.now = 17400;
+  device.tick(17400);
+  CHECK(rig.host.numbers[NumberType::TIMER] == 1);
+
+  // The MCU is still reachable, but the expiry confirmation never arrived.
+  report(3, 1, 86600);
+  device.tick(86600);
+  CHECK(rig.host.binaries[BinarySensorType::MCU_CONNECTION]);
+  CHECK(rig.host.texts[TextSensorType::TIMER_DURATION_CURRENT] == "Unknown");
+  CHECK(std::isnan(rig.host.numbers[NumberType::TIMER]));
+
+  rig.feed(cleared_timer, 86700);
+  rig.platform.now = 87600;
+  device.tick(87600);
+  CHECK(rig.host.texts[TextSensorType::TIMER_DURATION_CURRENT] == "Off");
+  CHECK(rig.host.numbers[NumberType::TIMER] == 0);
 }
 
 static void test_lv600s_deferred_fan_cancelled() {

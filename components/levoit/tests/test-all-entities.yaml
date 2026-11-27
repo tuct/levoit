@@ -175,6 +175,10 @@ sensor:
     levoit: dev
     name: "ambient_light"
     type: ambient_light
+  - platform: levoit
+    levoit: dev
+    name: "mist_level"
+    type: mist_level
 
 binary_sensor:
   - platform: levoit
@@ -205,6 +209,22 @@ binary_sensor:
     levoit: dev
     name: "humidifying"
     type: humidifying
+  - platform: levoit
+    levoit: dev
+    name: "tank_removed"
+    type: tank_removed
+  - platform: levoit
+    levoit: dev
+    name: "heating_enabled"
+    type: heating_enabled
+  - platform: levoit
+    levoit: dev
+    name: "mcu_fault"
+    type: mcu_fault
+  - platform: levoit
+    levoit: dev
+    name: "mcu_connection"
+    type: mcu_connection
   - platform: levoit
     levoit: dev
     name: "quiet_active"
@@ -343,6 +363,10 @@ number:
     type: humidity_target
   - platform: levoit
     levoit: dev
+    name: "warm_level"
+    type: warm_level
+  - platform: levoit
+    levoit: dev
     name: "quiet_start"
     type: quiet_start
   - platform: levoit
@@ -363,6 +387,10 @@ text_sensor:
     levoit: dev
     name: "model"
     type: model
+  - platform: levoit
+    levoit: dev
+    name: "reported_mode"
+    type: reported_mode
   - platform: levoit
     levoit: dev
     name: "timer_duration_initial"

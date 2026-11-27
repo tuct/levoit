@@ -979,6 +979,8 @@ namespace levoit
                                         lv600s::Controls::format_timer_duration(duration));
                     if (std::isfinite(remaining))
                         publish_number(NumberType::TIMER, std::ceil(remaining / 60.0f));
+                    else if (float previous; try_get_number_state(NumberType::TIMER, previous) && std::isfinite(previous))
+                        publish_number(NumberType::TIMER, NAN);
                 }
                 return;
             }
