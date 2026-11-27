@@ -7,6 +7,6 @@
 #       version: "<tag>"
 # ESPHome does not read this file.
 # Kept equal to components/levoit/VERSION by the release step.
-version: "1.7.3"
+version: "1.8.0"
 description: Levoit air purifier and humidifier MCU protocol (UART), without ESPHome
 url: https://github.com/tuct/levoit
