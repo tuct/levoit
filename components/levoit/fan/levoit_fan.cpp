@@ -61,8 +61,8 @@ namespace esphome
                     continue; // Turbo is EverestAir-only (fan mode 4)
                 if (isEverest && std::strcmp(m.preset, "Pet") == 0)
                     continue; // EverestAir has no Pet mode
-                if (isCoreModel && std::strcmp(m.preset, "Pet") == 0)
-                    continue; // Core models do not have Pet mode
+                if ((isCoreModel || model == ModelType::SUPERIOR6000S) && std::strcmp(m.preset, "Pet") == 0)
+                    continue; // Core and Superior models do not have Pet mode
                 if (isEleva && std::strcmp(m.preset, "Pet") == 0)
                     continue; // Eleva 300X: Manual/Sleep/Auto; turbo is fan level 4
                 if (!parent_->device().has_auto() && std::strcmp(m.preset, "Auto") == 0)
@@ -128,15 +128,20 @@ namespace esphome
                 // Sleep/Auto leave this->speed at its last manual value because the
                 // MCU reports no fan level for those modes (apply_device_status gets
                 // speed_level == -1), so "same level" is not "no change" here.
+                // A reported Superior mode can lack a preset (e.g. Humidity),
+                // leaving the entity label at Manual. Use the core mode as well.
+                const bool superior_not_manual =
+                    parent_ && parent_->get_model() == ModelType::SUPERIOR6000S &&
+                    parent_->device().state().fan.mode != 0;
                 const bool leaving_preset =
-                    preset == nullptr && cur_preset != "Manual" &&
-                    (!cur_preset.empty() ||
-                     (parent_ && parent_->get_model() == ModelType::SUPERIOR6000S));
+                    preset == nullptr && (superior_not_manual ||
+                    (cur_preset != "Manual" && (!cur_preset.empty() ||
+                     (parent_ && parent_->get_model() == ModelType::SUPERIOR6000S))));
                 if (new_speed != cur_speed || leaving_preset)
                 {
                     this->speed = new_speed;
                     speed_cmd = new_speed;
-                    if (preset == nullptr && (cur_preset.empty() || cur_preset != "Manual"))
+                    if (preset == nullptr && (superior_not_manual || cur_preset.empty() || cur_preset != "Manual"))
                     {
                         this->set_preset_mode_("Manual");
                         mode_cmd = preset_to_device_mode("Manual");

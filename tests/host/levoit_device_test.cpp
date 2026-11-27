@@ -597,10 +597,23 @@ static void test_superior_capture() {
   CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == true);
   CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
   // 08-off-with-auto-dry, 2026-11-27T15:33:07.240+00:00
-  rig.feed(hex("A5 22 FC 5D 00 E7 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 3C 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 1F 1C 01 01 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 7000);
+  const Bytes drying = hex("A5 22 FC 5D 00 E7 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 3C 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 1F 1C 01 01 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38");
+  rig.feed(drying, 7000);
   CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 1 && rig.host.fan_mode == 6);
   CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
   CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  // Repeated off while drying: the unchanged push is suppressed during grace,
+  // but neither the core nor the host may optimistically report power off.
+  const int reports = rig.host.fan_reports;
+  const auto cadr = rig.device.calculate_current_cadr_per_hour();
+  rig.device.on_fan_command(0, -1, -1);
+  CHECK(rig.device.state().fan.power == 1 && rig.host.fan_power == 1);
+  rig.feed(drying, 7100);
+  CHECK(rig.host.fan_reports == reports);
+  CHECK(rig.device.state().fan.power == 1 && rig.host.fan_power == 1);
+  CHECK(rig.device.calculate_current_cadr_per_hour() == cadr);
+  rig.device.on_fan_command(0, -1, -1);
+  CHECK(rig.device.state().fan.power == 1);
   // 10-full-off-after-drying, 2026-11-27T15:33:31.709+00:00
   rig.feed(hex("A5 22 00 5D 00 FC 02 30 55 00 00 01 01 01 03 09 00 01 02 01 00 03 01 00 04 01 00 05 02 01 00 06 01 01 07 01 00 08 01 3C 09 01 39 0A 01 11 0B 01 01 0C 01 00 11 01 00 13 01 01 14 05 07 1C 00 02 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 39"), 8000);
   CHECK(rig.host.fan_power == 0 && rig.host.fan_speed == 0 && rig.host.fan_mode == 0);
@@ -627,7 +640,25 @@ static void test_superior_power_and_commands() {
   CHECK(rig.host.fan_power == 1);
   report({0x00, 1, 1, 0x02, 1, 0}, 3000);
   CHECK(rig.host.fan_power == 0);
-  report({0x00, 1, 1}, 4000); // no power field: keep the last state
+  // Synthetic compatibility cases: no non-1.0.9 hardware capture is available.
+  report({0x00, 1, 1}, 4000); // legacy tag-only on
+  CHECK(rig.host.fan_power == 1);
+  report({0x00, 1, 0}, 4100); // legacy tag-only off
+  CHECK(rig.host.fan_power == 0);
+  report({0x02, 1, 0, 0x00, 1, 1}, 4200); // tag 02 wins in reverse order too
+  CHECK(rig.host.fan_power == 0);
+  report({0x00, 1, 0, 0x02, 1, 1}, 4300); // conflicting legacy off
+  CHECK(rig.host.fan_power == 1);
+  report({0x02, 1, 2, 0x00, 1, 0}, 4400); // invalid tag 02: valid legacy fallback
+  CHECK(rig.host.fan_power == 0);
+  report({0x00, 1, 1, 0x02, 2, 0, 0}, 4500); // invalid tag 02 width
+  CHECK(rig.host.fan_power == 1);
+  report({0x00, 1, 0}, 4600);
+  report({0x00, 1, 2}, 4700); // invalid legacy enum
+  CHECK(rig.host.fan_power == 0);
+  report({0x00, 2, 1, 0}, 4800); // invalid legacy width
+  CHECK(rig.host.fan_power == 0);
+  report({0x09, 1, 45}, 4900); // neither power field: retain state
   CHECK(rig.host.fan_power == 0);
   report({0x02, 1, 2}, 5000); // invalid enum: do not invent a state
   CHECK(rig.host.fan_power == 0);
@@ -636,6 +667,7 @@ static void test_superior_power_and_commands() {
 
   rig.platform.tx.clear();
   rig.device.on_fan_command(1, 1, 0);
+  CHECK(rig.device.state().fan.power == 0); // wait for the MCU, including on requests
   CHECK(rig.platform.tx.size() == 3);
   if (rig.platform.tx.size() == 3) {
     // Power, Manual, speed 1, in that order; compare command and payload.

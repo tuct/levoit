@@ -30,6 +30,7 @@ namespace levoit
       ESP_LOGV(TAG_SUP, "decode_superior_status: tlvs=%u", (unsigned)tlvs.size());
 
       bool have_power = false;
+      int legacy_power = -1;
       bool have_mode = false;
       bool have_speed = false;
       bool have_dry_active = false;
@@ -45,7 +46,9 @@ namespace levoit
         {
         case 0x00:
           // MCU 1.0.9: this remains 1 when the appliance is off.
-          ESP_LOGV(TAG_SUP, "ID=%u", (unsigned)t.value_u32);
+          // Preserve the earlier tag-00 decode only when no valid tag 02 exists.
+          if (t.value_len == 1 && t.value_u32 <= 1)
+            legacy_power = (int)t.value_u32;
           break;
 
         case 0x01:
@@ -230,7 +233,7 @@ namespace levoit
       }
 
       // Apply fan state
-              int pwr = have_power ? (power ? 1 : 0) : -1;
+              int pwr = have_power ? (power ? 1 : 0) : legacy_power;
         int spd = have_speed ? (int)speed : -1;
         // Map MCU mode values (1-based) to internal MODE_MAP values (0-based)
         // MCU: 1=Manual, 2=Sleep, 3=Humidity, 4=Auto

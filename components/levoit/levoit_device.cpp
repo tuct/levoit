@@ -577,7 +577,8 @@ namespace levoit
         void LevoitDevice::on_fan_command(int power, int speed_level, int mode)
         {
             ESP_LOGD(TAG, "on_fan_command: power=%d speed_level=%d mode=%d", power, speed_level, mode);
-            this->state_.set_fan(power, speed_level, mode);
+            // Superior power follows MCU feedback, including off requests that start drying.
+            this->state_.set_fan(this->model_ == ModelType::SUPERIOR6000S ? -1 : power, speed_level, mode);
             this->note_command();
             if (speed_level != -1 && this->state_.fan.selected_speed != -1)
                 this->state_.fan.selected_speed = speed_level;
