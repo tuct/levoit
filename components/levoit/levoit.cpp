@@ -33,7 +33,7 @@
 
 namespace esphome
 {
-    namespace levoit
+    namespace levoit_component
     {
 
         static const char *const TAG = "levoit";
@@ -353,5 +353,5 @@ namespace esphome
             return NetworkState::CONNECTING;
         }
 
-    } // namespace levoit
+    } // namespace levoit_component
 } // namespace esphome

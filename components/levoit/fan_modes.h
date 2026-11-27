@@ -4,7 +4,6 @@
 #include <cstring>
 #include <string>
 
-namespace esphome {
 namespace levoit {
 
 // Fan operating mode: the MCU's raw value (TLV 0x03, and the Vital daytime
@@ -43,4 +42,3 @@ inline int fan_operating_mode_to_raw(const std::string &option) {
 }
 
 }  // namespace levoit
-}  // namespace esphome

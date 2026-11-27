@@ -4,10 +4,8 @@
 #include "levoit_log.h"
 #include <algorithm>
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
     static const char *const TAG_SPROUT_CMD = "levoit.sprout_cmd";
 
     // CMD=02 0B 55  —  Nightlight mode
@@ -145,5 +143,4 @@ namespace esphome
       }
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

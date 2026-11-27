@@ -3,12 +3,12 @@ import esphome.config_validation as cv
 from esphome.components import switch
 from esphome.const import CONF_ID, CONF_ENTITY_CATEGORY, ENTITY_CATEGORY_CONFIG
 
-from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
+from .. import Levoit, CONF_LEVOIT_ID, levoit_ns, levoit_core_ns
 
 CONF_TYPE = "type"
 
 LevoitSwitch = levoit_ns.class_("LevoitSwitch", switch.Switch, cg.Component)
-SwitchType = levoit_ns.enum("SwitchType")
+SwitchType = levoit_core_ns.enum("SwitchType")
 
 TYPE_MAP = {
     "display": SwitchType.DISPLAY,

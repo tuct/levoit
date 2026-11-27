@@ -21,7 +21,7 @@
 #include "../../components/levoit/tlv.h"
 #include "../../components/levoit/types.h"
 
-using namespace esphome::levoit;
+using namespace levoit;
 
 static int failures = 0;
 

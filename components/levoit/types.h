@@ -1,10 +1,8 @@
 #pragma once
 #include <cstdint>
 
-namespace esphome
+namespace levoit
 {
-    namespace levoit
-    {
 
         enum ModelType : uint8_t
         {
@@ -400,5 +398,4 @@ namespace esphome
             return names[cmd];
         }
 
-    } // namespace levoit
-} // namespace esphome
+} // namespace levoit

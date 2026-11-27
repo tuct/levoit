@@ -5,7 +5,7 @@
 
 namespace esphome
 {
-  namespace levoit
+  namespace levoit_component
   {
 
     static const char *const TAG = "levoit.text_sensor";
@@ -27,5 +27,5 @@ namespace esphome
 
 
 
-  } // namespace levoit
+  } // namespace levoit_component
 } // namespace esphome

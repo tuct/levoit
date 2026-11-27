@@ -4,7 +4,7 @@
 
 namespace esphome
 {
-    namespace levoit
+    namespace levoit_component
     {
 
         static const char *const TAG = "levoit.button";
@@ -59,5 +59,5 @@ namespace esphome
             }
         }
 
-    } // namespace levoit
+    } // namespace levoit_component
 } // namespace esphome

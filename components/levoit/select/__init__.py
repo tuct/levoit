@@ -4,13 +4,13 @@ from esphome.components import select
 from esphome.const import CONF_ID, CONF_OPTIONS, CONF_ENTITY_CATEGORY, ENTITY_CATEGORY_CONFIG
 
 
-from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
+from .. import Levoit, CONF_LEVOIT_ID, levoit_ns, levoit_core_ns
 
 CONF_TYPE = "type"
 
 LevoitSelect = levoit_ns.class_("LevoitSelect", select.Select, cg.Component)
 
-SelectType = levoit_ns.enum("SelectType")
+SelectType = levoit_core_ns.enum("SelectType")
 
 TYPE_MAP = {
     "auto_mode": SelectType.AUTO_MODE,

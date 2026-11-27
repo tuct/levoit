@@ -13,12 +13,12 @@ from esphome.const import (
 )
 from esphome.components.sensor import validate_state_class
 
-from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
+from .. import Levoit, CONF_LEVOIT_ID, levoit_ns, levoit_core_ns
 
 CONF_TYPE = "type"
 
 LevoitSensor = levoit_ns.class_("LevoitSensor", sensor.Sensor, cg.Component)
-SensorType = levoit_ns.enum("SensorType")
+SensorType = levoit_core_ns.enum("SensorType")
 
 TYPE_MAP = {
     "aqi": SensorType.AQI,

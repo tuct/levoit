@@ -4,7 +4,6 @@
 #include <vector>
 #include "types.h"
 
-namespace esphome {
 namespace levoit {
 
 struct LevoitTLV {
@@ -21,4 +20,3 @@ bool extract_tlvs_from_payload(ModelType model,
                                size_t start_offset = 0);
 
 }  // namespace levoit
-}  // namespace esphome

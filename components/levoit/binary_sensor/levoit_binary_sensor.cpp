@@ -3,7 +3,7 @@
 #include "../levoit.h"
 
 namespace esphome {
-namespace levoit {
+namespace levoit_component {
 
 static const char *const TAG = "levoit.binary_sensor";
 
@@ -25,5 +25,5 @@ void LevoitBinarySensor::loop() {
 	}
 }
 
-}  // namespace levoit
+}  // namespace levoit_component
 }  // namespace esphome

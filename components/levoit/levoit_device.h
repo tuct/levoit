@@ -16,7 +16,6 @@
 #include "levoit_state.h"
 #include "types.h"
 
-namespace esphome {
 namespace levoit {
 
 // Eleva 300X auto-mode configuration block (CMD 02 21 55), cached from the
@@ -89,6 +88,9 @@ class LevoitDevice {
   // means "not reported in this frame, leave the field alone". Do not narrow
   // these - the Vital and Superior decoders rely on that sentinel.
   void apply_fan_status(int power, int speed, int mode);
+  // The selected manual speed where the status carries it apart from the
+  // running speed (FanState::selected_speed); call before apply_fan_status.
+  void set_selected_speed(int speed) { this->state_.fan.selected_speed = speed; }
   // helper to compute and publish filter stats immediately
   void publish_filter_stats_now();
   // EverestAir: push computed filter % to the MCU panel when it changes
@@ -173,7 +175,7 @@ class LevoitDevice {
   struct PayloadHashCacheEntry {
     uint8_t ptype0;
     uint8_t ptype1;
-    uint8_t hash;  // fingerprint of payload
+    uint32_t hash;  // fingerprint of payload
     bool valid;
   };
   static constexpr size_t PAYLOAD_HASH_CACHE_SIZE = 16;
@@ -268,4 +270,3 @@ class LevoitDevice {
 };
 
 }  // namespace levoit
-}  // namespace esphome

@@ -4,7 +4,6 @@
 #include "levoit_device.h"
 #include "types.h"
 
-namespace esphome {
 namespace levoit {
 
 void decode_vital_status(LevoitDevice *self,
@@ -17,4 +16,3 @@ void decode_vital_timer(LevoitDevice *self,
                          size_t payload_len);
 
 }  // namespace levoit
-}  // namespace esphome

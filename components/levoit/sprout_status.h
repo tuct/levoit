@@ -4,7 +4,6 @@
 #include "levoit_device.h"
 #include "types.h"
 
-namespace esphome {
 namespace levoit {
 
 // Decode async MCU event notifications (CMD=02 08 55, MCU→ESP).
@@ -14,4 +13,3 @@ void decode_sprout_event(LevoitDevice *self,
                          size_t payload_len);
 
 }  // namespace levoit
-}  // namespace esphome

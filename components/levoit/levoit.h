@@ -13,6 +13,7 @@
 #include "esphome/components/uart/uart.h"
 #include "esphome/core/application.h"
 #include "types.h"
+#include "esphome_ns.h"
 #include "levoit_device.h"
 #include "levoit_platform.h"
 #include "levoit_state.h"
@@ -27,7 +28,7 @@
 #endif
 
 namespace esphome {
-namespace levoit {
+namespace levoit_component {
 
 // forward declaration
 class LevoitSwitch;
@@ -147,5 +148,5 @@ class Levoit : public Component, public uart::UARTDevice, public LevoitHost, pub
   static constexpr uint8_t bs_idx_(BinarySensorType t) { return (uint8_t)t; }
 };
 
-}  // namespace levoit
+}  // namespace levoit_component
 }  // namespace esphome

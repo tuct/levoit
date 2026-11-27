@@ -3,10 +3,8 @@
 #include <cstdint>
 #include <cmath>
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
 
     // Format minutes into human-readable string (e.g., 502 -> "8h 22min").
     static inline std::string format_duration_minutes(uint16_t minutes)
@@ -52,5 +50,4 @@ namespace esphome
       return std::round(static_cast<float>(raw) / core_room_size_factor());
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

@@ -5,10 +5,8 @@
 #include <vector>
 #include <string>
 
-namespace esphome
+namespace levoit
 {
-  namespace levoit
-  {
     static const char *const TAG_SPROUT = "levoit.sprout";
 
     // Decode CMD=02 08 55 — async event notifications pushed by the Sprout MCU.
@@ -77,5 +75,4 @@ namespace esphome
       }
     }
 
-  } // namespace levoit
-} // namespace esphome
+} // namespace levoit

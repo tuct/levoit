@@ -3,12 +3,12 @@ import esphome.config_validation as cv
 from esphome.components import binary_sensor
 from esphome.const import CONF_ID, CONF_DEVICE_CLASS, CONF_ICON
 
-from .. import Levoit, CONF_LEVOIT_ID, levoit_ns
+from .. import Levoit, CONF_LEVOIT_ID, levoit_ns, levoit_core_ns
 
 CONF_TYPE = "type"
 
 LevoitBinarySensor = levoit_ns.class_("LevoitBinarySensor", binary_sensor.BinarySensor, cg.Component)
-BinarySensorType = levoit_ns.enum("BinarySensorType")
+BinarySensorType = levoit_core_ns.enum("BinarySensorType")
 
 TYPE_MAP = {
     "filter_low": BinarySensorType.FILTER_LOW,
