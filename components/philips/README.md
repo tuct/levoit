@@ -39,7 +39,7 @@ Both speak the identical protocol; the component selects model-specific behaviou
 > 🔒 **Secure boot is enforced** on the stock ESP32-C3 module, so custom firmware **cannot** be flashed onto it. The approach is to **add your own ESP32** and disable the original module.
 
 1. Disable the stock module: pull its `EN` pin to **GND** (a ~10 kΩ resistor to GND, optionally a small cap). It already has a 10 kΩ pull-up, so this draws only a fraction of a mA.
-2. Wire a new ESP32 (e.g. **XIAO Seeed ESP32-C3**) to the MCU↔module UART:
+2. Wire a new ESP32 (e.g. **[Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)**) to the MCU↔module UART:
    - Power (3.3 V) and GND from the purifier PCB
    - **ESP TX → MCU RX**, **ESP RX → MCU TX**
 3. The link runs at **115200 baud, 8N1**.

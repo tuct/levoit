@@ -285,6 +285,15 @@ The Saleae Logic 2 captures behind this section are in [uart/saleae/](uart/salea
 
 `model: ELEVA300X` in the levoit component. Configs: [levoit-eleva-300x.yaml](levoit-eleva-300x.yaml) (GitHub source) and [levoit-eleva-300x_dev.yaml](levoit-eleva-300x_dev.yaml) (local component), both for the stock ESP32-C3 module; the logger stays on J3 (UART0). For the ESPHome Device Builder: [levoit-eleva-300x-builder.yaml](levoit-eleva-300x-builder.yaml), everything inlined (see [devices/README.md](../README.md#esphome-web-builder--dashboard-no-local-setup)). For a replacement Seeed XIAO ESP32-S3 instead of the stock module (RX GPIO5 = pad D4 to module pin 27, TX GPIO4 = pad D3 to pin 28, stock EN held low): [levoit-eleva-300x-s3.yaml](levoit-eleva-300x-s3.yaml), [_dev](levoit-eleva-300x-s3_dev.yaml) and [builder-s3](levoit-eleva-300x-builder-s3.yaml); untested. Or a Seeed XIAO ESP32-C3 (RX GPIO5 = pad D3, TX GPIO4 = pad D2, same module pins 27 / 28; see the photo below): [levoit-eleva-300x-c3.yaml](levoit-eleva-300x-c3.yaml), [_dev](levoit-eleva-300x-c3_dev.yaml), [builder-c3](levoit-eleva-300x-builder-c3.yaml); **works on hardware** (fan speed, PM / AQI).
 
+**Recommended modules:**
+- [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html)
+- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)
+
+> [!TIP]
+> No YAML to write: in Home Assistant, the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration's
+> *Add device* makes a ready-to-flash config for either board from this model's
+> template. You only add a name and your Wi-Fi.
+
 The working XIAO ESP32-C3 install: the two MCU link wires soldered to the stock module's pins (the USB-UART on J3 and the logic analyzer on the right were for reverse engineering and flashing, not needed for the XIAO):
 
 ![XIAO ESP32-C3 on the Eleva 300X MCU link: green wire to XIAO D3 (GPIO5, RX), blue wire to XIAO D2 (GPIO4, TX)](images/xiao-c3-mcu-link.jpg)

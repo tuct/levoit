@@ -73,6 +73,15 @@ The header for the microvontroller is highlighted in yellow. This is not what yo
 
 ## Install New ESP32 (Recommended)
 
+**Recommended modules:**
+- [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html)
+- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)
+
+> [!TIP]
+> No YAML to write: in Home Assistant, the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration's
+> *Add device* makes a ready-to-flash config for either board from this model's
+> template. You only add a name and your Wi-Fi.
+
 > TODO: add wiring photos and pin mapping
 
 ## Flash Original ESP32
@@ -81,9 +90,7 @@ The header for the microvontroller is highlighted in yellow. This is not what yo
 
 The Core 600S uses an **ESP32-C3-SOLO-1** on the original board. It is recommended to replace it with a new ESP module.
 
-**Recommended modules:**
-- Seeed XIAO ESP32-C3
-- Seeed XIAO ESP32-S3
+**Recommended modules:** see [Install New ESP32](#install-new-esp32-recommended).
 
 ### Configure
 
