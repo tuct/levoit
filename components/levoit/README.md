@@ -353,7 +353,7 @@ dependencies:
   levoit:
     git: https://github.com/tuct/levoit.git
     path: components/levoit
-    version: "1.7.3"   # a tag of this repo
+    version: "1.8.0"   # a tag of this repo
 ```
 
 [tests/idf](../../tests/idf) is the smallest such project; CI builds it on
@@ -550,6 +550,47 @@ Auto mode options per model:
 | On/Off Button Held | binary_sensor | `power_button_held` | `on` from a few seconds into a hold of the On/Off button until it is released (CMD `01 02 D1`), for a long-press action such as a reset. Seen on a Core 300S **Core models** |
 
 ## Change Log
+
+#### ESP Version: 1.8.0 - 2026.11.27
+
+The protocol core is its own class (`LevoitDevice`) in namespace `levoit`,
+builds without ESPHome and as an ESP-IDF component, and the ESPHome component
+is a shell around it. Nothing changes in Home Assistant, apart from the fixes
+below; a YAML lambda that spelled out `esphome::levoit::` needs
+`esphome::levoit_component::`.
+
+* **Filter LED**: the boot blink is gone; on the Core 300S / 400S / 600S the
+  filter LED now shows `FILTER_LOW`, off at boot and lit under 5 %. Core 200S
+  keeps it off (its MCU owns the filter counter). Host test with a worn-filter
+  boot ([#168](https://github.com/tuct/levoit/pull/168))
+* **Core 300S on the `01 32 40` status**: the device state keeps the manual
+  speed last picked (`[5]`) as `FanState::selected_speed` next to the running
+  speed, for hosts other than the ESPHome fan entity. Frames in
+  [`status_32_40.txt`](../../devices/levoit-core300s/uart/status_32_40.txt)
+  ([#167](https://github.com/tuct/levoit/pull/167))
+* **UART frame handling**: the receive loop decodes both length bytes, bounds
+  the frame, drops a partial frame after 250 ms of silence, and keeps complete
+  frames in bursts longer than the buffer. Core 600S and Vital 100S reject error
+  and foreign-version envelopes and echo the incoming sequence in ACKs; other
+  models keep their ACK bytes. Parser regression under ASan and UBSan in CI;
+  tested on a Core 600S (MCU 1.0.12) and a Vital 100S (MCU 1.0.5)
+  ([#153](https://github.com/tuct/levoit/pull/153)); the status-push dedup uses
+  a 32-bit FNV-1a payload fingerprint instead of an 8-bit XOR/rotate one, which
+  matched about 1 in 256 changed payloads and skipped them. Affects all models
+  using status-push dedup; based on the Core 300S
+  [`status_32_40.txt`](../../devices/levoit-core300s/uart/status_32_40.txt)
+  ("speed 3") ([#165](https://github.com/tuct/levoit/pull/165)); after an
+  `on_*_command`, unchanged status pushes stay skipped for 1.5 s while the MCU
+  applies it; the first unchanged push after that is decoded once and replaces
+  the requested value in the device state if the MCU did not carry the command
+  out. Host test with a Core 300S `01 32 40` frame
+  ([#166](https://github.com/tuct/levoit/pull/166))
+* **Room size**: Vital 100S room size numbers configured with a 1 m² step round
+  MCU reports and normalise saved presets to whole square metres
+  ([#154](https://github.com/tuct/levoit/pull/154))
+* **UART frame encoding**: shared encoding now accepts the control byte and
+  writes both length bytes. The LV600S uses the same checksum and frame builder
+  as the purifiers ([#152](https://github.com/tuct/levoit/pull/152))
 
 #### ESP Version: 1.7.3 - 2026.11.23
 
