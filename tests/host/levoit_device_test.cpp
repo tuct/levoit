@@ -271,6 +271,8 @@ static void test_capabilities() {
       {"SPROUT", 4, true, true, "Sprout"},
       {"EVERESTAIR", 3, true, true, "EverestAir"},
       {"VITAL100S", 4, true, true, "Vital 100S"},
+      {"VITAL200S", 4, true, true, "Vital 200S"},
+      {"ELEVA300X", 4, true, true, "Eleva 300X"},
       {"SUPERIOR6000S", 9, true, false, "Superior 6000S"},
   };
   for (auto &c : cases) {
