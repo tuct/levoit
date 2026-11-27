@@ -705,12 +705,21 @@ namespace levoit
             //https://docs.google.com/spreadsheets/d/17j6FZwvqHRFkGoH5996u5JdR7tk4_7fNuTxAK7kc4Fk/edit?gid=1612245341#gid=1612245341
             cadr = this->rated_cadr();
             
-            // Restore saved values or initialize to 0
-            if (platform_->load_u32(PREF_USED_CADR, used_cadr_)) {
-                ESP_LOGI(TAG, "Restored used_cadr: %u m³", (unsigned)used_cadr_);
+            // Restore the counters. Firmware before #162 saved the wear in
+            // cubic metres; seed the seconds from that once, so no filter jumps
+            // back to 100 %.
+            uint32_t used_cadr = 0;
+            if (platform_->load_u32(PREF_FILTER_SECONDS, filter_seconds_)) {
+                ESP_LOGI(TAG, "Restored filter wear: %u s at full CADR (%u m³)",
+                         (unsigned)filter_seconds_, (unsigned)this->get_used_cadr());
+            } else if (platform_->load_u32(PREF_USED_CADR, used_cadr)) {
+                filter_seconds_ = (uint32_t)(((uint64_t) used_cadr * 3600 + cadr / 2) / cadr);
+                platform_->save_u32(PREF_FILTER_SECONDS, filter_seconds_);
+                ESP_LOGI(TAG, "Migrated filter wear: %u m³ -> %u s at full CADR",
+                         (unsigned)used_cadr, (unsigned)filter_seconds_);
             } else {
-                used_cadr_ = 0;
-                ESP_LOGI(TAG, "Initialized used_cadr to 0");
+                filter_seconds_ = 0;
+                ESP_LOGI(TAG, "Initialized filter wear to 0");
             }
             if (platform_->load_u32(PREF_TOTAL_RUNTIME, total_runtime_)) {
                 ESP_LOGI(TAG, "Restored total_runtime: %u min", (unsigned)total_runtime_);
@@ -718,6 +727,8 @@ namespace levoit
                 total_runtime_ = 0;
                 ESP_LOGI(TAG, "Initialized total_runtime to 0");
             }
+            saved_filter_hours_ = filter_seconds_ / 3600;
+            saved_runtime_hours_ = total_runtime_ / 60;
                                
             // Core models: the filter LED starts off, as the stock firmware
             // sends it once after boot (devices/levoit-core200s/README.md), and
@@ -774,45 +785,61 @@ namespace levoit
             track_cadr_usage();
         }
         
+        // Once a minute: the runtime counter and the filter sensors. The wear
+        // itself accrues on every tick (accrue_filter_).
         void LevoitDevice::track_cadr_usage()
         {
             // The fan's power and speed come from the device state: what the
             // MCU last reported, or what was last asked of it.
             if (this->state_.fan.power == 1) {
-                // Fan is enabled - track usage
                 total_runtime_++;
-
-                // calculate_current_cadr_per_hour() validates the speed against the
-                // model's own maximum and returns 0 if it is out of range, so no bound
-                // is needed here. The old `speed <= 4` check silently dropped the
-                // Superior 6000S's speeds 5-9.
-                int speed = this->state_.fan.speed;
-                uint32_t cadr_per_hour = this->calculate_current_cadr_per_hour();
-                if (cadr_per_hour > 0) {
-                    // Carry the sub-m³ remainder between minutes. Dividing by 60
-                    // directly truncated to zero for any model whose per-hour CADR at
-                    // the current speed was under 60 m³/h - a Core200S on speed 1
-                    // (55 m³/h) or in Sleep (34 m³/h), or a Sprout on speed 1
-                    // (36 m³/h), accumulated nothing at all and the filter estimate
-                    // stayed at exactly 100% forever. Higher speeds lost 28-46% to the
-                    // same truncation.
-                    cadr_remainder_ += cadr_per_hour;
-                    uint32_t cadr_per_min = cadr_remainder_ / 60;
-                    cadr_remainder_ %= 60;
-                    used_cadr_ += cadr_per_min;
-                    ESP_LOGD(TAG, "CADR tracked: +%u m³ (speed=%d, %u m³/h, carry=%u/60, total=%u m³, runtime=%u min)",
-                             (unsigned)cadr_per_min, speed, (unsigned)cadr_per_hour,
-                             (unsigned)cadr_remainder_, (unsigned)used_cadr_,
-                             (unsigned)total_runtime_);
-                }
-
-                // Publish filter life left (once per minute here)
+                ESP_LOGD(TAG, "Filter wear: %u s at full CADR (%u m³), runtime %u min",
+                         (unsigned)filter_seconds_, (unsigned)this->get_used_cadr(),
+                         (unsigned)total_runtime_);
                 this->publish_filter_stats_now();
-
-                // Save to preferences every minute when running
-                platform_->save_u32(PREF_USED_CADR, used_cadr_);
-                platform_->save_u32(PREF_TOTAL_RUNTIME, total_runtime_);
+                this->save_counters_();
             }
+        }
+
+        // The time since the last tick, weighted by the CADR at the current
+        // speed over the model's full CADR, in whole seconds with a carry.
+        // calculate_current_cadr_per_hour() is 0 while the fan is off or the
+        // speed is out of range, so nothing accrues then.
+        void LevoitDevice::accrue_filter_(uint32_t now)
+        {
+            if (!accrue_started_)
+            {
+                accrue_started_ = true;
+                accrue_ms_ = now;
+                return;
+            }
+            const uint32_t elapsed_ms = now - accrue_ms_;
+            accrue_ms_ = now;
+            const uint32_t cadr_per_hour = this->calculate_current_cadr_per_hour();
+            if (cadr_per_hour == 0 || cadr == 0)
+                return;
+            filter_carry_ += (uint64_t) elapsed_ms * cadr_per_hour;
+            const uint64_t per_second = (uint64_t) cadr * 1000;
+            const uint64_t whole = filter_carry_ / per_second;
+            if (whole == 0)
+                return;
+            filter_carry_ -= whole * per_second;
+            filter_seconds_ += (uint32_t) whole;
+            this->save_counters_();
+        }
+
+        // Saves once per completed hour of wear or of runtime, or at once when
+        // forced: a reset, a set, shutdown().
+        void LevoitDevice::save_counters_(bool force)
+        {
+            const uint32_t filter_hours = filter_seconds_ / 3600;
+            const uint32_t runtime_hours = total_runtime_ / 60;
+            if (!force && filter_hours == saved_filter_hours_ && runtime_hours == saved_runtime_hours_)
+                return;
+            saved_filter_hours_ = filter_hours;
+            saved_runtime_hours_ = runtime_hours;
+            platform_->save_u32(PREF_FILTER_SECONDS, filter_seconds_);
+            platform_->save_u32(PREF_TOTAL_RUNTIME, total_runtime_);
         }
 
         uint32_t LevoitDevice::calculate_current_cadr_per_hour() const
@@ -859,11 +886,12 @@ namespace levoit
             if (!this->state_.get_number(NumberType::FILTER_LIFETIME_MONTHS, filter_lifetime_months))
                 return 100.0f;
 
-            uint32_t total_filter_capacity = cadr * 24 * 30 * filter_lifetime_months;
-            if (total_filter_capacity == 0)
+            // Seconds at full CADR the filter is good for: months of 30 days
+            const float capacity_seconds = filter_lifetime_months * 30.0f * 24.0f * 3600.0f;
+            if (capacity_seconds <= 0.0f)
                 return 100.0f;
 
-            float life_left_percent = 100.0f - ((float)used_cadr_ / (float)total_filter_capacity * 100.0f);
+            float life_left_percent = 100.0f - ((float)filter_seconds_ / capacity_seconds * 100.0f);
             if (life_left_percent < 0.0f)
                 life_left_percent = 0.0f;
             if (life_left_percent > 100.0f)
@@ -875,7 +903,9 @@ namespace levoit
         /// @brief Once per main loop pass: LEDs, timers, CADR, filter life
         void LevoitDevice::tick(uint32_t now)
         {
-            // Every minute: track CADR usage and runtime
+            this->accrue_filter_(now);
+
+            // Every minute: the runtime counter and the filter sensors
             if (now - last_check_min_ >= 60000)
             {
                 last_check_min_ = now;
