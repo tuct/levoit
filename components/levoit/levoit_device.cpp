@@ -198,6 +198,21 @@ namespace levoit
             this->publish_sensor(SensorType::FILTER_LIFE_LEFT, filter_left);
             this->publish_binary_sensor(BinarySensorType::FILTER_LOW, filter_left < 5.0f);
             this->push_filter_pct_if_changed(filter_left);
+            this->sync_filter_led_(filter_left);
+        }
+
+        // Core models: the filter LED shows FILTER_LOW, as the panel's
+        // check-filter light. Not on the Core 200S, whose MCU keeps a filter
+        // counter of its own (has_mcu_filter_reset).
+        void LevoitDevice::sync_filter_led_(float filter_left)
+        {
+            if (!this->is_core_model() || this->has_mcu_filter_reset())
+                return;
+            const bool wanted = filter_left < 5.0f;
+            if (wanted == filter_led_on_)
+                return;
+            filter_led_on_ = wanted;
+            this->sendCommand(wanted ? CommandType::setFilterLedOn : CommandType::setFilterLedOff);
         }
 
         // EverestAir: mirror the ESP-computed filter % onto the MCU's panel
@@ -728,14 +743,15 @@ namespace levoit
                 ESP_LOGI(TAG, "Initialized total_runtime to 0");
             }
                                
-            // Core models: blink the filter LED until Wi-Fi connects. The other
-            // protocols have no filter LED command (on Vital the same code is
-            // tag 0x06 DisplayIlluminated, which toggled the display).
+            // Core models: the filter LED starts off, as the stock firmware
+            // sends it once after boot (devices/levoit-core200s/README.md), and
+            // then shows FILTER_LOW (sync_filter_led_). The other protocols have
+            // no filter LED command (on Vital the same code is tag 0x06
+            // DisplayIlluminated, which toggled the display).
             if (this->is_core_model())
             {
-                this->sendCommand(CommandType::setFilterLedOn);
-                filter_led_on_ = true;
-                filter_blinking_ = true;
+                this->sendCommand(CommandType::setFilterLedOff);
+                filter_led_on_ = false;
             }
 
             // EverestAir: push the computed filter % to the MCU panel on boot
@@ -898,21 +914,6 @@ namespace levoit
             {
                 // every second
                 last_check_sec_ = now;
-                // Handle filter LED blinking
-                if (filter_blinking_)
-                {
-                    // toggle filter led
-                    if (filter_led_on_)
-                    {
-                        this->sendCommand(CommandType::setFilterLedOff);
-                        filter_led_on_ = false;
-                    }
-                    else
-                    {
-                        this->sendCommand(CommandType::setFilterLedOn);
-                        filter_led_on_ = true;
-                    }
-                }
                 // Check network status (Wi-Fi or Ethernet) and update the Wi-Fi LED accordingly
                 {
                     const NetworkState network = platform_->network_state();
@@ -930,10 +931,6 @@ namespace levoit
                         if (desired == WifiLedState::SOLID)
                         {
                             ESP_LOGD(TAG, "WiFi connected - setting LED solid");
-                            if (this->is_core_model())
-                                this->sendCommand(CommandType::setFilterLedOff);
-                            filter_led_on_ = false;
-                            filter_blinking_ = false;
                             if (prev == WifiLedState::OFF)
                             {
                                 this->sendCommand(CommandType::setWifiLedOn);

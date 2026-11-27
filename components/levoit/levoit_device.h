@@ -223,6 +223,8 @@ class LevoitDevice {
  protected:
   // Frame-parse everything complete in buffer_, resyncing on bad bytes
   void parse_rx_();
+  // Core models: the filter LED follows FILTER_LOW
+  void sync_filter_led_(float filter_left);
 
   LevoitHost *host_;
   LevoitPlatform *platform_;
@@ -264,7 +266,6 @@ class LevoitDevice {
   bool mcu_seen_{false};  // set on first valid RX frame from MCU
   bool fan_status_seen_{false};  // set on the first decoded status frame
   bool filter_led_on_{false};
-  bool filter_blinking_{false};  // Core models only: filter LED blinks until Wi-Fi connects
 
   // Superior 6000S ESP-managed timer state
   bool esp_timer_active_{false};

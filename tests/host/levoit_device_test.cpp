@@ -304,6 +304,44 @@ static void test_wifi_led() {
   CHECK(rig.platform.tx.size() == sent + 2);  // then solid
 }
 
+// Core models: the filter LED starts off, never blinks, is lit while the
+// filter is under 5 %, and goes out when it is reset. The Core 200S keeps it off.
+static void test_filter_led() {
+  auto leds = [](const FakePlatform &p) {
+    std::vector<uint8_t> out;
+    for (const Bytes &f : p.tx)
+      if (f.size() >= 11 && f[7] == 0xE2 && f[8] == 0xA5)
+        out.push_back(f.back());
+    return out;
+  };
+  const uint32_t worn = 214u * 24 * 30 * 6 / 100 * 97;  // Core 300S, 6 months: 3 % left
+  Rig rig("CORE300S");
+  rig.platform.prefs[LevoitDevice::PREF_USED_CADR] = worn;
+  rig.device.note_number_state(NumberType::FILTER_LIFETIME_MONTHS, 6);
+  rig.device.begin();
+  rig.platform.network = NetworkState::CONNECTING;
+  rig.device.tick(1000);
+  rig.device.tick(2000);
+  CHECK(leds(rig.platform) == std::vector<uint8_t>({0x00}));
+
+  rig.device.publish_filter_stats_now();
+  rig.device.publish_filter_stats_now();
+  rig.platform.network = NetworkState::CONNECTED;
+  rig.device.tick(3000);
+  CHECK(leds(rig.platform) == std::vector<uint8_t>({0x00, 0x01}));
+
+  rig.device.set_used_cadr(0);
+  rig.device.publish_filter_stats_now();
+  CHECK(leds(rig.platform) == std::vector<uint8_t>({0x00, 0x01, 0x00}));
+
+  Rig c200("CORE200S");
+  c200.platform.prefs[LevoitDevice::PREF_USED_CADR] = 167u * 24 * 30 * 6;
+  c200.device.note_number_state(NumberType::FILTER_LIFETIME_MONTHS, 6);
+  c200.device.begin();
+  c200.device.publish_filter_stats_now();
+  CHECK(leds(c200.platform) == std::vector<uint8_t>({0x00}));
+}
+
 // The ACK bytes, as test_uart_integrity.py checked them against captures.
 static void test_acks() {
   // The stock Core trace replies to sequence 0 with exactly these ten bytes.
@@ -424,6 +462,7 @@ int main() {
   test_refused_command();
   test_begin_and_tracking();
   test_wifi_led();
+  test_filter_led();
   test_acks();
   test_version_guard();
   test_parser();
