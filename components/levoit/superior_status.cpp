@@ -30,6 +30,7 @@ namespace levoit
       ESP_LOGV(TAG_SUP, "decode_superior_status: tlvs=%u", (unsigned)tlvs.size());
 
       bool have_power = false;
+      int legacy_power = -1;
       bool have_mode = false;
       bool have_speed = false;
       bool have_dry_active = false;
@@ -44,9 +45,10 @@ namespace levoit
         switch (t.tag)
         {
         case 0x00:
-          ESP_LOGV(TAG_SUP, "Power=%u", (unsigned)t.value_u32);
-          have_power = true;
-          power = (t.value_u32 == 1);
+          // MCU 1.0.9: this remains 1 when the appliance is off.
+          // Preserve the earlier tag-00 decode only when no valid tag 02 exists.
+          if (t.value_len == 1 && t.value_u32 <= 1)
+            legacy_power = (int)t.value_u32;
           break;
 
         case 0x01:
@@ -63,6 +65,16 @@ namespace levoit
           }
           break;
         }
+
+        case 0x02:
+          // MCU 1.0.9: 0=off, 1=on (including active drying).
+          // Captures: devices/levoit-superior-6000s/uart/{power,drying}.txt
+          if (t.value_len == 1 && t.value_u32 <= 1)
+          {
+            have_power = true;
+            power = (t.value_u32 == 1);
+          }
+          break;
 
         case 0x03:
           ESP_LOGV(TAG_SUP, "CoverRemoved=%u", (unsigned)t.value_u32);
@@ -138,17 +150,24 @@ namespace levoit
         case 0x14:
         {
           // Dry mode composite block: 5 bytes
-          // bytes 0-2: remaining dry time (24-bit LE, seconds)
+          // bytes 0-1: remaining dry time (16-bit LE, seconds)
+          // byte 2: auto-dry on power off (00=off, 01=on)
+          // Evidence: devices/levoit-superior-6000s/stock-firmware.md, uart/drying.txt
           // byte 3: dry active flag (01=active, 02=inactive)
           // byte 4: dry level (01=low, 02=high)
           if (t.value_len >= 5 && t.value_ptr != nullptr)
           {
-            uint32_t dry_remaining = t.value_ptr[0] | (t.value_ptr[1] << 8) | (t.value_ptr[2] << 16);
+            uint16_t dry_remaining = t.value_ptr[0] | (t.value_ptr[1] << 8);
+            self->set_dry_remaining(dry_remaining);
+            uint8_t auto_dry = t.value_ptr[2];
             uint8_t dry_active_flag = t.value_ptr[3];
             uint8_t dry_level = t.value_ptr[4];
 
-            ESP_LOGV(TAG_SUP, "DryRemaining=%u sec, DryActive=%u, DryLevel=%u",
-                     (unsigned)dry_remaining, dry_active_flag, dry_level);
+            ESP_LOGV(TAG_SUP, "DryRemaining=%u sec, AutoDry=%u, DryActive=%u, DryLevel=%u",
+                     (unsigned)dry_remaining, auto_dry, dry_active_flag, dry_level);
+
+            if (auto_dry <= 1)
+              self->publish_switch(SwitchType::AUTO_DRY_POWER_OFF, auto_dry == 1);
 
             // Active flag: 01=active, 02=inactive (unusual)
             have_dry_active = true;
@@ -156,10 +175,12 @@ namespace levoit
             self->publish_binary_sensor(BinarySensorType::DRY_ACTIVE, dry_active);
 
             // Dry level: 01=Low(idx 0), 02=High(idx 1)
-            if (dry_level >= 1 && dry_level <= 2)
+            if (dry_level >= 1 && dry_level <= 2 &&
+                (dry_active || !self->has_dry_level_preference()))
             {
               self->publish_select(SelectType::DRY_LEVEL, dry_level - 1);
-              // Update the stored dry level preference
+              // Seed the preference at boot, then follow active drying reports.
+              // Inactive reports must not erase the next-cycle choice.
               self->set_dry_level_preference(dry_level - 1);
             }
           }
@@ -221,7 +242,7 @@ namespace levoit
       }
 
       // Apply fan state
-              int pwr = have_power ? (power ? 1 : 0) : -1;
+              int pwr = have_power ? (power ? 1 : 0) : legacy_power;
         int spd = have_speed ? (int)speed : -1;
         // Map MCU mode values (1-based) to internal MODE_MAP values (0-based)
         // MCU: 1=Manual, 2=Sleep, 3=Humidity, 4=Auto

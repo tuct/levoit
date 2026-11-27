@@ -6,7 +6,8 @@ namespace levoit {
 
 static uint32_t read_le_u32_(const uint8_t *p, uint8_t n) {
   uint32_t v = 0;
-  for (uint8_t i = 0; i < n; i++)
+  // Composite values (e.g. Superior dry status) use value_ptr for all bytes.
+  for (uint8_t i = 0; i < n && i < sizeof(v); i++)
     v |= (uint32_t)p[i] << (8 * i);
   return v;
 }

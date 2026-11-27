@@ -12,6 +12,7 @@
 // No -I on the component folder, as in an ESPHome build (its VERSION file
 // would shadow <version> on a case-insensitive file system).
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <functional>
@@ -562,7 +563,217 @@ static void test_parser() {
   CHECK(wrap.platform.acks() == 1);
 }
 
+// Full MCU frames from devices/levoit-superior-6000s/uart/ (MCU 1.0.9).
+static void test_superior_capture() {
+  Rig rig("SUPERIOR6000S");
+  // 00-idle-off, 2026-11-27T15:30:51.688+00:00
+  rig.feed(hex("A5 22 EA 5D 00 0C 02 30 55 00 00 01 01 01 03 09 00 01 02 01 00 03 01 00 04 01 00 05 02 01 00 06 01 01 07 01 00 08 01 2D 09 01 3A 0A 01 11 0B 01 01 0C 01 00 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 3A"), 1000);
+  CHECK(rig.host.fan_power == 0 && rig.host.fan_speed == 0 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 02-power-on-manual-1, 2026-11-27T15:31:17.043+00:00
+  rig.feed(hex("A5 22 EC 5D 00 06 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 01 08 01 2D 09 01 3A 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 3A"), 2000);
+  CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 1 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == true);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 03-power-off-after-on, 2026-11-27T15:31:33.508+00:00
+  rig.feed(hex("A5 22 EF 5D 00 0B 02 30 55 00 00 01 01 01 03 09 00 01 02 01 00 03 01 00 04 01 00 05 02 01 00 06 01 01 07 01 00 08 01 2D 09 01 38 0A 01 11 0B 01 01 0C 01 00 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 3000);
+  CHECK(rig.host.fan_power == 0 && rig.host.fan_speed == 0 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 04-manual-5, 2026-11-27T15:31:51.772+00:00
+  rig.feed(hex("A5 22 F1 5D 00 FB 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 01 08 01 2D 09 01 39 0A 01 11 0B 01 01 0C 01 05 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 05 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 39"), 4000);
+  CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 5 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == true);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 05-auto, 2026-11-27T15:32:07.055+00:00
+  rig.feed(hex("A5 22 F4 5D 00 E8 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 01 08 01 3C 09 01 38 0A 01 11 0B 01 04 0C 01 05 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 05 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 5000);
+  CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 5 && rig.host.fan_mode == 2);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == true);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 06-auto-to-manual-1, 2026-11-27T15:32:24.511+00:00
+  rig.feed(hex("A5 22 F6 5D 00 E9 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 01 08 01 3C 09 01 39 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 39"), 6000);
+  CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 1 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == true);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 08-off-with-auto-dry, 2026-11-27T15:33:07.240+00:00
+  const Bytes drying = hex("A5 22 FC 5D 00 E7 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 3C 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 1F 1C 01 01 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38");
+  rig.feed(drying, 7000);
+  CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 1 && rig.host.fan_mode == 6);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  CHECK(rig.host.switches[SwitchType::AUTO_DRY_POWER_OFF] == true);
+  CHECK(rig.device.get_dry_remaining() == 7199); // tag 14: 1F 1C, excluding auto-dry flag
+  // Repeated off while drying: the unchanged push is suppressed during grace,
+  // but neither the core nor the host may optimistically report power off.
+  const int reports = rig.host.fan_reports;
+  const auto cadr = rig.device.calculate_current_cadr_per_hour();
+  rig.device.on_fan_command(0, -1, -1);
+  CHECK(rig.device.state().fan.power == 1 && rig.host.fan_power == 1);
+  rig.feed(drying, 7100);
+  CHECK(rig.host.fan_reports == reports);
+  CHECK(rig.device.state().fan.power == 1 && rig.host.fan_power == 1);
+  CHECK(rig.device.calculate_current_cadr_per_hour() == cadr);
+  rig.device.on_fan_command(0, -1, -1);
+  CHECK(rig.device.state().fan.power == 1);
+  // 10-full-off-after-drying, 2026-11-27T15:33:31.709+00:00
+  rig.feed(hex("A5 22 00 5D 00 FC 02 30 55 00 00 01 01 01 03 09 00 01 02 01 00 03 01 00 04 01 00 05 02 01 00 06 01 01 07 01 00 08 01 3C 09 01 39 0A 01 11 0B 01 01 0C 01 00 11 01 00 13 01 01 14 05 07 1C 00 02 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 39"), 8000);
+  CHECK(rig.host.fan_power == 0 && rig.host.fan_speed == 0 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  CHECK(rig.host.switches[SwitchType::AUTO_DRY_POWER_OFF] == false);
+  CHECK(rig.host.texts[TextSensorType::MCU_VERSION] == "1.0.9");
+}
+
+// Replay dry_controls.txt: Manual, High start, Low start, High/Low changes.
+static void test_superior_dry_controls_capture() {
+  Rig rig("SUPERIOR6000S");
+  // baseline, 2026-11-27T16:43:24.734+00:00
+  rig.feed(hex("A5 22 6A 5D 00 89 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 01 08 01 2D 09 01 39 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 20 1C 00 02 02 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 39"), 1000);
+  CHECK(rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == true);
+  CHECK(rig.device.get_dry_remaining() == 7200);
+  CHECK(rig.device.get_dry_level_preference() == 1);
+  // 01-manual-to-dry-high, 2026-11-27T16:43:34.702+00:00
+  rig.feed(hex("A5 22 6C 5D 00 B9 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 2D 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 07 07 00 01 02 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 2000);
+  CHECK(rig.host.fan_mode == 6);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.device.get_dry_remaining() == 1799);
+  CHECK(rig.device.get_dry_level_preference() == 1);
+  // 04-fixed-manual-to-dry-low, 2026-11-27T16:45:44.687+00:00
+  rig.feed(hex("A5 22 79 5D 00 7A 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 2D 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 1F 1C 00 01 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 3000);
+  CHECK(rig.host.fan_mode == 6);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.device.get_dry_remaining() == 7199);
+  CHECK(rig.device.get_dry_level_preference() == 0);
+  // 05-fixed-active-select-high, 2026-11-27T16:46:08.546+00:00
+  rig.feed(hex("A5 22 7C 5D 00 A4 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 2D 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 07 07 00 01 02 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 37"), 4000);
+  CHECK(rig.host.fan_mode == 6);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.device.get_dry_remaining() == 1799);
+  CHECK(rig.device.get_dry_level_preference() == 1);
+  // 06-fixed-active-select-low, 2026-11-27T16:46:23.356+00:00
+  rig.feed(hex("A5 22 7F 5D 00 74 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 2D 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 1F 1C 00 01 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 5000);
+  CHECK(rig.host.fan_mode == 6);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.device.get_dry_remaining() == 7199);
+  CHECK(rig.device.get_dry_level_preference() == 0);
+}
+
+// Synthetic malformed-field and command-emission checks.
+static void test_superior_power_and_commands() {
+  Rig rig("SUPERIOR6000S");
+  auto report = [&rig](Bytes payload, uint32_t now) {
+    Bytes f(10 + payload.size(), 0);
+    f[0] = 0xA5; f[1] = 0x22;
+    f[3] = static_cast<uint8_t>(payload.size() + 4);
+    f[6] = 2; f[7] = 0x30; f[8] = 0x55;
+    std::copy(payload.begin(), payload.end(), f.begin() + 10);
+    levoit_finalize_message(f, 7);
+    rig.feed(f, now);
+  };
+  report({0x00, 1, 1, 0x02, 1, 0}, 1000);
+  CHECK(rig.host.fan_power == 0);
+  report({0x00, 1, 1, 0x02, 1, 1}, 2000);
+  CHECK(rig.host.fan_power == 1);
+  report({0x00, 1, 1, 0x02, 1, 0}, 3000);
+  CHECK(rig.host.fan_power == 0);
+  // Synthetic compatibility cases: no non-1.0.9 hardware capture is available.
+  report({0x00, 1, 1}, 4000); // legacy tag-only on
+  CHECK(rig.host.fan_power == 1);
+  report({0x00, 1, 0}, 4100); // legacy tag-only off
+  CHECK(rig.host.fan_power == 0);
+  report({0x02, 1, 0, 0x00, 1, 1}, 4200); // tag 02 wins in reverse order too
+  CHECK(rig.host.fan_power == 0);
+  report({0x00, 1, 0, 0x02, 1, 1}, 4300); // conflicting legacy off
+  CHECK(rig.host.fan_power == 1);
+  report({0x02, 1, 2, 0x00, 1, 0}, 4400); // invalid tag 02: valid legacy fallback
+  CHECK(rig.host.fan_power == 0);
+  report({0x00, 1, 1, 0x02, 2, 0, 0}, 4500); // invalid tag 02 width
+  CHECK(rig.host.fan_power == 1);
+  report({0x00, 1, 0}, 4600);
+  report({0x00, 1, 2}, 4700); // invalid legacy enum
+  CHECK(rig.host.fan_power == 0);
+  report({0x00, 2, 1, 0}, 4800); // invalid legacy width
+  CHECK(rig.host.fan_power == 0);
+  report({0x09, 1, 45}, 4900); // neither power field: retain state
+  CHECK(rig.host.fan_power == 0);
+  report({0x02, 1, 2}, 5000); // invalid enum: do not invent a state
+  CHECK(rig.host.fan_power == 0);
+  report({0x02, 2, 1, 0}, 6000); // invalid width
+  CHECK(rig.host.fan_power == 0);
+
+  // A level preference while inactive must survive subsequent MCU reports.
+  report({0x14, 5, 0x1F, 0x1C, 1, 2, 1}, 6100);
+  CHECK(rig.device.get_dry_remaining() == 7199);
+  rig.platform.tx.clear();
+  rig.device.on_select_command(SelectType::DRY_LEVEL, 1);
+  CHECK(rig.platform.tx.empty()); // sending the level here would start drying
+  report({0x14, 5, 0x1E, 0x1C, 0, 2, 1}, 6200);
+  CHECK(rig.device.get_dry_level_preference() == 1);
+  uint32_t level = 0;
+  CHECK(rig.device.state().get_select(SelectType::DRY_LEVEL, level) && level == 1);
+  rig.platform.tx.clear();
+  rig.device.on_fan_command(-1, -1, 6);
+  CHECK(rig.platform.tx.size() == 1);
+  if (rig.platform.tx.size() == 1)
+    CHECK(Bytes(rig.platform.tx[0].begin() + 6, rig.platform.tx[0].end()) ==
+          Bytes({2, 0x46, 0x55, 0, 2, 1, 2}));
+  report({0x14, 5, 0x07, 0x07, 0, 1, 2}, 6300);
+  CHECK(rig.device.get_dry_remaining() == 1799);
+  rig.platform.tx.clear();
+  rig.device.on_select_command(SelectType::DRY_LEVEL, 0);
+  CHECK(rig.platform.tx.size() == 1);
+  if (rig.platform.tx.size() == 1)
+    CHECK(Bytes(rig.platform.tx[0].begin() + 6, rig.platform.tx[0].end()) ==
+          Bytes({2, 0x46, 0x55, 0, 2, 1, 1}));
+  report({0x14, 5, 0x1F, 0x1C, 0, 1, 1}, 6400);
+  CHECK(rig.device.get_dry_level_preference() == 0);
+  CHECK(rig.device.get_dry_remaining() == 7199);
+  // Short fields leave the decoded countdown alone.
+  report({0x14, 4, 0, 0, 1, 2}, 6500);
+  CHECK(rig.device.get_dry_remaining() == 7199);
+
+  rig.platform.tx.clear();
+  rig.device.on_fan_command(1, 1, 0);
+  CHECK(rig.device.state().fan.power == 0); // wait for the MCU, including on requests
+  CHECK(rig.platform.tx.size() == 3);
+  if (rig.platform.tx.size() == 3) {
+    // Power, Manual, speed 1, in that order; compare command and payload.
+    const Bytes commands[] = {{2, 0, 0x50}, {2, 0x32, 0x55}, {2, 0x33, 0x55}};
+    for (size_t i = 0; i < 3; i++) {
+      const auto &f = rig.platform.tx[i];
+      CHECK(f.size() == 13);
+      if (f.size() == 13) {
+        CHECK(Bytes(f.begin() + 6, f.begin() + 9) == commands[i]);
+        CHECK(Bytes(f.begin() + 10, f.end()) == Bytes({1, 1, 1}));
+        CHECK(f[5] == levoit_checksum(f.data(), f.size()));
+      }
+    }
+  }
+  rig.platform.tx.clear();
+  rig.device.on_fan_command(0, -1, -1);
+  CHECK(rig.platform.tx.size() == 1);
+  if (rig.platform.tx.size() == 1)
+    CHECK(rig.platform.tx[0].back() == 0);
+  // An explicit retry must still reach the wire when core state is already off.
+  rig.device.on_fan_command(0, -1, -1);
+  CHECK(rig.platform.tx.size() == 2);
+  report({0x00, 1, 1, 0x02, 1, 1}, 7000);
+  CHECK(rig.host.fan_power == 1); // MCU still running after the off request
+  report({0x00, 1, 1, 0x02, 1, 0}, 8000);
+  CHECK(rig.host.fan_power == 0);
+}
+
 int main() {
+  test_superior_capture();
+  test_superior_dry_controls_capture();
+  test_superior_power_and_commands();
   test_core300s_capture();
   test_command();
   test_dedup();
