@@ -11,7 +11,8 @@ From the changed files (stdin):
 * devices/<device>/...       -> the builder files of that device
 * components/, .github/, other files in devices/ (the generator script)
                              -> every builder file
-* everything else (docs/, READMEs, images, devices/templates.json)
+* everything else (docs/, READMEs, images, devices/templates.json,
+  devices/onboarding.json)
                              -> nothing
 
 The files are split into groups of at most GROUP_SIZE, built one after another
@@ -31,7 +32,7 @@ DEVICES = REPO / "devices"
 GROUP_SIZE = 5
 
 # Changed paths that do not change any build.
-NO_BUILD = ("devices/templates.json",)
+NO_BUILD = ("devices/templates.json", "devices/onboarding.json")
 NO_BUILD_SUFFIXES = (".md", ".png", ".jpg", ".jpeg", ".gif", ".bin", ".sal")
 # Changed paths under these change every build.
 BUILD_ALL = ("components/", ".github/", "devices/")

@@ -1,0 +1,196 @@
+{
+  "version": 1,
+  "devices": [
+    {
+      "id": "levoit-core200s",
+      "title": "Core 200S",
+      "photo": "docs/images/devices/levoit-core200s.jpg",
+      "guide": "devices/levoit-core200s",
+      "status": "tested",
+      "spec": "167 m³/h",
+      "summary": "3 speeds, no air-quality sensor",
+      "open": "easy",
+      "routes": ["flash", "add_esp"]
+    },
+    {
+      "id": "levoit-core300s",
+      "title": "Core 300S",
+      "photo": "docs/images/devices/levoit-core300s.jpg",
+      "guide": "devices/levoit-core300s",
+      "status": "tested",
+      "spec": "214 m³/h",
+      "summary": "PM2.5 and Auto mode",
+      "open": "easy",
+      "routes": ["flash", "add_esp"]
+    },
+    {
+      "id": "levoit-core400s",
+      "title": "Core 400S",
+      "photo": "docs/images/devices/levoit-core400s.jpg",
+      "guide": "devices/levoit-core400s",
+      "status": "tested",
+      "spec": "442 m³/h",
+      "summary": "4 speeds",
+      "open": "hard",
+      "routes": ["flash", "add_esp"]
+    },
+    {
+      "id": "levoit-core600s",
+      "title": "Core 600S",
+      "photo": "docs/images/devices/levoit-core600s.jpg",
+      "guide": "devices/levoit-core600s",
+      "status": "tested",
+      "spec": "641 m³/h",
+      "summary": "4 auto modes",
+      "open": "hard",
+      "routes": ["flash", "add_esp"]
+    },
+    {
+      "id": "levoit-vital100s",
+      "title": "Vital 100S",
+      "photo": "docs/images/devices/levoit-vital100s.jpg",
+      "guide": "devices/levoit-vital100s",
+      "status": "tested",
+      "spec": "221 m³/h",
+      "summary": "Pet mode, detailed teardown",
+      "open": "easy",
+      "routes": ["flash", "add_esp"]
+    },
+    {
+      "id": "levoit-vital200s",
+      "title": "Vital 200S (Pro)",
+      "photo": "docs/images/devices/levoit-vital200s.jpg",
+      "guide": "devices/levoit-vital200s",
+      "status": "tested",
+      "spec": "415 m³/h",
+      "summary": "Pet mode",
+      "open": "easy",
+      "routes": ["flash", "add_esp"]
+    },
+    {
+      "id": "levoit-everest-air",
+      "title": "Everest Air",
+      "photo": "docs/images/devices/levoit-everest-air.jpg",
+      "guide": "devices/levoit-everest-air",
+      "status": "tested",
+      "spec": "612 m³/h",
+      "summary": "Vent louver, PM1.0/2.5/10, Turbo",
+      "open": "easy",
+      "routes": ["flash", "add_esp"]
+    },
+    {
+      "id": "levoit-eleva-300x",
+      "title": "Eleva 300X",
+      "photo": "docs/images/devices/levoit-eleva-300x.jpg",
+      "guide": "devices/levoit-eleva-300x",
+      "status": "tested",
+      "status_note": "Tested on a XIAO C3",
+      "spec": "273 m³/h",
+      "summary": "PM1.0/2.5/10, quiet period, timer",
+      "open": "medium",
+      "routes": ["flash", "add_esp"]
+    },
+    {
+      "id": "levoit-sprout",
+      "title": "Sprout",
+      "photo": "docs/images/devices/levoit-sprout.jpg",
+      "guide": "devices/levoit-sprout",
+      "status": "development",
+      "status_note": "Work in progress",
+      "spec": "145 m³/h",
+      "summary": "White-noise audio (I2S MP3)",
+      "open": "easy",
+      "routes": ["flash", "add_esp"]
+    },
+    {
+      "id": "levoit-superior-6000s",
+      "title": "Superior 6000S",
+      "photo": "docs/images/devices/levoit-superior-6000s.jpg",
+      "guide": "devices/levoit-superior-6000s",
+      "status": "untested",
+      "status_note": "Untested on hardware",
+      "spec": "6 L · 500 mL/h",
+      "summary": "Evaporative, 9 fan speeds, target humidity, auto-dry",
+      "open": "easy",
+      "routes": ["flash", "add_esp"]
+    },
+    {
+      "id": "levoit-lv600s",
+      "title": "LV600S",
+      "photo": "docs/images/devices/levoit-lv600s.jpg",
+      "guide": "devices/levoit-lv600s",
+      "status": "development",
+      "status_note": "Development",
+      "spec": "6 L",
+      "summary": "Warm and cool mist, one EU unit on MCU 1.0.56",
+      "open": "easy",
+      "routes": ["flash"]
+    },
+    {
+      "id": "levoit-dual200s",
+      "title": "Dual 200S",
+      "photo": "docs/images/devices/levoit-dual200s.jpg",
+      "guide": "docs/humidifiers.md",
+      "status": "planned",
+      "summary": "Ultrasonic; YAML and teardown in #66",
+      "open": "easy",
+      "routes": ["add_esp", "flash"]
+    },
+    {
+      "id": "levoit-lv131s",
+      "title": "LV-PUR 131S",
+      "photo": "docs/images/devices/levoit-lv131s.jpg",
+      "guide": "devices/levoit-lv131s",
+      "status": "custom",
+      "status_note": "Guide + YAML",
+      "summary": "ESP12F → ESP32-C3, PM1003 → PM5003",
+      "open": "medium",
+      "routes": ["custom"]
+    },
+    {
+      "id": "levoit-lv131",
+      "title": "LV-PUR 131",
+      "photo": "docs/images/devices/levoit-lv131.jpg",
+      "guide": "devices/levoit-lv131",
+      "status": "custom",
+      "status_note": "Guide + YAML",
+      "summary": "As the 131S, plus a temperature sensor",
+      "open": "medium",
+      "routes": ["custom"]
+    },
+    {
+      "id": "levoit-mini",
+      "title": "Levoit Mini",
+      "photo": "docs/images/devices/levoit-mini.jpg",
+      "guide": "devices/levoit-mini",
+      "status": "custom",
+      "status_note": "Guide + YAML",
+      "spec": "78 m³/h",
+      "summary": "Custom PCB and 3D parts, reversible",
+      "open": "easy",
+      "routes": ["custom"]
+    },
+    {
+      "id": "philips-600-series",
+      "title": "600 series: AC0650, AC0651",
+      "photo": "docs/images/devices/philips-600-series.jpg",
+      "guide": "devices/philips-600-series",
+      "status": "tested",
+      "spec": "170 m³/h",
+      "summary": "Secure boot, so add an ESP; the AC0651 adds PM2.5, allergen index, Auto",
+      "open": "easy",
+      "routes": ["add_esp"]
+    },
+    {
+      "id": "philips-900-series",
+      "title": "900 series: AC0951, AC0950",
+      "photo": "docs/images/devices/philips-900-series.jpg",
+      "guide": "devices/philips-900-series",
+      "status": "partly_tested",
+      "status_note": "AC0951 tested, AC0950 untested",
+      "summary": "PM2.5, allergen index, child lock, beep, sleep timer",
+      "open": "easy",
+      "routes": ["add_esp"]
+    }
+  ]
+}
