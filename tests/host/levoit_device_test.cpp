@@ -205,6 +205,24 @@ static void test_command() {
   CHECK(f[3] == f.size() - 6);
 }
 
+// The dedup gate: an unchanged push is skipped, every changed one is decoded.
+// AQI 1 -> 2 with PM2.5 5 -> 3 left the old 8-bit fingerprint unchanged.
+static void test_dedup() {
+  Rig rig("CORE300S");
+  Bytes push = hex("A5 22 D8 17 00 63 01 32 40 00 00 00 01 01 00 03 00 64 01 03 00 01 05 00 00 00 00 00 00");
+  rig.feed(push, 1000);
+  rig.feed(push, 2000);
+  CHECK(rig.host.fan_reports == 1);
+
+  push[21] = 0x02;
+  push[22] = 0x03;
+  push[5] = levoit_checksum(push.data(), push.size());
+  rig.feed(push, 3000);
+  CHECK(rig.host.fan_reports == 2);
+  CHECK(rig.host.sensors[SensorType::AQI] == 2);
+  CHECK(rig.host.sensors[SensorType::PM25] == 3);
+}
+
 // begin(): counters restored through the platform, the Core 300S asks for its
 // status once if nothing arrived, CADR tracking runs on the device state.
 static void test_begin_and_tracking() {
@@ -366,6 +384,7 @@ static void test_parser() {
 int main() {
   test_core300s_capture();
   test_command();
+  test_dedup();
   test_begin_and_tracking();
   test_wifi_led();
   test_acks();
