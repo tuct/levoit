@@ -9,6 +9,7 @@
 | Model | Core 300S |
 | Tested MCU FW | 2.0.7, 2.0.11 |
 | ESP Module | ESP32-SOLO-1C |
+| MCU | SinOne SC95F8616P, LQFP-48: a 1T 8051 core with 64 KB flash (U1, marking in `images/pcb_front.jpg`) |
 | Board | CORE300S Ctrl Board V1.4.1 |
 | Fan Speeds | 3 |
 | CADR (spec) | 214 m³/h |

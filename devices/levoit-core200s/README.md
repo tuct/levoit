@@ -9,6 +9,7 @@
 | Model | Core 200S |
 | Tested MCU FW | 2.0.11 |
 | ESP Module | ESP32-SOLO-1C |
+| MCU | SinOne SC95F8616P, LQFP-48: a 1T 8051 core with 64 KB flash (U1, marking in `images/core200sp-board.jpg`) |
 | Board | EH-BY-41916-C-V1.0 (SinOne) |
 | Fan Speeds | 3 |
 | CADR (spec) | 167 m³/h |
