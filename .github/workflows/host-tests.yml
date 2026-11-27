@@ -35,3 +35,7 @@ jobs:
             components/levoit/levoit_message.cpp \
             -o /tmp/levoit-frame-test
           /tmp/levoit-frame-test
+          g++ -std=c++17 -Wall -Wextra \
+            tests/host/levoit_state_test.cpp \
+            -o /tmp/levoit-state-test
+          /tmp/levoit-state-test

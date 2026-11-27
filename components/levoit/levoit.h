@@ -7,6 +7,7 @@
 #include "esphome/components/uart/uart.h"
 #include "esphome/core/application.h"
 #include "types.h"
+#include "levoit_state.h"
 #ifdef USE_LEVOIT_TIME
 #include "esphome/components/time/real_time_clock.h"
 #endif
@@ -49,7 +50,7 @@ class LevoitSproutLight;
 
 
 
-class Levoit : public Component, public uart::UARTDevice {
+class Levoit : public Component, public uart::UARTDevice, public LevoitHost {
  public:
   const char* get_version() const { return LEVOIT_VERSION " esphome"; }
 
@@ -65,7 +66,9 @@ class Levoit : public Component, public uart::UARTDevice {
   void on_number_command(NumberType type, float value);  
   void on_select_command(SelectType type, uint32_t value);
 
-  // called by decoder when device reports status
+  // called by decoder when device reports status: records the value in the
+  // device state (levoit_state.h) and, when it changed, hands it to the
+  // LevoitHost methods below, which forward it to the entity
   void publish_switch(SwitchType type, bool state);
   void publish_number(NumberType type, float value);
   void publish_sensor(SensorType type, float value);
@@ -75,6 +78,18 @@ class Levoit : public Component, public uart::UARTDevice {
   void register_binary_sensor(BinarySensorType type, class LevoitBinarySensor *bs);
   void register_button(ButtonType type, class LevoitButton *btn);
   void publish_binary_sensor(BinarySensorType type, bool state);
+  // LevoitHost: the ESPHome mapping of a changed slot
+  void switch_changed(SwitchType type, bool state) override;
+  void number_changed(NumberType type, float value) override;
+  void sensor_changed(SensorType type, float value) override;
+  void select_changed(SelectType type, uint32_t value) override;
+  void text_changed(TextSensorType type, const std::string &value) override;
+  void binary_changed(BinarySensorType type, bool state) override;
+  void fan_changed(int power, int speed, int mode) override;
+  // A number entity restored a saved value at boot: keep the state in step
+  // without sending anything
+  void note_number_state(NumberType type, float value) { this->state_.set_number(type, value); }
+  const LevoitState &state() const { return this->state_; }
   // EverestAir: filter % pushed to the MCU panel (read by setFilterPercent builder)
   uint8_t get_pending_filter_pct() const { return pending_filter_pct_; }
   void set_pending_filter_pct(uint8_t pct) { pending_filter_pct_ = pct > 100 ? 100 : pct; }
@@ -144,7 +159,11 @@ class Levoit : public Component, public uart::UARTDevice {
   LevoitSelect *get_select(SelectType type) const { return selects_[sl_idx_(type)]; }
   LevoitSwitch *get_switch(SwitchType type) const { return switches_[st_idx_(type)]; }
   class LevoitBinarySensor *get_binary_sensor(BinarySensorType type) const { return binary_sensors_[bs_idx_(type)]; }
-  bool get_binary_sensor_state(BinarySensorType type) const { return binary_sensor_states_[bs_idx_(type)]; }
+  bool get_binary_sensor_state(BinarySensorType type) const {
+    bool state = false;
+    this->state_.get_binary(type, state);
+    return state;
+  }
   // Value accessors that keep the platform entity classes confined to
   // levoit.cpp. The *_commands.cpp / *_status.cpp sources must not include
   // number/levoit_number.h and friends: those directories only exist in the
@@ -232,8 +251,9 @@ class Levoit : public Component, public uart::UARTDevice {
   LevoitSelect *selects_[16] {nullptr};    // max SelectType index = 9 (SLEEP_PREFERENCE)
   LevoitTextSensor *text_sensor_[16] {nullptr};  // max TextSensorType index = 7 (MODEL)
   class LevoitBinarySensor *binary_sensors_[8] {nullptr};
-  bool binary_sensor_states_[8] {false};
   class LevoitButton *buttons_[4] {nullptr};
+  // What the MCU reported, or what was last requested of it (levoit_state.h)
+  LevoitState state_;
   LevoitFan *fan_{nullptr};
   LevoitSproutLight *sprout_light_{nullptr};
   ModelType model_{ModelType::VITAL100S};
@@ -253,7 +273,6 @@ class Levoit : public Component, public uart::UARTDevice {
 #ifdef USE_LEVOIT_TIME
   time::RealTimeClock *time_{nullptr};
 #endif
-  bool display_on_{false};
   bool fan_sleep_speed_{false};  // true when MCU reports FanLevel 0 (Sleep or Auto-low speed)
 
   uint16_t cadr = 235;
