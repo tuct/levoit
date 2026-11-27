@@ -39,13 +39,21 @@ protocol with that glue.
 Nothing changes for an ESPHome build: the same macros expand, from the same
 header.
 
-### 2. An interface for what the decoders call
+### 2. The core owns the state; the host hears about changes
 
-The decoders call a narrow set of `Levoit` methods: `publish_*`,
-`try_get_*_state`, `apply_fan_status`, the timer methods, `update_bulk_pref`
-and a few cache getters. That set becomes a `LevoitHost` interface the decoders
-take instead of `Levoit *`. The ESPHome `Levoit` implements it by forwarding to
-its entities, as it does now.
+The decoders already speak in typed enums rather than entities: about a
+hundred `publish_*(SwitchType::…, NumberType::…, SensorType::…, …)` calls and
+some thirty `try_get_*_state` read-backs over the same enums (`types.h`). So
+the core keeps one typed state, a known-flag and value per enum slot plus the
+fan status, the decoders write into it, and the host gets one callback per
+slot that changed. The ESPHome `Levoit` forwards that to its entities exactly
+as now; a Matter firmware reads the struct and maps it to clusters. The
+read-backs become reads of the core's own state, which removes the last reason
+the decoders needed `Levoit`. One struct keyed by the existing enums, not one
+per model: a model fills the slots it has. (Shape agreed with tadhglewis in
+[#147](https://github.com/tuct/levoit/issues/147); forwarding entity-shaped
+`publish_*` calls to the host, the first idea, would have made Matter rebuild
+the state from them.)
 
 A second, smaller interface covers the platform: write bytes to the UART,
 milliseconds since boot, a one-shot timer, load and save a `uint32` (used CADR,
@@ -81,8 +89,13 @@ can live in a subfolder, and whether a `CMakeLists.txt` next to the sources
 leaves ESPHome's build alone, needs a compile test first. The core may have to
 stay at the top level of `components/levoit/`.
 
-## Open choices
+## Decisions and what is still open
 
-* **Namespace:** keep `esphome::levoit` for the core (smallest diff), or a
-  neutral `levoit::` (cleaner for Matter, touches every file once).
+* **Namespace:** the core moves to a neutral `levoit::` as part of step 3, not
+  as a separate rename. The ESPHome side stays `esphome::levoit` because of
+  ESPHome's codegen. levoit-matter renames its own `levoit` namespace first so
+  the two do not collide (agreed in #147).
 * **Philips:** a separate protocol in `components/philips`, same shape, later.
+* **LV600S:** `components/lv600s_humidifier` (#152) speaks the same Levoit
+  frame with a fixed-layout payload at 9600 baud. The goal is `model: LV600S`
+  in `levoit` once the core exists.
