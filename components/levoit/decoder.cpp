@@ -102,6 +102,12 @@ namespace levoit
       (void)msg_type;
       (void)cmd_size_code;
 
+      // The MCU DFU owns 0x8030..0x8033 and its ACKs. It writes its own
+      // replies (a chunk ACK carries up to the MCU's MTU), so this must run
+      // before the generic ackMessage()/dedup/status path.
+      if (self->mcu_dfu().handle_frame(msg_type, seq, ptype0, ptype1, payload, payload_len))
+        return;
+
       ESP_LOGD(TAG_DEC, "dispatch: model=%d ptype=%02X%02X payload_len=%u",
                (int)model, ptype0, ptype1, (unsigned)payload_len);
       // ack all messages!

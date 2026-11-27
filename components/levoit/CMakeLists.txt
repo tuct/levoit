@@ -6,6 +6,7 @@ idf_component_register(
     SRCS
         "levoit_device.cpp"
         "decoder.cpp"
+        "mcu_dfu.cpp"
         "core_status.cpp"
         "vital_status.cpp"
         "sprout_status.cpp"
