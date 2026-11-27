@@ -235,3 +235,14 @@ what the report says.
   and water-shortage are the candidates, by analogy with the LV600S.
 * **OasisMist LV450S / LV600S (US)**: likely the same family as the EU LV600S,
   but nobody has opened one; a request in the discussion thread.
+* **Home Assistant's `humidifier` entity: parked.** HA has a
+  [humidifier domain](https://www.home-assistant.io/integrations/humidifier/)
+  (on/off, target humidity, current humidity, modes, action) that would hold
+  the target and modes natively. ESPHome cannot produce one: the native API
+  of ESPHome 2026.5.3 defines no humidifier entity kind (Climate, Fan,
+  WaterHeater and the rest, no humidifier), and aioesphomeapi has no type for
+  it either. The routes that exist, an MQTT `humidifier` with discovery next
+  to the native API, an HA-side wrapper in levoit-esphome-ha, or a humidifier
+  component upstream in ESPHome, are all out of scope for now. The HA entity
+  also has no slot for tank, water or fault, which would stay binary and text
+  sensors. Revisit if ESPHome adds the entity.
