@@ -29,7 +29,7 @@ class UARTIntegrityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             exe = Path(temp) / 'levoit-device-test'
             subprocess.run([shutil.which('clang++') or 'c++', '-std=c++17', '-Wall', '-Wextra',
-                            '-DLEVOIT_HOST_QUIET',
+                            '-DLEVOIT_HOST_QUIET', '-fno-sanitize-recover=all',
                             '-fsanitize=' + os.environ.get('LEVOIT_TEST_SANITIZERS', 'address,undefined'),
                             str(ROOT / 'tests' / 'host' / 'levoit_device_test.cpp'),
                             *[str(COMPONENT / s) for s in CORE_SOURCES],

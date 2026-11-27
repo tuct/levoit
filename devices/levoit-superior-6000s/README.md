@@ -91,23 +91,6 @@ where the purifiers use minutes.
 the select just records Low or High, and the value is applied when you pick **Dry**
 on the fan entity. Setting the select alone will not start a drying cycle.
 
-## MCU 1.0.9 control observations
-
-[Owner test notes](./observations-1.0.9.txt) record power in status TLV
-`0x02` (0 off, 1 on, including drying); `0x00` remained 1 while off.
-Commands must reach the Superior builder, and Manual must be sent before a
-requested fan speed because entering Manual restores the remembered speed.
-The fan's power state follows MCU reports; explicit power requests can be
-retried even when the displayed state already matches.
-
-`water_tank_empty` is a reported empty condition, not a water-level reading:
-it may remain set after refilling until the unit is turned on. Keep it
-separate from `cover_open`, `humidifying`, and `dry_active`.
-
-These are earlier observations from a customized component on MCU 1.0.9,
-not hardware validation of the rebased implementation. Raw captures still
-need to be committed; the regression fixtures are synthetic.
-
 ## Credits
 
 Protocol reverse-engineering and the original implementation:

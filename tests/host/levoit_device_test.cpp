@@ -563,9 +563,53 @@ static void test_parser() {
   CHECK(wrap.platform.acks() == 1);
 }
 
-// Synthetic fixtures based on the MCU 1.0.9 observations in the local
-// devices/levoit-superior-6000s/observations-1.0.9.txt.
-// These are NOT captured UART frames.
+// Full MCU frames from devices/levoit-superior-6000s/uart/ (MCU 1.0.9).
+static void test_superior_capture() {
+  Rig rig("SUPERIOR6000S");
+  // 00-idle-off, 2026-11-27T15:30:51.688+00:00
+  rig.feed(hex("A5 22 EA 5D 00 0C 02 30 55 00 00 01 01 01 03 09 00 01 02 01 00 03 01 00 04 01 00 05 02 01 00 06 01 01 07 01 00 08 01 2D 09 01 3A 0A 01 11 0B 01 01 0C 01 00 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 3A"), 1000);
+  CHECK(rig.host.fan_power == 0 && rig.host.fan_speed == 0 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 02-power-on-manual-1, 2026-11-27T15:31:17.043+00:00
+  rig.feed(hex("A5 22 EC 5D 00 06 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 01 08 01 2D 09 01 3A 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 3A"), 2000);
+  CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 1 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == true);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 03-power-off-after-on, 2026-11-27T15:31:33.508+00:00
+  rig.feed(hex("A5 22 EF 5D 00 0B 02 30 55 00 00 01 01 01 03 09 00 01 02 01 00 03 01 00 04 01 00 05 02 01 00 06 01 01 07 01 00 08 01 2D 09 01 38 0A 01 11 0B 01 01 0C 01 00 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 3000);
+  CHECK(rig.host.fan_power == 0 && rig.host.fan_speed == 0 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 04-manual-5, 2026-11-27T15:31:51.772+00:00
+  rig.feed(hex("A5 22 F1 5D 00 FB 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 01 08 01 2D 09 01 39 0A 01 11 0B 01 01 0C 01 05 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 05 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 39"), 4000);
+  CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 5 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == true);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 05-auto, 2026-11-27T15:32:07.055+00:00
+  rig.feed(hex("A5 22 F4 5D 00 E8 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 01 08 01 3C 09 01 38 0A 01 11 0B 01 04 0C 01 05 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 05 16 01 78 17 01 62 18 01 00 1E 02 AC 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 5000);
+  CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 5 && rig.host.fan_mode == 2);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == true);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 06-auto-to-manual-1, 2026-11-27T15:32:24.511+00:00
+  rig.feed(hex("A5 22 F6 5D 00 E9 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 01 08 01 3C 09 01 39 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 20 1C 00 02 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 39"), 6000);
+  CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 1 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == true);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  // 08-off-with-auto-dry, 2026-11-27T15:33:07.240+00:00
+  rig.feed(hex("A5 22 FC 5D 00 E7 02 30 55 00 00 01 01 01 03 09 00 01 02 01 01 03 01 00 04 01 00 05 02 01 01 06 01 01 07 01 00 08 01 3C 09 01 38 0A 01 11 0B 01 01 0C 01 01 11 01 00 13 01 01 14 05 1F 1C 01 01 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 38"), 7000);
+  CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 1 && rig.host.fan_mode == 6);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  // 10-full-off-after-drying, 2026-11-27T15:33:31.709+00:00
+  rig.feed(hex("A5 22 00 5D 00 FC 02 30 55 00 00 01 01 01 03 09 00 01 02 01 00 03 01 00 04 01 00 05 02 01 00 06 01 01 07 01 00 08 01 3C 09 01 39 0A 01 11 0B 01 01 0C 01 00 11 01 00 13 01 01 14 05 07 1C 00 02 01 15 01 01 16 01 78 17 01 62 18 01 00 1E 02 B2 00 1F 01 00 20 01 00 21 01 01 27 04 00 00 00 00 2C 01 39"), 8000);
+  CHECK(rig.host.fan_power == 0 && rig.host.fan_speed == 0 && rig.host.fan_mode == 0);
+  CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
+  CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  CHECK(rig.host.texts[TextSensorType::MCU_VERSION] == "1.0.9");
+}
+
+// Synthetic malformed-field and command-emission checks.
 static void test_superior_power_and_commands() {
   Rig rig("SUPERIOR6000S");
   auto report = [&rig](Bytes payload, uint32_t now) {
@@ -621,6 +665,7 @@ static void test_superior_power_and_commands() {
 }
 
 int main() {
+  test_superior_capture();
   test_superior_power_and_commands();
   test_core300s_capture();
   test_command();

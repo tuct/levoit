@@ -65,6 +65,7 @@ namespace levoit
 
         case 0x02:
           // MCU 1.0.9: 0=off, 1=on (including active drying).
+          // Captures: devices/levoit-superior-6000s/uart/{power,drying}.txt
           if (t.value_len == 1 && t.value_u32 <= 1)
           {
             have_power = true;
