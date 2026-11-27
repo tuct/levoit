@@ -163,6 +163,7 @@ static void test_core300s_capture() {
   // "speed 3" at 216.110
   rig.feed(hex("A5 22 D8 17 00 63 01 32 40 00 00 00 01 01 00 03 00 64 01 03 00 01 05 00 00 00 00 00 00"), 1000);
   CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 3 && rig.host.fan_mode == 0);
+  CHECK(rig.device.state().fan.selected_speed == 3);
   CHECK(rig.host.switches[SwitchType::DISPLAY] == true);
   CHECK(rig.host.switches[SwitchType::CHILD_LOCK] == false);
   CHECK(rig.host.sensors[SensorType::AQI] == 1);
@@ -175,11 +176,13 @@ static void test_core300s_capture() {
   // "sleep. Mode 01, running speed 00" at 232.370: speed 0, display dark
   rig.feed(hex("A5 22 DC 17 00 61 01 32 40 00 00 00 01 01 01 03 00 64 01 00 00 01 05 00 00 00 00 00 00"), 2000);
   CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 0 && rig.host.fan_mode == 1);
+  CHECK(rig.device.state().fan.selected_speed == 3);
   CHECK(rig.host.switches[SwitchType::DISPLAY] == false);
 
   // "power off, at the panel" at 189.370: off, the kept manual speed 1
   rig.feed(hex("A5 22 D4 17 00 D6 01 32 40 00 00 00 01 00 00 01 00 00 01 FF 00 01 01 00 00 00 00 00 00"), 3000);
   CHECK(rig.host.fan_power == 0 && rig.host.fan_speed == 1 && rig.host.fan_mode == 0);
+  CHECK(rig.device.state().fan.selected_speed == 1);
   CHECK(rig.host.fan_reports == 3);
   CHECK(rig.platform.acks() == 3);
 
@@ -203,6 +206,12 @@ static void test_command() {
   CHECK(f.size() >= 10 && f[0] == 0xA5 && f[1] == 0x22);
   CHECK(levoit_checksum(f.data(), f.size()) == f[5]);
   CHECK(f[3] == f.size() - 6);
+
+  rig.device.on_fan_command(-1, 2, 0);
+  CHECK(rig.device.state().fan.selected_speed == 2);
+  Rig vital("VITAL100S");
+  vital.device.on_fan_command(-1, 2, 0);
+  CHECK(vital.device.state().fan.selected_speed == -1);
 }
 
 // begin(): counters restored through the platform, the Core 300S asks for its
