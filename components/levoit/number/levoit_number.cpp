@@ -43,10 +43,12 @@ namespace esphome
                                        std::min(this->traits.get_max_value(), saved));
               ESP_LOGI(TAG, "Restored auto profile room size input: %.0f m²", clamped);
               this->publish_state(clamped);
+              if (parent_) parent_->note_number_state(this->type_, clamped);
             } else {
               ESP_LOGI(TAG, "No saved room size input, defaulting to %.0f m²",
                        this->traits.get_min_value());
               this->publish_state(this->traits.get_min_value());
+              if (parent_) parent_->note_number_state(this->type_, this->traits.get_min_value());
             }
           }
           break;
@@ -70,9 +72,11 @@ namespace esphome
           if (pref_.load(&saved_value)) {
             ESP_LOGI(TAG, "Restored filter lifetime: %.0f months", saved_value);
             this->publish_state(saved_value);
+            if (parent_) parent_->note_number_state(this->type_, saved_value);
           } else {
             ESP_LOGI(TAG, "No saved filter lifetime, using default: 6 months");
             this->publish_state(6.0);
+            if (parent_) parent_->note_number_state(this->type_, 6.0f);
           }
           break;
 

@@ -18,14 +18,15 @@ users exactly where they were.
 
 Today the protocol is only half separated. The decoders and builders
 (`*_status.cpp`, `*_commands.cpp`, `decoder.cpp`, `tlv.cpp`, about 3,000
-lines) hold no ESPHome code of their own, but they write into `Levoit`, the
-ESPHome component in `levoit.h`, and that header pulls in `Component`,
-`UARTDevice`, preferences and the clock. `levoit.cpp` (1,700 lines) mixes the
-protocol with that glue.
+lines) hold no ESPHome code of their own and, since step 2, read and write a
+device state that builds without ESPHome. But they still reach it through
+`Levoit`, the ESPHome component in `levoit.h`, and that header pulls in
+`Component`, `UARTDevice`, preferences and the clock. `levoit.cpp` (1,700
+lines) mixes the protocol with that glue.
 
 ## Steps
 
-### 1. Shims, and a host build that proves them (this branch)
+### 1. Shims, and a host build that proves them (done, #155)
 
 * `levoit_log.h` picks the log macros: ESPHome's, ESP-IDF's, or `stderr` on a
   host. The protocol files include it instead of `esphome/core/log.h`, and drop
@@ -39,26 +40,43 @@ protocol with that glue.
 Nothing changes for an ESPHome build: the same macros expand, from the same
 header.
 
-### 2. The core owns the state; the host hears about changes
+### 2. The core owns the state; the host hears about changes (this branch)
 
 The decoders already speak in typed enums rather than entities: about a
 hundred `publish_*(SwitchType::…, NumberType::…, SensorType::…, …)` calls and
 some thirty `try_get_*_state` read-backs over the same enums (`types.h`). So
-the core keeps one typed state, a known-flag and value per enum slot plus the
-fan status, the decoders write into it, and the host gets one callback per
-slot that changed. The ESPHome `Levoit` forwards that to its entities exactly
-as now; a Matter firmware reads the struct and maps it to clusters. The
-read-backs become reads of the core's own state, which removes the last reason
-the decoders needed `Levoit`. One struct keyed by the existing enums, not one
-per model: a model fills the slots it has. (Shape agreed with tadhglewis in
+`levoit_state.h` holds one typed `LevoitState`, a known-flag and value per
+enum slot plus the fan's power/speed/mode, and a `LevoitHost` interface with
+one method per kind of slot. `Levoit` owns the state and implements the host:
+
+* `publish_*` records the slot and calls the host method only when the value
+  changed. The host methods are the old `publish_*` bodies, entity dedup, room
+  size rounding and select option checks included, so what reaches Home
+  Assistant is unchanged. A Matter firmware implements the same seven methods
+  and maps to clusters.
+* `try_get_*` reads the state. A slot is known once the MCU reported it or a
+  command requested it, whether or not the entity is in the YAML: the
+  `on_*_command` entry points write the requested value first, as the
+  optimistic entity publish did, and `LevoitNumber` reports its restored
+  values at boot. For a builder this is the one visible change: a field whose
+  entity is not configured now echoes what the MCU reported instead of a
+  default.
+* The decoders are untouched; they still take `Levoit *`, which step 3 turns
+  into the core.
+* `tests/host/levoit_state_test.cpp` builds the state with a plain `g++`.
+
+One struct keyed by the existing enums, not one per model: a model fills the
+slots it has. (Shape agreed with tadhglewis in
 [#147](https://github.com/tuct/levoit/issues/147); forwarding entity-shaped
 `publish_*` calls to the host, the first idea, would have made Matter rebuild
-the state from them.)
+the state from them.) The Sprout's LED ring light (`publish_sprout_light`)
+stays a separate call for now; it joins the state when the Sprout gets its
+Matter mapping.
 
-A second, smaller interface covers the platform: write bytes to the UART,
-milliseconds since boot, a one-shot timer, load and save a `uint32` (used CADR,
-runtime), the local time when there is a clock, and whether the network is up
-(for the Wi-Fi LED).
+The platform interface, write bytes to the UART, milliseconds since boot, a
+one-shot timer, load and save a `uint32` (used CADR, runtime), the local time
+when there is a clock, and whether the network is up (for the Wi-Fi LED),
+comes with step 3, where `LevoitDevice` is its first user.
 
 ### 3. Split `levoit.cpp`
 
