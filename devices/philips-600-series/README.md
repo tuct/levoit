@@ -25,7 +25,7 @@ Two variants are supported via the `model:` option — both speak the identical
 | Brand | MUJI (Philips/Versuni OEM) |
 | Tested MCU FW | 0.1.9 / 0.2.1|
 | Stock ESP module | ESP32-C3-WROOM-02U (secure boot — locked) |
-| Replacement module | Seeed XIAO ESP32-C3 (or any ESP32-C3 or ESP32-S3) |
+| Replacement module | [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link) or [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link) (or any ESP32-C3 or ESP32-S3) |
 | MCU link | UART, 115200 8N1, `FE FF` protocol |
 | Fan speeds | 3 (Sleep / Medium / Turbo) + Auto on 651 |
 | PM sensor | PM1003 (AC0651 only) |
@@ -114,8 +114,13 @@ be flashed onto it — the only option is to **add your own ESP32-C3** on the MC
 UART and park the stock module.
 
 **Recommended modules:**
-- Seeed XIAO ESP32-C3
-- Seeed XIAO ESP32-S3
+- [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+
+> [!TIP]
+> No YAML to write: in Home Assistant, the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration's
+> *Add device* makes a ready-to-flash config for either board from this model's
+> template. You only add a name and your Wi-Fi.
 
 **Wiring:** 4 wires — `+5V`, `GND`, `RX`, `TX`. In the example configs the C3 uses
 `GPIO20` = RX (MCU TX → ESP RX) and `GPIO21` = TX (ESP TX → MCU RX).

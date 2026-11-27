@@ -50,8 +50,8 @@ Keep the original ESP32 functional while adding a custom ESP32 for ESPHome contr
 
 
 **Recommended modules:**
-- **XIAO Seeed ESP32-S3** - Compact form factor, easy to integrate
-- **XIAO Seeed ESP32-C3** - Budget-friendly alternative
+- **[Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)** - Compact form factor, easy to integrate
+- **[Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)** - Budget-friendly alternative
 - Any ESP32 module with UART and sufficient GPIO pins
 
 ### Hardware Access

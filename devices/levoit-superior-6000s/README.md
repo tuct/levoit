@@ -54,6 +54,18 @@ protocol** as the Levoit air purifiers, so it needs no new component — just
    programming pads); ESPHome warns that GPIO18/19 are the USB pins, which is
    expected.
 
+To keep the stock module instead, wire your own ESP to the MCU link and use the
+`-c3` or `-s3` config from [Files](#files).
+
+**Recommended modules:**
+- [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+
+> [!TIP]
+> No YAML to write: in Home Assistant, the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration's
+> *Add device* makes a ready-to-flash config for either board from this model's
+> template. You only add a name and your Wi-Fi.
+
 ## Entities
 
 | Platform | `type` | Notes |

@@ -67,6 +67,15 @@ Pull up left and right and remove the top
 
 ## Install New ESP32 (Recommended)
 
+**Recommended modules:**
+- [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+
+> [!TIP]
+> No YAML to write: in Home Assistant, the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration's
+> *Add device* makes a ready-to-flash config for either board from this model's
+> template. You only add a name and your Wi-Fi.
+
 Make sure to connect EN (reset) to GND on the Debug Header to dissable the old ESP32
 
 Pinout: 

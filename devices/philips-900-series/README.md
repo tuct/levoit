@@ -58,6 +58,15 @@ The move is the same as the [600 series](../philips-600-series): park the stock
 Wi-Fi module and let your own ESP32 talk to the purifier's MCU over the internal
 UART.
 
+**Recommended modules:**
+- [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+
+> [!TIP]
+> No YAML to write: in Home Assistant, the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration's
+> *Add device* makes a ready-to-flash config for either board from this model's
+> template. You only add a name and your Wi-Fi.
+
 All the connection points are on the **top edge of the MXCHIP module**:
 
 ![Annotated MXCHIP pads: +5V and GND on the header, A/B UART pair and C reset](./images/mxchip_emc6069_pins.jpg)

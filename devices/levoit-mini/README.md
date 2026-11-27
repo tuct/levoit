@@ -52,7 +52,7 @@ Filter can be resetted via HomeAssistant integration
 
 ### BOM
 
-* Xiao Seeed Studio ESP32S3
+* [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
 * [LCD - 0.91 Inch OLED Display I2C SSD1306](https://www.amazon.de/-/en/dp/B07BY6QN7Q)
 * [Level Shifter](https://www.amazon.de/-/en/4-Channel-Converter-BiDirectional-Raspberry-Microcontroller/dp/B07RY15XMJ) - 3.3 / 5v Bidirectional
 * [DC-DC Stepdown Converter]( https://www.amazon.de/-/en/dp/B08K37TS6F?ref_=ppx_hzod_title_dt_b_fed_asin_title_0_0&th=1), MP1584EN 22mm x 17mm x 4mm

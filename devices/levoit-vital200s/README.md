@@ -69,6 +69,15 @@ Same protocol as the Vital 100S. Tested with original ESP by @dnsefe.
 ## Install New ESP32 (Recommended)
 > Tested by @bcrook on a Seeed Xiao ESP32-C6 + Vital 200S-P
 
+**Recommended modules:**
+- [Seeed XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
+
+> [!TIP]
+> No YAML to write: in Home Assistant, the [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha) integration's
+> *Add device* makes a ready-to-flash config for either board from this model's
+> template. You only add a name and your Wi-Fi.
+
 <img width="2304" height="958" alt="image" src="https://github.com/user-attachments/assets/b7235e33-998f-4eea-ae13-3d3470a87ece" />
 
 * Bridge EN and GND on debug header to force onboard ESP32 into reset/off state
