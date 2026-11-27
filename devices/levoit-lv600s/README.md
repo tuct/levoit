@@ -13,8 +13,7 @@ EU `LUH-A602S-WEUR` with the original ESP32-SOLO-1C and MCU 1.0.56. See
   at the verified board input and a UART adapter with 3.3 V logic. Leave the
   adapter's VCC disconnected. [Disassembly and serial access](HARDWARE.md)
 - This example uses ESPHome's default partition table for a **new installation**.
-  It is not a drop-in OTA profile for the owner's already converted appliance.
-  Existing installations must preserve their own original table and access keys.
+  For an OTA migration, preserve the existing partition table and access keys.
 
 Copy `secrets-example.yaml` to a private `secrets.yaml` and replace every
 placeholder. Generate the API key with `openssl rand -base64 32` and choose
@@ -33,11 +32,10 @@ ESPHome resolves the private values at build time. Keep the private
 example authenticates native OTA with a password, which is distinct from the
 API key and the setup Wi-Fi password.
 
-Use the secure owner profile on an already converted appliance that uses its
-original partition table and encrypted native OTA. This profile uses one
-device-specific key for the API and native OTA, plus separate setup Wi-Fi and
-portal upload passwords. Its physical reset clears the stored Wi-Fi login and
-settings. The credentials compiled into the firmware survive the reset.
+For an existing installation with encrypted native OTA, use its current OTA
+credential and preserve the device's configured access settings. A physical
+reset with the recovery profile clears the stored Wi-Fi login and settings.
+The credentials compiled into the firmware survive the reset.
 
 Keep the currently accepted OTA credential, setup Wi-Fi password, any
 separate portal upload password, matching recovery image and partition
@@ -68,26 +66,14 @@ as does a standby device that has sent no timer report. Missing or expired
 timer data while running displays `Unknown`. A queued duration is shown
 separately while the countdown is still off.
 
-**Deutsch.** Warmnebelstufe und Timer lassen sich im Standby vormerken.
-Die eigenständige Komponente bietet zusätzlich eine Nebelvorgabe. Der ESP speichert sie und überträgt
-sie nach sicher bestätigtem Einschalten. Eine Nebelvorgabe schaltet auf
-**Manuell**. Eine Warmnebelvorgabe wartet, bis der Schlafmodus endet. Der
-ESP löscht die Timervormerkung nach bestätigtem Start. Läuft die Bestätigung
-in ein Zeitlimit, bleibt sie für das nächste Einschalten gespeichert.
-`0` löscht die Vormerkung sofort. Bestätigt die MCU den
-eingeschalteten Zustand, wird der Timerabbruch angefordert. Bei bestätigtem
-Timer-Aus und im Standby ohne Timer-Rückmeldung steht `Off`. Fehlen aktuelle Timerdaten,
-steht dort `Unknown`. Eine vorgemerkte Dauer erscheint bei weiterhin
-ausgeschaltetem Countdown.
-
 | ESPHome entity | Default icon |
 |---|---|
-| Mist Level / Nebelstufe, Humidifying / Befeuchtet | `mdi:scent` |
-| Warm Level / Warmnebelstufe, Heating Enabled / Wärme aktiv | `mdi:heat-wave` |
-| Water Tank Empty / Wassermangel | `mdi:water-off` |
-| Target Humidity / Zielfeuchte | `mdi:water-percent` |
-| Timer Duration / Timer Dauer | `mdi:timer` |
-| Timer Remaining / Timer Restzeit | `mdi:progress-clock` |
+| Mist Level, Humidifying | `mdi:scent` |
+| Warm Level, Heating Enabled | `mdi:heat-wave` |
+| Water Tank Empty | `mdi:water-off` |
+| Target Humidity | `mdi:water-percent` |
+| Timer Duration | `mdi:timer` |
+| Timer Remaining | `mdi:progress-clock` |
 
 [Wire format, commands, safety and evidence](PROTOCOL.md).
 

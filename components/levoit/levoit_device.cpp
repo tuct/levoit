@@ -966,6 +966,10 @@ namespace levoit
                     publish_sensor(SensorType::HUMIDITY, NAN);
                     publish_sensor(SensorType::TEMPERATURE, NAN);
                     publish_sensor(SensorType::MIST_LEVEL, NAN);
+                    publish_number(NumberType::WARM_LEVEL, NAN);
+                    publish_number(NumberType::HUMIDITY_TARGET, NAN);
+                    publish_text_sensor(TextSensorType::REPORTED_MODE, "Unknown");
+                    publish_text_sensor(TextSensorType::ERROR_MESSAGE, "Unknown");
                 }
                 publish_binary_sensor(BinarySensorType::MCU_CONNECTION, online);
                 if (uint32_t(now - last_check_sec_) >= 1000)

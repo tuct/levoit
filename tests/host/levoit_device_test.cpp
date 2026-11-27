@@ -764,15 +764,25 @@ static void test_lv600s_shared_commands() {
   device.on_fan_command(0, -1, -1);
   CHECK(rig.platform.tx.size() == before_rejected + 1);
   report(3, 0, 1300);
+  CHECK(rig.host.texts[TextSensorType::REPORTED_MODE] == "Sleep");
+  CHECK(rig.host.texts[TextSensorType::ERROR_MESSAGE] == "No reported MCU fault");
   rig.platform.now = 16400;
   device.tick(16400);
   CHECK(!rig.host.binaries[BinarySensorType::MCU_CONNECTION]);
   CHECK(std::isnan(rig.host.sensors[SensorType::HUMIDITY]));
+  CHECK(std::isnan(rig.host.numbers[NumberType::WARM_LEVEL]));
+  CHECK(std::isnan(rig.host.numbers[NumberType::HUMIDITY_TARGET]));
+  CHECK(rig.host.texts[TextSensorType::REPORTED_MODE] == "Unknown");
+  CHECK(rig.host.texts[TextSensorType::ERROR_MESSAGE] == "Unknown");
   CHECK(rig.host.texts[TextSensorType::TIMER_DURATION_CURRENT] == "Unknown");
   CHECK(std::isnan(rig.host.numbers[NumberType::TIMER]));
   CHECK(rig.platform.acks() == 0);
 
   report(3, 1, 16500);
+  CHECK(rig.host.numbers[NumberType::WARM_LEVEL] == 2);
+  CHECK(rig.host.numbers[NumberType::HUMIDITY_TARGET] == 66);
+  CHECK(rig.host.texts[TextSensorType::REPORTED_MODE] == "Sleep");
+  CHECK(rig.host.texts[TextSensorType::ERROR_MESSAGE] == "No reported MCU fault");
   rig.feed(running_timer, 16600);
   rig.platform.now = 17400;
   device.tick(17400);
