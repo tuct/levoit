@@ -5,8 +5,10 @@
 The integration (tuct/levoit-esphome-ha) reads the file from main: per device
 a photo, a status and a few words, shown when a device is added. This checks
 that it parses, has only the known fields and values, that every photo and
-guide exists in the repo, and that every device with a template in
-devices/templates.json has an entry. Prints what is wrong; exit 1 if anything.
+guide exists in the repo, that every device with a template in
+devices/templates.json has an entry, and that `models` (the component's
+model codes, by which the integration finds a device's photo) names each
+code once and lists the models of the folder's templates. Prints what is wrong; exit 1 if anything.
 """
 
 from __future__ import annotations
@@ -21,7 +23,8 @@ FILE = REPO / "devices" / "onboarding.json"
 TEMPLATES = REPO / "devices" / "templates.json"
 
 REQUIRED = {"id", "title", "photo", "guide", "status", "summary", "open", "routes"}
-OPTIONAL = {"status_note", "spec"}
+OPTIONAL = {"status_note", "spec", "models"}
+MODEL = re.compile(r"^[A-Z0-9]+$")
 STATUS = {"tested", "partly_tested", "untested", "development", "planned", "custom"}
 OPEN = {"easy", "medium", "hard"}
 ROUTES = {"flash", "add_esp", "custom"}
@@ -44,6 +47,7 @@ def problems() -> list[str]:
         return ["devices is a list"]
 
     seen: set[str] = set()
+    model_of: dict[str, str] = {}
     for index, entry in enumerate(devices):
         where = f"devices[{index}]"
         if not isinstance(entry, dict):
@@ -54,7 +58,7 @@ def problems() -> list[str]:
             errors.append(f"{where}: missing {', '.join(sorted(missing))}")
         if unknown := entry.keys() - REQUIRED - OPTIONAL:
             errors.append(f"{where}: unknown {', '.join(sorted(unknown))}")
-        for key in ("id", "title", "photo", "guide", "status", "summary", "open", *OPTIONAL):
+        for key in ("id", "title", "photo", "guide", "status", "summary", "open", "status_note", "spec"):
             if key in entry and (not isinstance(entry[key], str) or not entry[key].strip()):
                 errors.append(f"{where}: {key} is a non-empty string")
         for key in ("title", "summary", "status_note", "spec"):
@@ -86,7 +90,20 @@ def problems() -> list[str]:
         ):
             errors.append(f"{where}: routes is a list of {', '.join(sorted(ROUTES))}")
 
+        models = entry.get("models")
+        if models is not None:
+            if not isinstance(models, list) or not models or not all(isinstance(m, str) and MODEL.match(m) for m in models):
+                errors.append(f"{where}: models is a list of model codes, e.g. CORE300S")
+            else:
+                for model in models:
+                    if model in model_of:
+                        errors.append(f"{where}: model {model} is also in {model_of[model]}")
+                    model_of[model] = str(ident)
+
     templates = json.loads(TEMPLATES.read_text(encoding="utf-8")).get("templates", [])
+    for folder, model in sorted({(t["file"].split("/")[1], t["model"]) for t in templates}):
+        if model_of.get(model) != folder:
+            errors.append(f"{folder}: its template model {model} is not in its models")
     folders = sorted({t["file"].split("/")[1] for t in templates})
     for folder in folders:
         if folder not in seen:
