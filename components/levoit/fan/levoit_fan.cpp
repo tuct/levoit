@@ -21,6 +21,7 @@ namespace esphome
             {2, "Auto"},
             {4, "Turbo"},  // EverestAir top speed, exposed as a fan mode
             {5, "Pet"},
+            {6, "Dry"},
         };
         static int preset_to_device_mode(const char *preset)
         {
@@ -54,6 +55,8 @@ namespace esphome
             std::vector<const char *> preset_modes;
             for (const auto &m : MODE_MAP)
             {
+                if (m.device == 6 && model != ModelType::SUPERIOR6000S)
+                    continue; // Dry is Superior 6000S-only
                 if (!isEverest && std::strcmp(m.preset, "Turbo") == 0)
                     continue; // Turbo is EverestAir-only (fan mode 4)
                 if (isEverest && std::strcmp(m.preset, "Pet") == 0)

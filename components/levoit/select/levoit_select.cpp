@@ -15,6 +15,9 @@ namespace esphome
 
     void LevoitSelect::setup() {
       switch (this->type_) {
+        case SelectType::DRY_LEVEL:
+          this->traits.set_options({"Low", "High"});
+          break;
         case SelectType::AUTO_MODE:
           if (parent_ && parent_->get_model() == ModelType::EVERESTAIR)
             this->traits.set_options({"Default", "Eco"});  // EverestAir: only Default(0) and Eco(3)
