@@ -337,6 +337,29 @@ Default: 12 months. Adjust based on your filter's actual rated lifespan or usage
 - **Command Builders**: Separated into `core_commands.cpp` and `vital_commands.cpp` for model-specific logic
 - **Global Counter**: `messageUpCounter` tracks outgoing message sequence (inline variable in `levoit_message.h`)
 
+### The core without ESPHome
+The protocol lives in `LevoitDevice` ([levoit_device.h](levoit_device.h)) and
+the decoders and builders around it, in namespace `levoit`, with no ESPHome in
+it. A firmware that is not ESPHome (a Matter firmware, for one) takes this
+folder as an ESP-IDF component through the component manager and implements
+two small interfaces: `LevoitPlatform` ([levoit_platform.h](levoit_platform.h)),
+the UART, clock, timeouts and saved counters, and `LevoitHost`
+([levoit_state.h](levoit_state.h)), which hears about state changes and maps
+them to whatever the firmware exposes.
+
+```yaml
+# main/idf_component.yml
+dependencies:
+  levoit:
+    git: https://github.com/tuct/levoit.git
+    path: components/levoit
+    version: "1.7.3"   # a tag of this repo
+```
+
+[tests/idf](../../tests/idf) is the smallest such project; CI builds it on
+every change to this folder. The plan and the steps that led here are in
+[docs/shared-core.md](../../docs/shared-core.md).
+
 ### Adding New Commands
 1. Add enum to `CommandType` in [types.h](types.h)
 2. Implement in `build_core_command()` or `build_vital_command()` depending on model series

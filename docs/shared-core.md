@@ -21,9 +21,9 @@ Since step 3 the protocol is a core of its own: `LevoitDevice`
 `*_commands.cpp`, `decoder.cpp`, `tlv.cpp`), about 4,500 lines that build with
 a plain `g++` and depend on nothing but the standard library. The ESPHome
 component `Levoit` (`levoit.h/.cpp`, 500 lines) owns one core, feeds it the
-UART, and implements the two interfaces the core talks through. What is left
-before a Matter firmware can pull it in is the namespace (3b) and the
-packaging (step 4).
+UART, and implements the two interfaces the core talks through. Since step 4
+the folder is also an ESP-IDF component, so a Matter firmware pulls it in
+with the component manager at a tag of this repo.
 
 ## Steps
 
@@ -74,7 +74,7 @@ the state from them.) The Sprout's LED ring light (`publish_sprout_light`)
 stays a separate call for now; it joins the state when the Sprout gets its
 Matter mapping.
 
-### 3. Split `levoit.cpp` (this branch, 3a)
+### 3. Split `levoit.cpp` (done, #158)
 
 * **`LevoitDevice`** (`levoit_device.h/.cpp`): UART framing and the parser,
   `process_message`, the ACKs, `sendCommand`, the `on_*_command` mapping, the
@@ -109,7 +109,7 @@ a config without one; filter life goes through `publish_sensor`, so an
 unchanged value is no longer re-sent every 10 s; the hex in TX logs is
 formatted by the core.
 
-**3b (this branch):** the core moves to namespace `levoit`; no core file
+**3b (done, #163 into #158):** the core moves to namespace `levoit`; no core file
 mentions `esphome` any more. The ESPHome side moves to
 `esphome::levoit_component`, not `esphome::levoit` as first planned:
 ESPHome's generated `main.cpp` says `using namespace esphome;`, so a bare
@@ -119,22 +119,36 @@ namespace for the component classes and `::levoit` for the enums
 visible on the ESPHome side. The move is mechanical: only the namespace lines
 changed, the code inside keeps its indentation.
 
-### 4. Packaging for a Matter firmware
+### 4. Packaging for a Matter firmware (this branch)
 
-The core gets a `CMakeLists.txt` and `idf_component.yml`, so an ESP-IDF project
-pulls it with the IDF component manager at a tag of this repo. A Matter
-firmware then implements the two interfaces and keeps its own mapping layer,
-which is what [levoit-matter](https://github.com/tadhglewis/levoit-matter)
-already has in `purifier_map` and `matter_setup`. In return it gets the
-protocol of every model here, not only the Core 200S to 600S, and later fixes
-for free.
+`components/levoit` is an ESP-IDF component as well: `CMakeLists.txt` lists
+the core sources (not the ESPHome glue) and `idf_component.yml` is the
+component manager manifest, its version kept equal to `VERSION` by the
+*Version check* workflow. A project depends on it with
 
-## To check before step 4
+```yaml
+dependencies:
+  levoit:
+    git: https://github.com/tuct/levoit.git
+    path: components/levoit
+    version: "<tag>"
+```
 
-ESPHome copies the component's source files into its build. Whether the core
-can live in a subfolder, and whether a `CMakeLists.txt` next to the sources
-leaves ESPHome's build alone, needs a compile test first. The core may have to
-stay at the top level of `components/levoit/`.
+implements the two interfaces, and keeps its own mapping layer, which is what
+[levoit-matter](https://github.com/tadhglewis/levoit-matter) does since its
+PR 6: it runs on `LevoitDevice`, deleted its own decoder, builders and frame
+code, and checks parity against every frame in the Core 300S capture. In
+return it gets the protocol of every model here, not only the Core 200S to
+600S, and later fixes for free.
+
+`tests/idf` is the smallest such project, built by the *IDF component*
+workflow with ESP-IDF's own flags on every change to the component, so the
+core cannot quietly stop building outside ESPHome.
+
+Two facts settled on the way: ESPHome copies only `.c .cpp .h .hpp .ino .tcc`
+into its build, so the two packaging files are invisible to it and the core
+stays at the top level of the folder; and the core builds warning-free with
+logs enabled, so a consumer needs no `-Wno-*` flags.
 
 ## Decisions and what is still open
 

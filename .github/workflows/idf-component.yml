@@ -1,0 +1,37 @@
+name: IDF component
+
+# Builds tests/idf, a minimal ESP-IDF project that takes components/levoit as
+# a component through the IDF component manager, with ESP-IDF's own compiler
+# flags. It fails when the protocol core stops building outside ESPHome, or
+# when a change makes it warn under ESP-IDF's -Werror=all. See
+# docs/shared-core.md, step 4.
+on:
+  pull_request:
+    paths:
+      - 'components/levoit/**'
+      - 'tests/idf/**'
+      - '.github/workflows/idf-component.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'components/levoit/**'
+      - 'tests/idf/**'
+      - '.github/workflows/idf-component.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: levoit core as an ESP-IDF component
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: idf.py build
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: release-v5.4
+          target: esp32
+          path: tests/idf

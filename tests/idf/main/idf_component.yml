@@ -1,0 +1,8 @@
+# The component under test, by path. A real firmware uses the git form:
+#   levoit:
+#     git: https://github.com/tuct/levoit.git
+#     path: components/levoit
+#     version: "<tag>"
+dependencies:
+  levoit:
+    path: ../../../components/levoit
