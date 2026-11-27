@@ -180,6 +180,22 @@ class LevoitDevice {
   };
   static constexpr size_t PAYLOAD_HASH_CACHE_SIZE = 16;
   PayloadHashCacheEntry (&payload_hash_cache())[PAYLOAD_HASH_CACHE_SIZE] { return payload_hash_cache_; }
+  // After a command the state holds the requested value. While the MCU
+  // applies it, a fast pusher still sends the old payload, so an unchanged
+  // push within COMMAND_GRACE_MS of the command stays skipped. The first
+  // unchanged push after that is decoded once: a command the MCU did not carry
+  // out is then reported back instead of staying in the state.
+  static constexpr uint32_t COMMAND_GRACE_MS = 1500;
+  void note_command() {
+    command_pending_ = true;
+    command_ms_ = platform_->millis();
+  }
+  bool decode_unchanged_push() {
+    if (!command_pending_ || platform_->millis() - command_ms_ < COMMAND_GRACE_MS)
+      return false;
+    command_pending_ = false;
+    return true;
+  }
 
   // ---- model knowledge ----
   // Core 200S / 300S / 400S / 600S: the Core protocol (it has a filter LED command)
@@ -267,6 +283,8 @@ class LevoitDevice {
   uint32_t total_runtime_{0};
   BulkPrefsCache bulk_prefs_;
   PayloadHashCacheEntry payload_hash_cache_[PAYLOAD_HASH_CACHE_SIZE]{};
+  bool command_pending_{false};
+  uint32_t command_ms_{0};
 };
 
 }  // namespace levoit

@@ -48,7 +48,9 @@ namespace levoit
 
           if (e.hash == hash)
           {
-            return false; // identical payload → skip
+            // identical payload → skip, unless it is the first one past the
+            // grace window after a command (LevoitDevice::note_command)
+            return self->decode_unchanged_push();
           }
 
           e.hash = hash;

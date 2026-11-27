@@ -222,6 +222,7 @@ namespace levoit
             // The requested value is the state until the MCU reports back,
             // which is what the builders read through try_get_switch_state.
             this->state_.set_switch(type, state);
+            this->note_command();
             // Optional: restrict by model
             // if (model_ != ModelType::VITAL200S && type == SwitchType::QUICK_CLEAN) return;
 
@@ -294,6 +295,7 @@ namespace levoit
         {
             // Requested value first: the builders below read it back.
             this->state_.set_number(type, value);
+            this->note_command();
             // Optional: restrict by model
             // if (model_ != ModelType::VITAL200S && type == NumberType::EFFICIENCY_ROOM_SIZE) return;
 
@@ -417,6 +419,7 @@ namespace levoit
         {
             // Requested value first: the builders below read it back.
             this->state_.set_select(type, value);
+            this->note_command();
             // Optional: restrict by model
             // if (model_ != ModelType::VITAL200S && type == SwitchType::QUICK_CLEAN) return;
 
@@ -565,6 +568,7 @@ namespace levoit
         {
             ESP_LOGD(TAG, "on_fan_command: power=%d speed_level=%d mode=%d", power, speed_level, mode);
             this->state_.set_fan(power, speed_level, mode);
+            this->note_command();
             if (speed_level != -1 && this->state_.fan.selected_speed != -1)
                 this->state_.fan.selected_speed = speed_level;
             // Optional: restrict by model
