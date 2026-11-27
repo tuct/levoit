@@ -9,6 +9,8 @@
 #include <optional>
 #include <vector>
 
+#include "levoit_message.h"
+
 namespace esphome::lv600s_humidifier {
 
 // LV600S / LUH-A602S-WEUR, MCU 1.0.56. See the device's PROTOCOL.md.
@@ -24,18 +26,11 @@ inline uint32_t le32(const uint8_t *p) {
   return uint32_t(p[0]) | (uint32_t(p[1]) << 8) | (uint32_t(p[2]) << 16) | (uint32_t(p[3]) << 24);
 }
 inline uint8_t checksum(const Bytes &data) {
-  uint8_t sum = 0;
-  for (size_t i = 0; i < data.size(); ++i) if (i != 5) sum += data[i];
-  return uint8_t(~sum);
+  return levoit::levoit_checksum(data.data(), data.size());
 }
 inline Bytes packet(Command command, const Bytes &payload, uint8_t sequence, uint8_t control = 0x22) {
-  const uint16_t length = uint16_t(payload.size() + 4);
   const uint16_t code = static_cast<uint16_t>(command);
-  Bytes out{0xA5, control, sequence, uint8_t(length), uint8_t(length >> 8), 0,
-            1, uint8_t(code), uint8_t(code >> 8), 0};
-  out.insert(out.end(), payload.begin(), payload.end());
-  out[5] = checksum(out);
-  return out;
+  return levoit::build_levoit_message({1, uint8_t(code), uint8_t(code >> 8)}, payload, sequence, control);
 }
 
 struct Status {
@@ -153,15 +148,19 @@ class Protocol {
     return c == Command::POWER && p.size() == 1 && p[0] == 0;
   }
   void discard_unsafe_(uint32_t now) {
-    if (pending_.empty() || (status.fresh(now) && status.safe())) return;
-    const bool keep_off = is_off_(pending_.front().code, pending_.front().payload);
-    const size_t retained = keep_off ? 1 : 0;
-    const size_t discarded = pending_.size() - retained;
+    const bool safe = status.fresh(now) && status.safe();
+    if (pending_.empty() || (safe && status.power())) return;
+    const auto discard = [safe](const auto &p) {
+      return !is_off_(p.code, p.payload) && !(safe && p.code == Command::POWER);
+    };
+    const bool discard_active = active_ && discard(pending_.front());
+    const size_t before = pending_.size();
+    pending_.erase(std::remove_if(pending_.begin(), pending_.end(), discard), pending_.end());
+    const size_t discarded = before - pending_.size();
     if (discarded == 0) return;
-    pending_.erase(pending_.begin() + retained, pending_.end());
-    if (!keep_off) active_ = false;
+    if (discard_active) active_ = false;
     command_failures += discarded;
-    result = "Rejected: MCU or tank safety state changed";
+    result = "Rejected: MCU, power or tank state changed";
   }
   void write_(Command command, const Bytes &payload) {
     if (transmit) transmit(packet(command, payload, sequence_++));
@@ -169,10 +168,11 @@ class Protocol {
   bool allowed_(Command c, const Bytes &p, uint32_t now) const {
     if (is_off_(c, p)) return true;
     if (!status.fresh(now) || !status.safe()) return false;
+    if (c == Command::POWER) return p == Bytes{1};
+    if (!status.power()) return false;
     switch (c) {
-      case Command::POWER: return p == Bytes{1};
-      case Command::DISPLAY: return p.size() == 1 && (p[0] == 0 || p[0] == 100) && status.power() && status.raw[11] != 2;
-      case Command::TARGET: return p.size() == 2 && p[0] == 0 && p[1] >= 40 && p[1] <= 80 && status.power() && status.raw[11] == 3;
+      case Command::DISPLAY: return p.size() == 1 && (p[0] == 0 || p[0] == 100) && status.raw[11] != 2;
+      case Command::TARGET: return p.size() == 2 && p[0] == 0 && p[1] >= 40 && p[1] <= 80 && status.raw[11] == 3;
       case Command::MIST: return p.size() == 4 && p[0] >= 1 && p[0] <= 9 && status.raw[11] != 2;
       case Command::WARM: return p.size() == 5 && p[0] <= 3 && status.raw[11] != 2;
       case Command::MANUAL: return p.size() == 3 && p[0] <= 1 && p[1] <= 1 && p[2] >= 1 && p[2] <= 9;

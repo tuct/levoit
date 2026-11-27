@@ -214,7 +214,8 @@ number:
     set_action:
       - lambda: lv600s_startup::set_timer_minutes(*id(humidifier), id(lv600s_start_timer), x);
   - platform: template
-    name: Target Humidity
+    name: Target Humidity Preset
+    id: humidifier_target_preset
     icon: mdi:water-percent
     entity_category: config
     unit_of_measurement: "%"

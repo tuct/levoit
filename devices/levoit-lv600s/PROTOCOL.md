@@ -12,7 +12,8 @@ Length counts all bytes after the checksum (four header bytes + payload). The
 checksum is the complement of the sum of all other bytes, modulo 256. LV replies
 use version 0/1 and result 0; SEND controls are 02/22, reply control 12. A 250 ms
 inter-byte timeout and a 512-byte body bound prevent a damaged length from
-holding later reports indefinitely. This component does not assume that the
+holding later reports indefinitely. The component uses the shared Levoit frame
+builder and checksum. This component does not assume that the
 purifiers' ACK policy applies to LV600S; the prior working LV implementation did
 not send automatic report ACKs either.
 

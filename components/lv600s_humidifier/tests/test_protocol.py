@@ -21,6 +21,8 @@ class ProtocolTest(unittest.TestCase):
                             "-Wall",
                             "-Wextra",
                             "-Werror",
+                            "-I",
+                            str(source.parents[2] / "levoit"),
                             "-fsanitize="
                             + os.environ.get("LEVOIT_TEST_SANITIZERS", "address,undefined"),
                             str(source),

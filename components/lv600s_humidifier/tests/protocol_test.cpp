@@ -9,7 +9,7 @@ Bytes state(bool on = true) {
   return s;
 }
 void verify_recorded_water_depletion() {
-  // MCU payloads from the 1.1.08-mcu-feedback water-depletion run. The API
+  // MCU payloads from the water-depletion test on MCU 1.0.56. The API
   // samples did not retain the opcode or header, so packet() provides a
   // synthetic envelope. The intervals below are for replay, not wire timing.
   Protocol device;
@@ -154,6 +154,38 @@ void verify_timer_restart_with_same_remaining() {
   assert(device.remaining(32000) == 59);
 }
 
+void verify_writes_require_confirmed_power() {
+  Protocol device;
+  std::vector<Bytes> sent;
+  device.transmit = [&](const Bytes &frame) { sent.push_back(frame); };
+  feed(device, packet(Command::STATUS, state(false), 0, 0x12), 1000);
+  assert(device.enqueue(Command::POWER, {1}, 1010));
+  assert(!device.enqueue(Command::MIST, {1, 0, 0, 0}, 1020));
+  assert(!device.enqueue(Command::WARM, {1, 0, 0, 0, 0}, 1020));
+  assert(!device.enqueue(Command::MANUAL, {1, 1, 1}, 1020));
+  assert(!device.enqueue(Command::HUMIDITY, {55, 0, 0, 0}, 1020));
+  assert(!device.enqueue(Command::SLEEP, {55, 0, 0, 0, 0, 0}, 1020));
+  assert(!device.enqueue(Command::TIMER, {60, 0, 0, 0}, 1020));
+  assert(!device.enqueue(Command::TIMER, {0, 0, 0, 0}, 1020));
+  assert(sent.size() == 1);
+  feed(device, packet(Command::STATUS, state(), 1, 0x12), 1030);
+  assert(device.enqueue(Command::TIMER, {60, 0, 0, 0}, 1040));
+  assert(device.enqueue(Command::WARM, {1, 0, 0, 0, 0}, 1050));
+  feed(device, packet(Command::STATUS, state(false), 2, 0x12), 1060);
+  device.tick(1061);
+  assert(sent.size() == 2 && device.commands_idle());
+  assert(device.enqueue(Command::POWER, {0}, 1070));
+  assert(sent.back() == packet(Command::POWER, {0}, 2));
+}
+
+void verify_shared_frame_encoding() {
+  const Bytes status{0xA5, 0x22, 0x2C, 0x04, 0x00, 0xB6, 0x01, 0x10, 0x41, 0x00};
+  assert(packet(Command::STATUS, {}, 0x2C) == status);
+  const auto wide = packet(Command::REPORT, Bytes(252, 0), 0x31, 0x02);
+  assert(wide[1] == 0x02 && wide[3] == 0 && wide[4] == 1);
+  assert(wide[5] == 0xD3);
+}
+
 void verify_timer_confirmation_checks_total() {
   Protocol device;
   feed(device, packet(Command::STATUS, state(), 0, 0x12), 1000);
@@ -176,6 +208,8 @@ int main() {
   verify_observed_tank_removal();
   verify_observed_level_write_shapes();
   verify_timer_restart_with_same_remaining();
+  verify_writes_require_confirmed_power();
+  verify_shared_frame_encoding();
   verify_timer_confirmation_checks_total();
   Protocol d; std::vector<Bytes> sent; d.transmit = [&](const Bytes &f) { sent.push_back(f); };
   feed(d, packet(Command::STATUS, state(), 0, 0x12));

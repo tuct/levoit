@@ -35,8 +35,7 @@ void set_timer_minutes(Device &device, int16_t &preset, float value) {
   const auto minutes = static_cast<int16_t>(std::lround(value));
   if (minutes == 0) {
     preset = unset;
-    if (device.has_status() && (device.is_power_on() || device.get_timer_remaining() > 0))
-      device.set_timer_seconds(0);
+    if (device.has_status() && device.is_power_on()) device.set_timer_seconds(0);
     return;
   }
   if (!device.has_status()) return;

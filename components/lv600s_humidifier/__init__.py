@@ -7,6 +7,8 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import uart, sensor, binary_sensor, text_sensor
 from esphome.const import CONF_ID
+from esphome.core import CORE
+from esphome.helpers import copy_file_if_changed
 
 DEPENDENCIES = ["uart"]
 AUTO_LOAD = ["sensor", "binary_sensor", "text_sensor"]
@@ -112,6 +114,10 @@ FINAL_VALIDATE_SCHEMA = uart.final_validate_device_schema(
 
 
 async def to_code(config):
+    # ESPHome copies loaded component sources only. Share the framing header
+    # without loading the purifier component or any of its platforms.
+    header = Path(__file__).resolve().parent.parent / "levoit" / "levoit_message.h"
+    copy_file_if_changed(header, CORE.relative_src_path(header.name))
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)

@@ -79,7 +79,7 @@ void verify_timer_cancellation() {
   assert(timer == 2 && standby.timers_sent == 0);
   standby.remaining = 61;
   set_timer_minutes(standby, timer, 0);
-  assert(timer == unset && standby.timers_sent == 1 && standby.last_timer_seconds == 0);
+  assert(timer == unset && standby.timers_sent == 0);
 }
 
 int main() {
