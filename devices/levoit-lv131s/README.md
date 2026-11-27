@@ -5,7 +5,7 @@
 This model is discontinued and known for reliability issues (sudden shutdown syndrome). This project upgrades the original hardware with modern components while maintaining form factor compatibility.
 
 **Hardware Upgrades:**
-- MCU: Original ESP12F → [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)
+- MCU: Original ESP12F → [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
 - Sensor: Original PM1003 → PM5003 (significantly improved air quality detection)
 
 The original PM1003 sensor was unreliable; spare PM5003 components were substituted for better performance. Legacy PM1003 code is preserved as commented reference.
@@ -52,7 +52,7 @@ This model experienced manufacturing defects leading to premature failures. Reso
 
 
 - Broken or working Levoit LV-PUR131S
-- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)
+- [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link)
 - PM5003 particle sensor
 - Wires and some connectors
 

@@ -10,7 +10,7 @@
 > **New: [Levoit ESPHome](https://github.com/tuct/levoit-esphome-ha), a Home Assistant integration for these purifiers.**
 > It finds every device running the `levoit` or `philips` component and shows its installed and latest component version.
 > When a new release is out, it appears under *Settings → Updates*, and *Install* compiles and uploads it through the ESPHome Device Builder.
-> *Add device* makes a ready-to-flash config from a template (original ESP, [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html) / [ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html), or your own board).
+> *Add device* makes a ready-to-flash config from a template (original ESP, [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html?sensecap_affiliate=3gGMlPv&referring_service=link) / [ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html?sensecap_affiliate=3gGMlPv&referring_service=link), or your own board).
 > Its optional sidebar page shows every purifier as a card to use it (power, mode, speed, PM2.5, AQI, CADR), a page per device with its settings grouped and its air quality history, and a tab with versions, channel and filter %.
 > Install it from the Marketplace as a custom repository: [setup steps](https://github.com/tuct/levoit-esphome-ha#installation).
 
