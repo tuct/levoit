@@ -72,15 +72,15 @@ To keep the stock module instead, wire your own ESP to the MCU link and use the
 |----------|--------|-------|
 | `fan` | — | on/off, speeds **1–9**, modes Manual / Sleep / Auto / Humidity / Dry |
 | `number` | `humidity_target` | target relative humidity (%) |
-| `number` | `timer` | **hours**, 0 = off (see the note below) |
+| `number` | `timer` | **hours**, 0–12, 0 = off (see the note below) |
 | `number` | `filter_lifetime_months` | filter interval |
 | `sensor` | `humidity` | measured RH (%) |
 | `sensor` | `temperature` | measured temperature (°C) |
 | `sensor` | `filter_life_mcu` | filter life as the MCU reports it |
 | `sensor` | `filter_life_left` | filter life derived from runtime |
 | `sensor` | `timer_current` | hours remaining |
-| `select` | `auto_profile` | Home / Away |
-| `select` | `humidity_subtype` | Smart / Fan |
+| `select` | `auto_profile` | 50% / 55%: the target of the Auto mode |
+| `select` | `humidity_subtype` | Smart / Fan, in Humidity mode |
 | `select` | `dry_level` | Low / High — see the note below |
 | `switch` | `display` · `child_lock` | |
 | `switch` | `auto_dry_power_off` | run a drying cycle after power off |

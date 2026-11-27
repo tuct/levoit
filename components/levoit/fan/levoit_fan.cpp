@@ -20,6 +20,7 @@ namespace esphome
             {0, "Manual"},
             {1, "Sleep"},
             {2, "Auto"},
+            {3, "Humidity"},  // Superior 6000S humidity-target mode (MCU mode 3)
             {4, "Turbo"},  // EverestAir top speed, exposed as a fan mode
             {5, "Pet"},
             {6, "Dry"},
@@ -60,6 +61,8 @@ namespace esphome
             {
                 if (m.device == 6 && model != ModelType::SUPERIOR6000S)
                     continue; // Dry is Superior 6000S-only
+                if (m.device == 3 && model != ModelType::SUPERIOR6000S)
+                    continue; // Humidity is Superior 6000S-only
                 if (!isEverest && std::strcmp(m.preset, "Turbo") == 0)
                     continue; // Turbo is EverestAir-only (fan mode 4)
                 if (isEverest && std::strcmp(m.preset, "Pet") == 0)
@@ -138,8 +141,8 @@ namespace esphome
                 // Sleep/Auto leave this->speed at its last manual value because the
                 // MCU reports no fan level for those modes (apply_device_status gets
                 // speed_level == -1), so "same level" is not "no change" here.
-                // A reported Superior mode can lack a preset (e.g. Humidity),
-                // leaving the entity label at Manual. Use the core mode as well.
+                // On the Superior the entity label can lag the reported mode,
+                // so use the core mode as well.
                 const bool superior_not_manual =
                     parent_ && parent_->get_model() == ModelType::SUPERIOR6000S &&
                     parent_->device().state().fan.mode != 0;
@@ -215,7 +218,10 @@ namespace esphome
             }
 
             const bool is_lv600s = parent_ && parent_->get_model() == ModelType::LV600S;
-            const char *preset = is_lv600s && mode == 3 ? "Humidity" : device_mode_to_preset(mode);
+            const bool is_superior = parent_ && parent_->get_model() == ModelType::SUPERIOR6000S;
+            const char *preset = device_mode_to_preset(mode);
+            if (mode == 3 && !is_lv600s && !is_superior)
+                preset = nullptr; // Humidity only exists on the Superior 6000S and the LV600S
             if (mode != -1 && this->parent_ != nullptr && !is_lv600s &&
                 ::levoit::fan_operating_mode_to_option(mode) != nullptr)
             {
