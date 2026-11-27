@@ -14,117 +14,63 @@ appear.
 
 ### 2026.11.27 (component 1.8.0)
 
-* **Component [1.8.0](./components/levoit/README.md#change-log)**: the protocol core stands on its own, in its own namespace and as an
-  ESP-IDF component, so a Matter firmware builds on the same decoders ESPHome
-  does ([#147](https://github.com/tuct/levoit/issues/147)); the Core 300S on
-  the `01 32 40` status is fully supported; the Core filter LED means a low
-  filter; and the LV600S humidifier arrives as a development component
-* **One protocol core for ESPHome and Matter
-  ([#147](https://github.com/tuct/levoit/issues/147))**: step 1: the plan in
-  [docs/shared-core.md](./docs/shared-core.md); the protocol sources log through
-  `levoit_log.h` (ESPHome's, ESP-IDF's or a host's log), `fan_modes.h` no longer
-  needs ESPHome, and a *Host tests* workflow builds the frame layer with a plain
-  `g++` against captured frames
-  ([#155](https://github.com/tuct/levoit/pull/155)); step 2: the core owns the
-  device state. `levoit_state.h` holds what the MCU reported, or what was last
-  asked of it, in the typed slots the decoders and builders already use, and a
-  `LevoitHost` interface hands a changed slot to the ESPHome entities, or to
-  Matter. A command builder now echoes a reported value for a field whose entity
-  is not configured ([#157](https://github.com/tuct/levoit/pull/157)); step 3:
-  `LevoitDevice` is the protocol core (UART framing, decoding, commands, timers,
-  CADR and filter tracking, the LEDs), in namespace `levoit` with no ESPHome in
-  it; the ESPHome component feeds it the UART and implements `LevoitHost` and
-  `LevoitPlatform`. A host test replays captured Core 300S frames through the
-  real core ([#158](https://github.com/tuct/levoit/pull/158)); the ESPHome
-  component moved from `esphome::levoit` to `esphome::levoit_component`; a YAML
-  lambda that spelled out the old namespace needs the new one
-  ([#163](https://github.com/tuct/levoit/pull/163)); step 4: `components/levoit`
-  is an ESP-IDF component too (`CMakeLists.txt`, `idf_component.yml`), so a
-  firmware that is not ESPHome pulls the core in with the component manager, as
-  [levoit-matter](https://github.com/tadhglewis/levoit-matter) does; `tests/idf`
-  builds that way in CI. Nothing changes in an ESPHome build
-  ([#170](https://github.com/tuct/levoit/pull/170))
-* **Core models**: the filter LED follows `FILTER_LOW` after boot instead of
-  blinking until Wi-Fi connects and then switching off. Core 300S / 400S / 600S
-  light it when under 5 % of filter life is left, like the panel's check-filter
-  light (the stock firmware sends it off once after boot); the Core 200S keeps
-  it off ([#168](https://github.com/tuct/levoit/pull/168))
-* **Levoit UART frame handling**: both length bytes are decoded, impossible or
-  truncated frames are dropped, and complete frames survive long bursts. Core
-  600S and Vital 100S echo the incoming sequence in ACKs and reject frames with
-  an unexpected protocol version or error result
-  ([#153](https://github.com/tuct/levoit/pull/153)); status-push dedup now uses
-  a 32-bit fingerprint to reduce collisions: the 8-bit fingerprint behind the
-  dedup matched about 1 in 256 changed payloads and dropped them (Core 300S: AQI
-  and PM2.5 changing together, frames in
-  [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)). Now 32
-  bits, all models ([#165](https://github.com/tuct/levoit/pull/165)); a command
-  the MCU did not carry out (Display in Sleep on the Core 300S `01 32 40`
-  status) no longer stays on the entity: the first unchanged status push more
-  than 1.5 s after a command is decoded. Pushes inside that window stay skipped,
-  so fast pushers do not flip the entity back. All models
-  ([#166](https://github.com/tuct/levoit/pull/166))
-* **Levoit humidifiers**: a plan for bringing every Levoit humidifier onto the
-  component as a `model:`, with the Superior 6000S, the LV600S
-  ([#152](https://github.com/tuct/levoit/pull/152)) and the Dual 200S
-  ([#66](https://github.com/tuct/levoit/issues/66)) protocols side by side, in
-  [`docs/humidifiers.md`](./docs/humidifiers.md); the README humidifier table
-  gets a planned row for the Dual 200S
-  ([#159](https://github.com/tuct/levoit/pull/159)); the plan records that Home
-  Assistant's `humidifier` entity cannot be produced by ESPHome (no such entity
-  kind in the native API of 2026.5.3) and parks the idea with the possible
-  routes ([#164](https://github.com/tuct/levoit/pull/164))
-* **Change log entries are one file per PR**: under `changelog.d/` (project) and
-  `components/levoit/changelog.d/` (component), grouped by area and assembled at
-  release by `tools/changelog.py`, so open PRs no longer conflict on
-  CHANGELOG.md. New [AGENTS.md](./AGENTS.md) for coding assistants and a pull
-  request template ask for the fragment, the models affected, and what was
-  actually verified ([#156](https://github.com/tuct/levoit/pull/156))
-* **Auto mode room size (Core 300S / 400S / 600S, Vital 100S / 200S)**: one
-  number to set: changing *Auto Mode Room Size Preset* while Room Size is the
-  active auto mode sends it to the purifier at once, not on the next pick of
-  Room Size. *Auto Mode Room Size*, which shows what the purifier reports, moves
-  to *Diagnostic* in Home Assistant; same entity and name, automations keep
-  working. The Sprout keeps it as a setting, it has no Preset
-  ([#137](https://github.com/tuct/levoit/pull/137)); the Core 600S diagnostic
-  control uses the same 147 m² upper limit as its preset, and the Vital 100S
-  rounds reported and restored room sizes to the nearest m² when configured with
-  a 1 m² step ([#154](https://github.com/tuct/levoit/pull/154))
-* **LV600S humidifier (development)**: local ESPHome support for the
-  LUH-A602S-WEUR as a separate `lv600s_humidifier` component: fixed-layout UART
-  at 9600 baud, shared frame encoding, and an original-ESP32 example. Settings
-  writes require confirmed appliance power. Keep unconfirmed timer presets for
-  the next power-on. See `devices/levoit-lv600s/uart/` for the status, settings
-  and timer frames. The goal is `model: LV600S` once the shared protocol core
-  exists ([#152](https://github.com/tuct/levoit/pull/152))
-* **Core 300S on the `01 32 40` status**: a LAP-C302S-WGC with MCU 1.0.0 now
-  reports its state: the 19-byte status is decoded and asked for at boot, a
-  filter reset on the panel (Sleep held 3 s) resets the filter life, and the new
-  `power_button_held` binary sensor (Core models) follows a long press of
-  On/Off. Capture in
+* **Component [1.8.0](./components/levoit/README.md#change-log)**: the
+  protocol core stands on its own, the Core 300S `01 32 40` status is fully
+  supported, and the LV600S humidifier arrives as a development component.
+
+**Core**
+
+* **One protocol core for ESPHome and Matter**
+  ([#147](https://github.com/tuct/levoit/issues/147)): `LevoitDevice` holds
+  the whole MCU protocol (framing, decoding, commands, timers, filter tracking,
+  LEDs) in namespace `levoit`, builds without ESPHome, and ships as an ESP-IDF
+  component that [levoit-matter](https://github.com/tadhglewis/levoit-matter)
+  runs on. The ESPHome component is a shell around it; nothing changes in Home
+  Assistant. A YAML lambda that spelled out `esphome::levoit::` needs
+  `esphome::levoit_component::`. Host tests replay captured frames through the
+  real core ([#155](https://github.com/tuct/levoit/pull/155), [#157](https://github.com/tuct/levoit/pull/157), [#158](https://github.com/tuct/levoit/pull/158), [#163](https://github.com/tuct/levoit/pull/163), [#170](https://github.com/tuct/levoit/pull/170))
+* **Change log fragments**: one file per PR under `changelog.d/`, assembled at
+  release, so open PRs stop conflicting; [AGENTS.md](./AGENTS.md) and a PR
+  template ([#156](https://github.com/tuct/levoit/pull/156))
+
+**Devices**
+
+* **Core 300S on the `01 32 40` status** (LAP-C302S-WGC, MCU 1.0.0): decoded
+  and requested at boot, filter reset from the panel, new `power_button_held`
+  binary sensor on Core models ([#140](https://github.com/tuct/levoit/pull/140), [#141](https://github.com/tuct/levoit/pull/141), [#142](https://github.com/tuct/levoit/pull/142), [#143](https://github.com/tuct/levoit/pull/143)); Display reads off
+  in Sleep and while off ([#148](https://github.com/tuct/levoit/pull/148)); speed reads the running speed in Sleep
+  ([#151](https://github.com/tuct/levoit/pull/151)). Capture in
   [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
-  ([#140](https://github.com/tuct/levoit/pull/140),
-  [#141](https://github.com/tuct/levoit/pull/141),
-  [#142](https://github.com/tuct/levoit/pull/142),
-  [#143](https://github.com/tuct/levoit/pull/143)); Display reads off in Sleep
-  and while off, as the panel does; the setting is kept and comes back on
-  leaving Sleep or turning on ([#148](https://github.com/tuct/levoit/pull/148));
-  speed reads the running speed in Sleep, `00` shown as the lowest speed,
-  instead of the last manual speed. Frames in
-  [`status_32_40.txt`](./devices/levoit-core300s/uart/status_32_40.txt)
-  ("sleep") ([#151](https://github.com/tuct/levoit/pull/151))
-* **Core plasma documented in
-  [LEVOIT_UART.md](./LEVOIT_UART.md#plasma-01-e8-a5)**: the command `01 E8 A5`,
-  read from the stock firmware of a Core 300S (not sent to a purifier yet), and
-  offset 6 of the `01 32 40` status, which follows the panel's plasma button.
-  Not used by the component yet
+* **Core filter LED** (300S / 400S / 600S): lit under 5 % filter life, off
+  otherwise; the boot blink is gone, the Core 200S keeps it off ([#168](https://github.com/tuct/levoit/pull/168))
+* **Auto mode room size** (Core 300S / 400S / 600S, Vital 100S / 200S): one
+  number to set, applied at once; the reported value moves to *Diagnostic*;
+  the Core 600S limit is 147 m² and the Vital 100S rounds to whole m²
+  ([#137](https://github.com/tuct/levoit/pull/137), [#154](https://github.com/tuct/levoit/pull/154))
+* **Statistics**: Superior 6000S humidity, temperature and MCU filter life,
+  and the Philips filter sensors, get `state_class: measurement` and their
+  units ([#138](https://github.com/tuct/levoit/pull/138))
+* **Core plasma** (`01 E8 A5`) documented in
+  [LEVOIT_UART.md](./LEVOIT_UART.md#plasma-01-e8-a5), not used yet
   ([#144](https://github.com/tuct/levoit/pull/144))
-* **Statistics for the remaining measurements**: the Superior 6000S humidity,
-  temperature and MCU filter life, and the Philips filter sensors, get
-  `state_class: measurement`, so Home Assistant keeps long-term statistics for
-  them as it does for PM, AQI, CADR and filter life. The Superior ones also get
-  their unit and device class (%, °C)
-  ([#138](https://github.com/tuct/levoit/pull/138))
+
+**Humidifiers**
+
+* **LV600S** (LUH-A602S-WEUR): local ESPHome support as the
+  `lv600s_humidifier` development component, with an original-ESP32 example
+  and a wiring and protocol guide ([#152](https://github.com/tuct/levoit/pull/152))
+* **Plan** for every Levoit humidifier as a `model:` of the component, in
+  [`docs/humidifiers.md`](./docs/humidifiers.md); Home Assistant's
+  `humidifier` entity cannot come from ESPHome yet ([#159](https://github.com/tuct/levoit/pull/159), [#164](https://github.com/tuct/levoit/pull/164))
+
+**Fixes**
+
+* **UART frame handling**: both length bytes decoded, impossible and
+  truncated frames dropped, long bursts survive; Core 600S and Vital 100S echo
+  the sequence in ACKs and reject error frames ([#153](https://github.com/tuct/levoit/pull/153))
+* **Status dedup**: a 32-bit fingerprint; before, one changed push in 256 was
+  skipped as unchanged ([#165](https://github.com/tuct/levoit/pull/165)). A command the MCU did not carry out no
+  longer sticks on the entity ([#166](https://github.com/tuct/levoit/pull/166))
 
 ### 2026.11.23 (component 1.7.3)
 
