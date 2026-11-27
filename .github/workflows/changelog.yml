@@ -1,0 +1,39 @@
+name: Change log
+
+# Change log entries are one file per PR under changelog.d/ (project) and
+# components/levoit/changelog.d/ (component), assembled at release by
+# tools/changelog.py. This checks the fragments, refuses direct edits of the
+# "Unreleased" section, and renders the assembled sections into the job
+# summary. See CONTRIBUTING.md, "Change log".
+on:
+  pull_request:
+    paths:
+      - 'CHANGELOG.md'
+      - 'changelog.d/**'
+      - 'components/levoit/README.md'
+      - 'components/levoit/changelog.d/**'
+      - 'tools/changelog.py'
+      - '.github/workflows/changelog.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'CHANGELOG.md'
+      - 'changelog.d/**'
+      - 'components/levoit/README.md'
+      - 'components/levoit/changelog.d/**'
+      - 'tools/changelog.py'
+      - '.github/workflows/changelog.yml'
+
+jobs:
+  fragments:
+    name: changelog fragments
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check fragments and the Unreleased section
+        run: python3 tools/changelog.py check
+
+      - name: Preview the assembled sections
+        if: always()
+        run: python3 tools/changelog.py preview >> "$GITHUB_STEP_SUMMARY"

@@ -45,10 +45,33 @@ raw bytes matter.
 | New device | `devices/<model>/` with example YAML, wiring notes and a README; the UART dumps you decoded it from; a row in the README table |
 | Component behaviour | Which model(s) it affects, and how it was verified — hardware, or a compile test |
 | Protocol decode | The capture backing it, committed under the device's folder |
-| Anything user-visible | A [CHANGELOG.md](./CHANGELOG.md) entry, and the component's own change log if it is a component change |
+| Anything user-visible | A change log fragment, `changelog.d/<pr>-<slug>.md`, plus one under `components/levoit/changelog.d/` for a component change. See [Change log](#change-log) |
 
 State plainly what you **did** and **did not** verify. "Compiles, not tested on
 hardware" is a perfectly good PR — silently implying otherwise is not.
+
+## Change log
+
+Two logs, both assembled from small files so that open PRs never conflict on
+them:
+
+| Log | Fragment goes in | For |
+|-----|------------------|-----|
+| [CHANGELOG.md](./CHANGELOG.md), the project log | `changelog.d/<pr>-<slug>.md` | Every user-visible change: devices, configs, docs, component |
+| [Component change log](./components/levoit/README.md#change-log) | `components/levoit/changelog.d/<pr>-<slug>.md` | Changes in what the component does; released with a version bump |
+
+A fragment is the finished Markdown bullet; see
+[`changelog.d/README.md`](./changelog.d/README.md) for the format and an
+example. Do not edit the *Unreleased* section of CHANGELOG.md, and do not add
+an *Unreleased* heading to the component README: the `Change log` workflow
+fails the PR with a pointer here. The workflow also renders the assembled
+sections into its job summary; `python tools/changelog.py preview` does the
+same locally.
+
+Releasing (maintainer): bump `components/levoit/VERSION` if there are
+component fragments, run `python tools/changelog.py release`, write the lead
+paragraph where it left a `release lead` comment, commit. The script dates the
+new entry, appends the PR links, and deletes the fragments.
 
 ## CI
 
@@ -153,6 +176,9 @@ PR, or neither — a changelog entry for a version the binary does not report is
 worse than no entry. The `Version check` workflow enforces this on every PR
 that touches the component, and checks that a release tag matches the file.
 
+`python tools/changelog.py release` writes both entries from the fragments
+(see [Change log](#change-log)); it does not bump VERSION, so do that first.
+
 Publishing a release on GitHub (tag `X.Y.Z`, notes written by hand) runs the
 `Release` workflow, which moves the `stable` branch forward to that tag.
 Configs that pull the components with `ref: stable` get releases only; `main`
@@ -164,6 +190,17 @@ gets every merge.
 credentials, and check that photos and captures do not carry them either —
 phone photos routinely include GPS EXIF, and device labels can show MAC
 addresses.
+
+## AI assistants
+
+[AGENTS.md](./AGENTS.md) is the short version of this page for coding
+assistants; Codex, Copilot, Claude Code and Cursor read it, and
+[`.github/PULL_REQUEST_TEMPLATE.md`](./.github/PULL_REQUEST_TEMPLATE.md) asks
+for the same things. If an assistant wrote part of your PR, that is fine: say
+so, and make sure the PR description claims only what *you* verified. An
+assistant cannot run the firmware on a purifier, and a description that says
+a change was "tested" when it only compiled costs the reviewer more than the
+change saved.
 
 ## Reviews
 
