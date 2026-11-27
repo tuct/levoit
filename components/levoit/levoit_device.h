@@ -14,6 +14,7 @@
 
 #include "levoit_platform.h"
 #include "levoit_state.h"
+#include "mcu_dfu.h"
 #include "types.h"
 
 namespace levoit {
@@ -51,6 +52,9 @@ class LevoitDevice {
   const std::string &get_model_name() const { return this->model_name_; }
   ModelType get_model() const { return model_; }
   const LevoitState &state() const { return this->state_; }
+  // MCU in-application programming (mcu_dfu.h). The decoder routes
+  // 0x8030..0x8033 frames here; the image comes from a Reader callback.
+  McuDfu &mcu_dfu() { return this->mcu_dfu_; }
   // A number entity restored a saved value at boot: keep the state in step
   // without sending anything
   void note_number_state(NumberType type, float value) { this->state_.set_number(type, value); }
@@ -324,6 +328,7 @@ class LevoitDevice {
   std::string model_name_;
   // What the MCU reported, or what was last requested of it (levoit_state.h)
   LevoitState state_;
+  McuDfu mcu_dfu_;
   // Last commanded LED values — set by sendSproutLightDirect, read by build_sprout_command
   uint8_t  pending_led_bri_{100};    // 0–100 percent
   uint16_t pending_led_ct_{3500};    // Kelvin

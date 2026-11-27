@@ -702,6 +702,7 @@ namespace levoit
         void LevoitDevice::begin()
         {
             ESP_LOGI(TAG, "Starting Levoit %s", model_name_.c_str());
+            this->mcu_dfu_.begin(this->platform_);
             //https://docs.google.com/spreadsheets/d/17j6FZwvqHRFkGoH5996u5JdR7tk4_7fNuTxAK7kc4Fk/edit?gid=1612245341#gid=1612245341
             cadr = this->rated_cadr();
             
@@ -903,6 +904,7 @@ namespace levoit
         /// @brief Once per main loop pass: LEDs, timers, CADR, filter life
         void LevoitDevice::tick(uint32_t now)
         {
+            this->mcu_dfu_.tick(now);
             this->accrue_filter_(now);
 
             // Every minute: the runtime counter and the filter sensors
@@ -1246,6 +1248,14 @@ namespace levoit
         /// @param commandType
         void LevoitDevice::sendCommand(CommandType commandType)
         {
+            const McuDfu::State dfu = this->mcu_dfu_.state();
+            if (dfu == McuDfu::State::WAIT_READY || dfu == McuDfu::State::TRANSFER ||
+                dfu == McuDfu::State::BURNING)
+            {
+                ESP_LOGW(TAG, "MCU DFU in progress; dropping %s",
+                         command_type_to_string(commandType));
+                return;
+            }
             ESP_LOGD(TAG, "Command triggered: %s", command_type_to_string(commandType));
             std::vector<uint8_t> message;
 
