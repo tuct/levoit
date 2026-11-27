@@ -602,6 +602,7 @@ static void test_superior_capture() {
   CHECK(rig.host.fan_power == 1 && rig.host.fan_speed == 1 && rig.host.fan_mode == 6);
   CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
   CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == true);
+  CHECK(rig.host.switches[SwitchType::AUTO_DRY_POWER_OFF] == true);
   // Repeated off while drying: the unchanged push is suppressed during grace,
   // but neither the core nor the host may optimistically report power off.
   const int reports = rig.host.fan_reports;
@@ -619,6 +620,7 @@ static void test_superior_capture() {
   CHECK(rig.host.fan_power == 0 && rig.host.fan_speed == 0 && rig.host.fan_mode == 0);
   CHECK(rig.host.binaries[BinarySensorType::HUMIDIFYING] == false);
   CHECK(rig.host.binaries[BinarySensorType::DRY_ACTIVE] == false);
+  CHECK(rig.host.switches[SwitchType::AUTO_DRY_POWER_OFF] == false);
   CHECK(rig.host.texts[TextSensorType::MCU_VERSION] == "1.0.9");
 }
 
