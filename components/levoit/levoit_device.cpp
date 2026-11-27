@@ -1481,8 +1481,9 @@ namespace levoit
         void LevoitDevice::ackMessage(uint8_t ptype0, uint8_t ptype1, uint8_t sequence)
         {
 
+            // Superior MCU 1.0.9 rejects pv=01; see uart/status_acks.txt.
             uint8_t pv = 0x01;
-            if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S || this->model_ == ModelType::SPROUT || this->model_ == ModelType::EVERESTAIR || this->model_ == ModelType::ELEVA300X)
+            if (this->model_ == ModelType::VITAL100S || this->model_ == ModelType::VITAL200S || this->model_ == ModelType::SPROUT || this->model_ == ModelType::EVERESTAIR || this->model_ == ModelType::ELEVA300X || this->model_ == ModelType::SUPERIOR6000S)
             {
                 pv = 0x02;
                 ESP_LOGI("TAG", ">>> Sending VITAL ack for: 0x%02X 0x%02X", ptype0, ptype1);

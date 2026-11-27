@@ -466,6 +466,14 @@ static void test_acks() {
   CHECK(levoit_checksum(v.data(), v.size()) == v[5]);
   CHECK(messageUpCounter == 93);
 
+  // Superior MCU 1.0.9 accepts pv=02 with the existing outgoing counter.
+  // status_acks.txt: incoming sequence 2C, ACK sequence 18; no retry follows.
+  Rig superior("SUPERIOR6000S");
+  messageUpCounter = 0x18;
+  superior.device.ackMessage(0x30, 0x55, 0x2C);
+  CHECK(superior.platform.tx.back() == hex("A5 12 18 04 FF A6 02 30 55 00"));
+  CHECK(messageUpCounter == 0x19);
+
   // Match the existing Core 300S ACK convention captured in status_32_40.txt.
   Rig core300("CORE300S");
   messageUpCounter = 0x1C;

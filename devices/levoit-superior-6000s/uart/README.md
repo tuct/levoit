@@ -45,3 +45,14 @@ These are MCU reports, not physical observations or stock-app traffic.
 Models affected by #176: `SUPERIOR6000S`; hardware evidence is limited to
 LEH-S602S-WUS / MCU 1.0.9. The tag 00 fallback has synthetic tests only;
 no other MCU version, full drying cycle, or Humidity-mode transition was tested.
+
+## Status acknowledgements
+
+[status_acks.txt](status_acks.txt) compares the old ACK with the protocol-byte
+fix on LEH-S602S-WUS / MCU 1.0.9. Capture settings match the Dry follow-up.
+The old exchange repeats status sequence 6C and gets `52 ... 35` replies.
+Changing only ACK protocol `01` to `02` gives 15 status pushes with
+15 distinct sequences, each received once, and no type-52 replies in the
+recorded window. Power on/off, High Dry countdown and return to Manual/off
+were checked through MCU reports. No sequence-counter or reserved-byte
+change was needed: ACKs still use the ESP counter and byte 4 = FF.
