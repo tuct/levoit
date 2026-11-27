@@ -8,12 +8,14 @@ on:
     paths:
       - 'components/levoit/**'
       - 'tests/host/**'
+      - 'devices/levoit-lv600s/uart/*.csv'
       - '.github/workflows/host-tests.yml'
   push:
     branches: [main]
     paths:
       - 'components/levoit/**'
       - 'tests/host/**'
+      - 'devices/levoit-lv600s/uart/*.csv'
       - '.github/workflows/host-tests.yml'
   workflow_dispatch:
 
@@ -49,6 +51,7 @@ jobs:
             components/levoit/vital_status.cpp \
             components/levoit/sprout_status.cpp \
             components/levoit/superior_status.cpp \
+            components/levoit/lv600s_status.cpp \
             components/levoit/core_commands.cpp \
             components/levoit/vital_commands.cpp \
             components/levoit/sprout_commands.cpp \

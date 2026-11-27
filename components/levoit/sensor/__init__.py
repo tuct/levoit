@@ -33,6 +33,7 @@ TYPE_MAP = {
     # Superior 6000S (humidifier) only below
     "humidity": SensorType.HUMIDITY,
     "temperature": SensorType.TEMPERATURE,
+    "mist_level": SensorType.MIST_LEVEL,
     "filter_life_mcu": SensorType.FILTER_LIFE_MCU,
     # Eleva 300X only below
     "aqi_index": SensorType.AQI_INDEX,

@@ -88,6 +88,11 @@ namespace esphome
 
     void LevoitNumber::control(float value)
     {
+      if (parent_ && parent_->get_model() == ModelType::LV600S)
+      {
+        parent_->on_number_command(this->type_, value);
+        return;
+      }
       value = this->normalize_room_size(value);
       // Whole-number entities are truncated; the Eleva quiet window is in
       // fractional hours (21.5 = 21:30) and must keep its fraction.

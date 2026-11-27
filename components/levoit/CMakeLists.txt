@@ -10,6 +10,7 @@ idf_component_register(
         "vital_status.cpp"
         "sprout_status.cpp"
         "superior_status.cpp"
+        "lv600s_status.cpp"
         "core_commands.cpp"
         "vital_commands.cpp"
         "sprout_commands.cpp"

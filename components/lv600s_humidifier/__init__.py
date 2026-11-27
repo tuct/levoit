@@ -114,10 +114,11 @@ FINAL_VALIDATE_SCHEMA = uart.final_validate_device_schema(
 
 
 async def to_code(config):
-    # ESPHome copies loaded component sources only. Share the framing header
-    # without loading the purifier component or any of its platforms.
-    header = Path(__file__).resolve().parent.parent / "levoit" / "levoit_message.h"
-    copy_file_if_changed(header, CORE.relative_src_path(header.name))
+    # The standalone component uses the same protocol and presets without
+    # loading the Levoit ESPHome platforms.
+    shared = Path(__file__).resolve().parent.parent / "levoit"
+    for name in ("levoit_message.h", "lv600s_protocol.h", "lv600s_controls.h", "lv600s_presets.h"):
+        copy_file_if_changed(shared / name, CORE.relative_src_path(name))
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)

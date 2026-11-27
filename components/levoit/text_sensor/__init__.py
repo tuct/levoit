@@ -19,6 +19,7 @@ TYPE_MAP = {
     "error_message": TextSensorType.ERROR_MESSAGE,
     "sprout_event": TextSensorType.SPROUT_EVENT,
     "model": TextSensorType.MODEL,
+    "reported_mode": TextSensorType.REPORTED_MODE,
 }
 
 TYPE_PROPS = {

@@ -20,16 +20,6 @@ void LV600SHumidifier::loop() {
 void LV600SHumidifier::dump_config() {
   ESP_LOGCONFIG("lv600s", "LV600S MCU UART, 9600 8N1; component " LV600S_VERSION);
 }
-std::string LV600SHumidifier::get_mode_name() const {
-  if (!has_status()) return "Unknown";
-  switch (uint8_t(get_mode())) {
-    case 0: return "Auto (read only)";
-    case 1: return "Manual";
-    case 2: return "Humidity Sleep";
-    case 3: return "Humidity";
-    default: return "Unknown";
-  }
-}
 void LV600SHumidifier::publish_() {
   const auto &s = protocol_.status; const auto &v = s.raw; const bool fresh = has_status();
   const float values[] = {float(v[9]), float(v[10]), get_target_humidity(), float(v[12]), float(v[13]),

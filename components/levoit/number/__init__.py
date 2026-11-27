@@ -45,6 +45,7 @@ TYPE_MAP = {
     "auto_profile_room_size_input": NumberType.AUTO_PROFILE_ROOM_SIZE_INPUT,
     # Superior 6000S (humidifier) only below
     "humidity_target": NumberType.HUMIDITY_TARGET,
+    "warm_level": NumberType.WARM_LEVEL,
     # Eleva 300X only below: quiet window, hours after midnight (21.5 = 21:30)
     "quiet_start": NumberType.QUIET_START,
     "quiet_end": NumberType.QUIET_END,
@@ -52,6 +53,7 @@ TYPE_MAP = {
 
 # (min_value, max_value, step, extra_props)
 TYPE_RANGE = {
+    "warm_level": (0.0, 3.0, 1.0, {CONF_ICON: "mdi:heat-wave"}),
     "efficiency_room_size": (9.0, 296.0, 1.0, {
         CONF_DEVICE_CLASS: "area",
         CONF_UNIT_OF_MEASUREMENT: "m²",
