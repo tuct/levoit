@@ -143,6 +143,7 @@ namespace esphome
             auto *nm = numbers_[nt_idx_(type)];
             if (!nm)
                 return;
+            value = nm->normalize_room_size(value);
             if (nm->has_state() && nm->state == value)
                 return;
             nm->publish_state(value);

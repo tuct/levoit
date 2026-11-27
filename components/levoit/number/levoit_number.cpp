@@ -3,6 +3,7 @@
 #include "esphome/core/log.h"
 #include "esphome/components/number/number_traits.h"
 #include <algorithm>
+#include <cmath>
 
 namespace esphome
 {
@@ -10,6 +11,16 @@ namespace esphome
   {
 
     static const char *const TAG = "levoit.number";
+
+    float LevoitNumber::normalize_room_size(float value) const {
+      if (parent_ && parent_->get_model() == ModelType::VITAL100S &&
+          this->traits.get_step() == 1.0f &&
+          (this->type_ == NumberType::EFFICIENCY_ROOM_SIZE ||
+           this->type_ == NumberType::AUTO_PROFILE_ROOM_SIZE_INPUT)) {
+        return std::round(value);
+      }
+      return value;
+    }
 
     void LevoitNumber::setup() {
       // pick default
@@ -27,6 +38,7 @@ namespace esphome
           {
             float saved;
             if (pref_.load(&saved)) {
+              saved = this->normalize_room_size(saved);
               float clamped = std::max(this->traits.get_min_value(),
                                        std::min(this->traits.get_max_value(), saved));
               ESP_LOGI(TAG, "Restored auto profile room size input: %.0f m²", clamped);
@@ -72,6 +84,7 @@ namespace esphome
 
     void LevoitNumber::control(float value)
     {
+      value = this->normalize_room_size(value);
       // Whole-number entities are truncated; the Eleva quiet window is in
       // fractional hours (21.5 = 21:30) and must keep its fraction.
       const bool fractional = this->type_ == NumberType::QUIET_START || this->type_ == NumberType::QUIET_END;

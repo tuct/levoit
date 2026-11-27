@@ -14,6 +14,7 @@ class LevoitNumber :  public number::Number, public Component {
   void set_type(NumberType t) { type_ = t; }
   void setup() override;
   void dump_config() override;
+  float normalize_room_size(float value) const;
   
 
  protected:

@@ -13,6 +13,9 @@ Project-level changes. Component releases have their own log:
   `lv600s_humidifier` component for now; the goal is `model: LV600S` in `levoit`
   once the shared protocol core ([#147](https://github.com/tuct/levoit/issues/147))
   exists.
+* **Auto room size**: the Core 600S diagnostic control uses the same 147 m²
+  upper limit as its preset. The Vital 100S rounds reported and restored room
+  sizes to the nearest m² when configured with a 1 m² step.
 * **Towards one protocol core for ESPHome and Matter**
   ([#147](https://github.com/tuct/levoit/issues/147)): the plan in
   [docs/shared-core.md](./docs/shared-core.md), and its first step: the
