@@ -15,6 +15,7 @@
 | Tested MCU FW | 1.0.06 as shipped (WiFi FW 1.0.07, VeSync SDK v1.3.1, ESP-IDF dc489539); updated via VeSync to WiFi FW 1.0.08 + new MCU FW on 2026-11-20 |
 | Internal name | Salute 300 (EU, Amazon), label 1321-B2516B-C |
 | ESP Module | ESP32-C3 (QFN32, rev v0.4), 4 MB embedded flash (XMC), single core |
+| MCU | Arm Cortex-M0+, 44-pin QFP; the marking is not legible in the photos, the core is read from the [MCU update image](#mcu-firmware-image) |
 | Board | PCB A: main board (MCU + ESP) / PCB B: HT-PCB-1321-B2516A-C-V04 (display) |
 | PM Sensor | Cubic PM2008MZ (laser, PM1.0 / PM2.5 / PM10) |
 | Fan Speeds | 4 (1–3 + Turbo) |
@@ -108,7 +109,7 @@ The pins for a replacement ESP (here a Seeed XIAO ESP32-C3): the MCU link on two
 |-----|------------------------------|-------|
 | WIFI1 | Espressif ESP32-C3-SOLO-1 module (FCC ID 2AC7Z-ESPC3SOLO) | Same module as the Vital 100S / 200S; MCU UART on module pins 27 / 28 = **IO18 (RX) / IO19 (TX)** |
 | J3 | EN, GND, +3V3, TXD0, RXD0, IO0 | ESP programming / UART header |
-| MCU1 | 44-pin QFP, part TBD | Main MCU, talks to the ESP over UART |
+| MCU1 | 44-pin QFP, Arm Cortex-M0+, vendor TBD | Main MCU, talks to the ESP over UART. Core from the [MCU update image](#mcu-firmware-image) |
 | J5 | +5V, DIO, GND, CLK | MCU debug header (SWD-style) |
 | U4 | 28-pin SSOP, part TBD | |
 | Dust connector | +5V_DUST, DUST_… | PM2008MZ sensor cable |
@@ -151,6 +152,23 @@ Don't go by the classic **ESP32-SOLO-1** datasheet: it has the same footprint, b
 The stock app agrees: `vesync_uart_init` passes `tx = 19, rx = 18` (and 115200) to `uart_set_pin()` in both dumped builds (May 2026 in `ota_0`, Wi-Fi 1.0.08 from Jul 2026 in `ota_1`).
 
 The stock firmware updates the MCU in pass-through mode: the image is streamed from the cloud over UART to the MCU and is not stored on the ESP flash first.
+
+### MCU firmware image
+
+The MCU update 1.0.13 (`LAP-C341S-WEU_MCU_C1_ota_v1.0.13.bin`, 64 284 bytes, URL in [firmware-updates.md](../../docs/firmware-updates.md)) is a 16-byte VeSync header followed by a raw Arm binary:
+
+| Bytes | Value | Meaning |
+|-------|-------|---------|
+| 0 | `01` | type (unconfirmed) |
+| 1–3 | `0C FB 00` | payload length, little-endian: 64 268 = file minus header |
+| 4–7 | `00 01 00 0D` | version 1.0.13 |
+| 8–15 | `01 80 87 00 02 25 8E 00` | unknown, probably checksums |
+
+- The vector table points into `0x0800_2xxx`, so the application is linked at `0x0800_2000`. The first 8 KB of flash hold a bootloader, which is not in the file.
+- The code is 16-bit Thumb only (no IT blocks, no hardware divide, no MOVW/MOVT) and writes `SCB->VTOR`: a **Cortex-M0+**, not an M0, M3 or M4.
+- Built with Keil (Arm C library heap messages); no chip name in the image. The clock and flash controllers sit at `0x4002_1000` / `0x4002_2000` as on STM32-style parts, but the code loads no GPIO base at `0x4800_0000` or `0x5000_0000`, so it is not an STM32F0/G0/L0, PY32 or AT32F421 map.
+
+The ESP side is chip-agnostic: the strings in the Wi-Fi 1.0.08 image (`MCU not requesting bin`, `MCU not in BIN_REQ state`, `ota mcu packet len`) show the ESP only relays chunks that the MCU's bootloader asks for.
 
 The VeSync update downloads from `fw.vesync.com` by hostname. If the device's DNS lookups fail (`getaddrinfo() error=202` in the UART log), the update aborts at about 4% in the app. Adding 8.8.8.8 as a DNS server fixed it here.
 

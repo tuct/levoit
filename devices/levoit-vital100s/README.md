@@ -9,6 +9,7 @@
 | Model | Vital 100S |
 | Tested MCU FW | 1.0.5 |
 | ESP Module | ESP32-C3-SOLO-1 |
+| MCU | Chipsbank CBM7?32FLQ16, LQFP-48 (U2, marking in `images/Vital100s-board_back.jpg`; the fifth character reads as 3 or J). No public datasheet found |
 | Board | Vital 100S-C_V1.3P1.4 20221027 |
 | Fan Speeds | 4 |
 | CADR (spec) | 221 m³/h |

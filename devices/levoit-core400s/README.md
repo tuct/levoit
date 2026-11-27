@@ -11,6 +11,7 @@ Started from community projects ([acvigue](https://github.com/acvigue/esphome-le
 | Model | Core 400S |
 | Tested MCU FW | 3.0.0, 2.0.18 |
 | ESP Module | ESP32-SOLO-1C (ESP32-S0WD rev v1.0, single core, 4 MB flash) |
+| MCU | SinOne SC95F8616P, LQFP-48: a 1T 8051 core with 64 KB flash (U2 on the CORE400S Ctrl V1.2, marking in `images/pcp_front.jpg`; the `Core400S_C_V2.2P2.2SP3` board is not photographed) |
 | Board | CORE400S Ctrl V1.2, `Core400S_C_V2.2P2.2SP3` |
 | Fan Speeds | 4 |
 | CADR (spec) | 442 m³/h |
