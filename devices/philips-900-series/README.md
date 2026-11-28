@@ -328,7 +328,7 @@ of captures are in [PROTOCOL.md](./PROTOCOL.md).
 
 | File | Status | Purpose |
 |------|--------|---------|
-| [`philips-900-uart-sniffer.yaml`](./philips-900-uart-sniffer.yaml) | ✅ usable | Passive both-direction UART capture — the only flashable config here |
+| [`philips-900-uart-sniffer.yaml`](./philips-900-uart-sniffer.yaml) | ✅ usable | Passive both-direction UART capture, with the stock module left running: for re-checking the pads on another board revision and capturing unmapped datapoints. Not a purifier config; use the board configs below |
 | [`common.yaml`](./common.yaml) | ✅ | Shared entity config |
 | [`philips-ac0950.yaml`](./philips-ac0950.yaml) | ⚠️ untested | AC0950 board config — same protocol assumed, never verified |
 | [`philips-ac0951-c3_dev.yaml`](./philips-ac0951-c3_dev.yaml) | ✅ working | AC0951 board config; adds PM2.5, allergen index and the standby-sensor switch |
